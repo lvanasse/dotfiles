@@ -139,6 +139,8 @@ bindsym $mod+Shift+0 move container to workspace $workspace10
 assign [class="Pavucontrol"] $workspace10
 assign [class="Rhythmbox"] $workspace10
 assign [class="Pidgin"] $workspace9
+assign [class="Thunderbird"] $workspace9
+assign [class="Slack"] $workspace9
 
 #Language change short cut
 exec --no-startup-id "setxkbmap -model pc105 -layout us,ca -option grp:alt_shift_toggle"
@@ -148,12 +150,13 @@ exec --no-startup-id "setxkbmap -model pc105 -layout us,ca -option grp:alt_shift
 exec ~/.screenlayout/default.sh
 exec pavucontrol
 exec rhythmbox
-exec_always compton -f 
+#exec_always compton -f 
 exec_always feh --bg-scale /home/ludovic/.config/i3/wallpaper/wallhaven-192028.jpg
 #exec pidgin
 exec --no-startup-id "setxkbmap -model pc105 -layout us,ca -option grp:alt_shift_toggle"
 exec_always --no-startup-id $HOME/.config/polybar/launch.sh
-
+exec thunderbird
+exec slack
 # Inner gaps setting
 gaps inner 10 
 gaps outer 10 

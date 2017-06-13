@@ -98,16 +98,16 @@ bindsym $mod+shift+z exec systemctl
 
 
 
-set $workspace1 "1: "
-set $workspace2 "2: "
-set $workspace3 "3: "
-set $workspace4 "4: "
-set $workspace5 "5: "
-set $workspace6 "6: "
-set $workspace7 "7: "
-set $workspace8 "8: "
-set $workspace9 "9: " 
-set $workspace10 "10: "
+set $workspace1 "1"
+set $workspace2 "2"
+set $workspace3 "3"
+set $workspace4 "4"
+set $workspace5 "5"
+set $workspace6 "6 "
+set $workspace7 "7 "
+set $workspace8 "8: Chat" 
+set $workspace9 "9: Mail" 
+set $workspace10 "10: Music"
 
 # switch to workspace
 bindsym $mod+1 workspace $workspace1
@@ -138,9 +138,11 @@ bindsym $mod+Shift+0 move container to workspace $workspace10
 
 assign [class="Pavucontrol"] $workspace10
 assign [class="Rhythmbox"] $workspace10
-assign [class="Pidgin"] $workspace9
+assign [class="Pidgin"] $workspace8
 assign [class="Thunderbird"] $workspace9
 assign [class="Slack"] $workspace9
+assign [class="Spotify"] $workspace10
+assign [class="Blockify"] $workspace10
 
 #Language change keybind 
 exec --no-startup-id "setxkbmap -model pc105 -layout us,ca -option grp:alt_shift_toggle"
@@ -149,7 +151,9 @@ exec --no-startup-id "setxkbmap -model pc105 -layout us,ca -option grp:alt_shift
 
 exec ~/.screenlayout/default.sh
 exec pavucontrol
-exec rhythmbox
+exec blockify-ui
+exec spotify
+#exec rhythmbox
 #exec_always compton -f 
 exec_always feh --bg-scale /home/ludovic/.config/i3/wallpaper/wallhaven-192028.jpg
 exec pidgin

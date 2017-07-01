@@ -153,7 +153,7 @@ exec --no-startup-id "setxkbmap -model pc105 -layout us,ca -option grp:alt_shift
 
 exec ~/.screenlayout/default.sh
 exec pavucontrol
-exec discord
+#exec discord
 #exec spotify
 exec blockify-ui
 #exec rhythmbox

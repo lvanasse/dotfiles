@@ -208,7 +208,7 @@ exec --no-startup-id "setxkbmap us intl"
 #Starting program
 
 exec pavucontrol
-exec discord
+#exec discord
 #exec spotify
 exec blockify-ui
 #exec rhythmbox

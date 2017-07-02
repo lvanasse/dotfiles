@@ -213,7 +213,7 @@ exec pavucontrol
 exec blockify-ui
 #exec rhythmbox
 #exec_always compton -f 
-exec_always feh --bg-scale /home/ludovic/.config/i3/wallpaper/wallhaven-192028.jpg
+exec_always feh --bg-scale /home/ludovic/.config/i3/wallpaper/alena-aenami-sundown.jpg
 exec pidgin
 exec --no-startup-id "setxkbmap -model pc105 -layout us,ca -option grp:alt_shift_toggle"
 #exec_always --no-startup-id $HOME/.config/polybar/launch.sh

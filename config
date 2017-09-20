@@ -96,6 +96,14 @@ bindsym $mod+shift+x exec /home/ludovic/.config/i3/i3lock.sh
 # suspend the session
 bindsym $mod+shift+z exec systemctl 
 
+# Pulse Audio controls
+bindsym XF86AudioRaiseVolume exec --no-startup-id pactl -- set-sink-volume 0 +5% #increase sound volume
+bindsym XF86AudioLowerVolume exec --no-startup-id pactl -- set-sink-volume 0 -5% #decrease sound volume
+bindsym XF86AudioMute exec --no-startup-id pactl set-sink-mute 0 toggle # mute sound
+
+# Sreen brightness controls
+bindsym XF86MonBrightnessUp exec xbacklight -inc 20 # increase screen brightness
+bindsym XF86MonBrightnessDown exec xbacklight -dec 20 # decrease screen brightness
 
 
 set $workspace1 "1"
@@ -185,7 +193,7 @@ exec --no-startup-id "setxkbmap -model pc105 -layout us,ca -option grp:alt_shift
 
 #Starting program
 
-exec ~/.screenlayout/default.sh
+exec ~/.screenlayout/screenleft.sh
 exec pavucontrol
 #exec discord
 #exec spotify
@@ -201,6 +209,9 @@ exec slack
 # Inner gaps setting
 gaps inner 10 
 gaps outer 10 
+# Start the network manager for wifi.
+exec --no-startup-id nm-applet
+
 
 # reload the configuration file
 bindsym $mod+Shift+c reload

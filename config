@@ -199,9 +199,8 @@ exec discord
 #exec blockify-ui
 #exec rhythmbox
 exec_always compton  
-exec_always feh --bg-scale /home/ludovic/.config/i3/wallpaper/1447145304572.jpg
-exec pidgin
-exec --no-startup-id "setxkbmap -model pc105 -layout us,ca -option grp:alt_shift_toggle"
+exec_always feh --bg-scale /home/ludovic/.config/i3/wallpaper/dlFRxgU.jpg
+#exec --no-startup-id "setxkbmap -model pc105 -layout us,ca -option grp:alt_shift_toggle"
 #exec_always --no-startup-id $HOME/.config/polybar/launch.sh
 exec thunderbird
 exec slack
@@ -210,7 +209,8 @@ gaps inner 10
 gaps outer 10 
 # Start the network manager for wifi.
 exec --no-startup-id nm-applet
-
+# Setup the screenlayout
+exec /home/ludovic/.screenlayout/default.sh
 
 # reload the configuration file
 bindsym $mod+Shift+c reload

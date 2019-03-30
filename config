@@ -211,6 +211,8 @@ gaps outer 10
 exec --no-startup-id nm-applet
 # Setup the screenlayout
 exec /home/ludovic/.screenlayout/default.sh
+# Start xcompmgr to fix screen artecfact
+xcompmgr
 
 # reload the configuration file
 bindsym $mod+Shift+c reload

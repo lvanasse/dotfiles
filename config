@@ -202,7 +202,7 @@ exec_always compton
 exec_always feh --bg-scale /home/ludovic/.config/i3/wallpaper/dlFRxgU.jpg
 #exec --no-startup-id "setxkbmap -model pc105 -layout us,ca -option grp:alt_shift_toggle"
 #exec_always --no-startup-id $HOME/.config/polybar/launch.sh
-exec thunderbird
+#exec thunderbird
 exec slack
 # Inner gaps setting
 gaps inner 10 

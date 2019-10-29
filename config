@@ -205,14 +205,15 @@ exec_always feh --bg-scale /home/ludovic/.config/i3/wallpaper/dlFRxgU.jpg
 exec thunderbird
 exec slack
 # Inner gaps setting
-gaps inner 10 
-gaps outer 10 
+#gaps inner 10 
+#gaps outer 10 
 # Start the network manager for wifi.
 exec --no-startup-id nm-applet
 # Setup the screenlayout
 exec /home/ludovic/.screenlayout/default.sh
 # Start xcompmgr to fix screen artecfact
 exec xcompmgr
+exec slimbookbattery
 
 # reload the configuration file
 bindsym $mod+Shift+c reload

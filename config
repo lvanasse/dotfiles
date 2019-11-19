@@ -205,7 +205,7 @@ exec_always feh --bg-scale /home/ludovic/.config/i3/wallpaper/dlFRxgU.jpg
 #exec --no-startup-id "setxkbmap -model pc105 -layout us,ca -option grp:alt_shift_toggle"
 #exec_always --no-startup-id $HOME/.config/polybar/launch.sh
 #exec thunderbird
-exec slack
+#exec slack
 # Inner gaps setting
 gaps inner 10 
 gaps outer 10 
@@ -216,6 +216,7 @@ exec /home/ludovic/.screenlayout/default.sh
 # Start xcompmgr to fix screen artecfact
 exec xcompmgr
 exec slimbookbattery
+exec blueman-applet
 
 # reload the configuration file
 bindsym $mod+Shift+c reload

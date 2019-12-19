@@ -102,8 +102,8 @@ bindsym XF86AudioLowerVolume exec --no-startup-id pactl -- set-sink-volume 0 -5%
 bindsym XF86AudioMute exec --no-startup-id pactl set-sink-mute 0 toggle # mute sound
 
 # Sreen brightness controls
-bindsym XF86MonBrightnessUp exec xbacklight -inc 10 # increase screen brightness
-bindsym XF86MonBrightnessDown exec xbacklight -dec 10 # decrease screen brightness
+bindsym XF86MonBrightnessUp exec xbacklight -inc 5 # increase screen brightness
+bindsym XF86MonBrightnessDown exec xbacklight -dec 5 # decrease screen brightness
 
 
 set $workspace1 "1"
@@ -186,9 +186,6 @@ assign [class="Slack"] $workspace9
 assign [class="Blockify"] $workspace10
 assign [class="discord"] $workspace11
 
-#Assigning workspace to screen 
-workspace $workspace1 output DVI-D-0
-
 #Language change keybind 
 exec --no-startup-id "setxkbmap -model pc105 -layout us,ca -option grp:alt_shift_toggle"
 
@@ -196,11 +193,9 @@ exec --no-startup-id "setxkbmap -model pc105 -layout us,ca -option grp:alt_shift
 
 exec pavucontrol
 exec discord
-#exec_always compton  
 exec_always feh --bg-scale /home/ludovic/.config/i3/wallpaper/dlFRxgU.jpg
 # Start the network manager for wifi.
 exec --no-startup-id nm-applet
-# Setup the screenlayout
 # Start xcompmgr to fix screen artecfact
 exec xcompmgr
 exec slimbookbattery
@@ -239,7 +234,6 @@ mode "resize" {
 
 bindsym $mod+r mode "resize"
 
-
 set $base00 #101218
 set $base01 #0E0E0E
 set $base02 #1A1D19 
@@ -256,9 +250,6 @@ set $base0C #97e0ff
 set $base0D #97bbf7
 set $base0E #c0b7f9
 set $base0F #fcc09e
-
-
-
 
 # Widow Colours
 #                               border  background text    indicator

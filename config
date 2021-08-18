@@ -187,7 +187,8 @@ assign [class="Blockify"] $workspace10
 assign [class="discord"] $workspace11
 
 #Language change keybind 
-exec --no-startup-id "setxkbmap -model pc105 -layout us,ca -option grp:alt_shift_toggle"
+#exec --no-startup-id "setxkbmap -model pc105 -layout us,ca -option grp:alt_shift_toggle"
+exec --no-startup-id "setxkbmap -layout us -variant intl"
 
 #Starting program
 

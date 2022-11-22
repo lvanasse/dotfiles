@@ -194,6 +194,7 @@ exec --no-startup-id "setxkbmap -model pc105 -layout us,ca -option grp:alt_shift
 
 #Starting program
 
+exec xinput set-prop "DELL08AF:00 06CB:76AF Touchpad" "libinput Tapping Enabled" 1
 exec ~/.screenlayout/screenleft.sh
 exec pavucontrol
 exec discord

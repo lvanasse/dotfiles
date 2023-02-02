@@ -182,7 +182,7 @@ bindsym $mod+Shift+Control+0 move container to workspace $workspace20
 
 assign [class="Pavucontrol"] $workspace10
 assign [class="discord"] $workspace11
-
+assign [class="slack"] $workspace11
 #Assigning workspace to screen 
 workspace $workspace1 output DVI-D-0
 
@@ -192,6 +192,7 @@ exec --no-startup-id "setxkbmap us intl"
 
 exec pavucontrol
 exec discord
+exec slack
 exec_always feh --bg-scale /home/ludovic/.config/i3/wallpaper/dlFRxgU.jpg
 # Start the network manager for wifi.
 exec --no-startup-id nm-applet
@@ -199,7 +200,6 @@ exec --no-startup-id nm-applet
 exec /home/ludovic/.screenlayout/default.sh
 # Start xcompmgr to fix screen artecfact
 exec xcompmgr
-exec slimbookbattery
 
 # reload the configuration file
 bindsym $mod+Shift+c reload

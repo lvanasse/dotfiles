@@ -182,9 +182,12 @@ bindsym $mod+Shift+Control+0 move container to workspace $workspace20
 
 assign [class="Pavucontrol"] $workspace10
 assign [class="discord"] $workspace11
-assign [class="slack"] $workspace11
+assign [class="Slack"] $workspace11
 #Assigning workspace to screen 
-workspace $workspace1 output DVI-D-0
+workspace $workspace1 output HDMI-A-1
+workspace $workspace3 output DVI-D-0
+workspace $workspace10 output DVI-D-0
+workspace $workspace11 output DVI-D-0
 
 #Language change keybind 
 exec --no-startup-id "setxkbmap us intl"
@@ -193,13 +196,14 @@ exec --no-startup-id "setxkbmap us intl"
 exec pavucontrol
 exec discord
 exec slack
-exec_always feh --bg-scale /home/ludovic/.config/i3/wallpaper/dlFRxgU.jpg
 # Start the network manager for wifi.
 exec --no-startup-id nm-applet
 # Setup the screenlayout
 exec /home/ludovic/.screenlayout/default.sh
 # Start xcompmgr to fix screen artecfact
 exec xcompmgr
+exec --no-startup-id nitrogen --restore
+
 
 # reload the configuration file
 bindsym $mod+Shift+c reload
@@ -269,10 +273,10 @@ set $base0F #fcc09e
 # finds out, if available)
 bar {
         #status_command i3status
-        status_command i3blocks -c ~/.config/i3/i3blocks.conf
+        status_command i3blocks -vv -c ~/.config/i3/i3blocks.conf
         font pango: System San Francisco Display, FontAwesome 14
         position bottom
-        
+        tray_output HDMI-A-0
         #bindsym button4 nop
         #bindsym button5 nop
        colors {

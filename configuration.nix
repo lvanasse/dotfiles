@@ -1,7 +1,9 @@
-# TODO Emacs
+# TODO Emacs maybe with home-manager?
 # TODO Git
 # TODO A way to store the gnome-terminal profile
 # TODO fix zsh not showing git status
+# TODO fix git to use lvanasse instead of random user
+# TODO find a good dotfiles management
 
 { config, pkgs, ... }:
 

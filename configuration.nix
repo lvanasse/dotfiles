@@ -1,9 +1,7 @@
-# TODO Emacs maybe with home-manager?
-# TODO Git
+
 # TODO A way to store the gnome-terminal profile
-# TODO fix zsh not showing git status
+# TODO fix zsh not showing git status -> it's source $ZSH/oh-my-zsh.sh that was not called
 # TODO fix git to use lvanasse instead of random user
-# TODO find a good dotfiles management
 
 { config, pkgs, ... }:
 
@@ -89,23 +87,6 @@
     shell = pkgs.zsh;
   };
 
-  # home-manager.users.ludovic = { pkgs, ... }: {
-  #   home.stateVersion = "24.05";
-  #   programs.git = {
-  #     enable = true;
-  #     userEmail = "lvanasse@luxaerobot.com";
-  #     userName = "Ludovic Vanasse";
-  #   };
-  #   programs.emacs = {
-  #     enable = true;
-  #     package = pkgs.emacs;
-  #   };
-  #   # home.file."Code" = {
-  #   #   text = "";
-  #   #   directory = true;
-  #   # };
-  # };
-
   programs.firefox.enable = true;
 
   programs.zsh = {
@@ -114,6 +95,7 @@
       enable = true;
       theme = "minimal";
       plugins = [ "git" "sudo" "docker" ];
+
     };
   };
 

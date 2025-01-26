@@ -12,7 +12,6 @@
     [
       # Include the results of the hardware scan.
       ./hardware-configuration.nix
-      <home-manager/nixos>
     ];
 
   # Bootloader.
@@ -51,7 +50,7 @@
     fontDir.enable = true;
     packages = with pkgs; [
       noto-fonts
-      noto-fonts-cjk
+      noto-fonts-cjk-sans
       noto-fonts-emoji
       liberation_ttf
       fira-code
@@ -90,22 +89,22 @@
     shell = pkgs.zsh;
   };
 
-  home-manager.users.ludovic = { pkgs, ... }: {
-    home.stateVersion = "24.05";
-    programs.git = {
-      enable = true;
-      userEmail = "lvanasse@luxaerobot.com";
-      userName = "Ludovic Vanasse";
-    };
-    programs.emacs = {
-      enable = true;
-      package = pkgs.emacs;
-    };
-    # home.file."Code" = {
-    #   text = "";
-    #   directory = true;
-    # };
-  };
+  # home-manager.users.ludovic = { pkgs, ... }: {
+  #   home.stateVersion = "24.05";
+  #   programs.git = {
+  #     enable = true;
+  #     userEmail = "lvanasse@luxaerobot.com";
+  #     userName = "Ludovic Vanasse";
+  #   };
+  #   programs.emacs = {
+  #     enable = true;
+  #     package = pkgs.emacs;
+  #   };
+  #   # home.file."Code" = {
+  #   #   text = "";
+  #   #   directory = true;
+  #   # };
+  # };
 
   programs.firefox.enable = true;
 
@@ -144,7 +143,6 @@
     arandr
     pavucontrol
     networkmanagerapplet
-    htop
     polkit
     nixpkgs-fmt
     flameshot
@@ -232,6 +230,6 @@
   # this value at the release version of the first install of this system.
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-  system.stateVersion = "24.05"; # Did you read the comment?
+  system.stateVersion = "24.11"; # Did you read the comment?
 
 }

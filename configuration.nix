@@ -144,6 +144,7 @@
     arandr
     pavucontrol
     networkmanagerapplet
+    htop
     polkit
     nixpkgs-fmt
     flameshot

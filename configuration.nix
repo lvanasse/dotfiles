@@ -30,8 +30,8 @@
 
   services.xserver = {
     enable = true;
-    layout = "us";
-    xkbVariant = "alt-intl";
+    xkb.layout = "us";
+    xkb.variant = "alt-intl";
     displayManager.gdm.enable = true;
     desktopManager.gnome.enable = true;
     windowManager.i3 = {
@@ -144,7 +144,6 @@
     arandr
     pavucontrol
     networkmanagerapplet
-    htop
     polkit
     nixpkgs-fmt
     flameshot
@@ -205,9 +204,7 @@
   # }
 
 
-  nix.extraOptions = ''
-    experimental-features = nix-command flakes
-  '';
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.

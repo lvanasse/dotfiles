@@ -17,6 +17,7 @@
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
             home-manager.users.ludovic = import ./home.nix;
+            home-manager.backupFileExtension = "backup";
         }
       ];
     };

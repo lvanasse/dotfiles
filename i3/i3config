@@ -180,7 +180,7 @@ bindsym $mod+Shift+Control+0 move container to workspace $workspace20
 
 #Assigning program to workspace
 
-assign [class="Pavucontrol"] $workspace10
+assign [class="pavucontrol"] $workspace10
 assign [class="discord"] $workspace11
 assign [class="Slack"] $workspace11
 #Assigning workspace to screen 

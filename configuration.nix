@@ -3,9 +3,6 @@
 # # TODO fix git to use lvanasse instead of random user
 
 { config, pkgs, ... }:
-let
-  sharedI3Config = ./i3/i3config;
-in
 {
   imports = [
     ./hardware-configuration.nix
@@ -15,8 +12,10 @@ in
   # Boot / System basics #
   ########################
   boot.loader.grub.enable = true;
-  boot.loader.grub.device = "/dev/sda";
+  boot.loader.grub.device = "nodev";
   boot.loader.grub.useOSProber = true;
+  boot.loader.grub.efiSupport = true;
+  boot.loader.efi.canTouchEfiVariables = true;
 
   networking.hostName = "pc";
   networking.networkmanager.enable = true;
@@ -28,36 +27,18 @@ in
 
   services.gnome.gnome-keyring.enable = true;
 
-  #########
-  # X.org #
-  #########
-  services.xserver.enable = true;
-  services.xserver.xkb.layout = "us";
-  services.xserver.xkb.variant = "alt-intl";
+  ###########
+  # Wayland #
+  ###########
 
-  # Display manager (GDM) + Gnome
-  services.xserver.displayManager.gdm.enable = true;
-  services.xserver.desktopManager.gnome.enable = true;
+  # Display manager (SDDM) + plasma	
+  services.displayManager.sddm.enable = true;
+  services.displayManager.sddm.wayland.enable = true;
+  services.desktopManager.plasma6.enable = true;
 
-  # i3 window manager
-  services.xserver.windowManager.i3 = {
-    enable = true;
-    extraPackages = with pkgs; [
-      dmenu
-      i3status
-      i3blocks
-      i3lock
-      gnome-terminal
-    ];
-    configFile = sharedI3Config;
-  };
+  programs.sway.enable = true;
 
-  # sway window manager
-  programs.sway = {
-    enable = true;
-    wrapperFeatures.gtk = true;
-  };
-
+  security.polkit.enable = true;
 
   ##########
   # Fonts #
@@ -83,11 +64,6 @@ in
   # Packages #
   ############
   environment.systemPackages = with pkgs; [
-    sway
-    grim # screenshot functionality
-    slurp # screenshot functionality
-    wl-clipboard # wl-copy and wl-paste for copy/paste from stdin / stdout
-    mako #
   ];
 
 
@@ -120,8 +96,6 @@ in
   ##################
   services.printing.enable = true;
   virtualisation.docker.enable = true;
-  virtualisation.virtualbox.guest.enable = true;
-  # virtualisation.virtualbox.guest.x11 = true;
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 

@@ -1,7 +1,3 @@
-# # TODO A way to store the gnome-terminal profile
-# # TODO fix zsh not showing git status -> it's source $ZSH/oh-my-zsh.sh that was not called
-# # TODO fix git to use lvanasse instead of random user
-
 { config, pkgs, ... }:
 {
   imports = [
@@ -26,6 +22,21 @@
   nixpkgs.config.allowUnfree = true;
 
   services.gnome.gnome-keyring.enable = true;
+
+  ###########
+  # Gaming  #
+  ###########
+
+  boot.initrd.kernelModules = [ "amdgpu" ];
+  
+  hardware.graphics = {
+    enable = true;
+    enable32Bit = true;
+  };
+
+  programs.steam.enable = true;
+  programs.steam.gamescopeSession.enable = true;
+  programs.gamemode.enable = true;
 
   ###########
   # Wayland #
@@ -64,6 +75,13 @@
   # Packages #
   ############
   environment.systemPackages = with pkgs; [
+    mangohud
+    protonup-qt
+    lutris
+    bottles
+    heroic
+    mesa
+    nh
   ];
 
 
@@ -85,7 +103,7 @@
   users.users.ludovic = {
     isNormalUser = true;
     description = "ludovic";
-    extraGroups = [ "networkmanager" "wheel" "docker" ];
+    extraGroups = [ "networkmanager" "wheel" "docker" "input" ];
     shell = pkgs.zsh;
     ignoreShellProgramCheck = true;
   };
@@ -99,6 +117,5 @@
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
-  # State version
   system.stateVersion = "24.11";
 }

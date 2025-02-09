@@ -1,22 +1,9 @@
+# # TODO A way to store the gnome-terminal profile
+# # TODO fix zsh not showing git status -> it's source $ZSH/oh-my-zsh.sh that was not called
+# # TODO fix git to use lvanasse instead of random user
+# # TODO Add sway config
+
 { config, pkgs, ... }:
-let
-  base00 = "#101218";
-  base01 = "#0E0E0E";
-  base02 = "#1A1D19";
-  base03 = "#A3A3A3";
-  base04 = "#C0C5CE";
-  base05 = "#d1d4e0";
-  base06 = "#C9CCDB";
-  base07 = "#ffffff";
-  base08 = "#FF0000";
-  base09 = "#f99170";
-  base0A = "#ffefcc";
-  base0B = "#a5ffe1";
-  base0C = "#97e0ff";
-  base0D = "#97bbf7";
-  base0E = "#c0b7f9";
-  base0F = "#fcc09e";
-in
 {
   home.username = "ludovic";
   home.homeDirectory = "/home/ludovic";
@@ -27,11 +14,14 @@ in
 
   programs.home-manager.enable = true;
 
+
+  ######################################
+  # Wayland user-level config
+  ######################################
   wayland.windowManager.sway = {
     enable = true;
     config = rec {
       modifier = "Mod4";
-      terminal = "kitty";
       input = {
         "*" = {
           xkb_layout = "us";
@@ -39,6 +29,10 @@ in
         };
       };
     };
+    extraConfig = "
+        include ~/.config/sway/outputs
+        include ~/.config/sway/workspaces
+      ";
   };
 
   ######################################
@@ -65,21 +59,32 @@ in
   programs.emacs = {
     enable = true;
     package = pkgs.emacs;
-    # If you want extra packages:
     extraPackages = epkgs: [
       epkgs.gruvbox-theme
     ];
+  };
+
+
+  programs.nh = {
+    enable = true;
+    clean.enable = true;
+    clean.extraArgs = "--keep-since 4d --keep 3";
+    flake = "/home/ludovic/Code/dotfiles";
   };
 
   ######################################
   # Personal user packages
   ######################################
   home.packages = with pkgs; [
+    qbittorrent
+    discord-canary
+    gamescope
+    gamemode
+    btop
+    nvtopPackages.full
     sway
-    grim # screenshot functionality
-    slurp # screenshot functionality
-    wl-clipboard # wl-copy and wl-paste for copy/paste from stdin / stdout
-    mako 
+    wl-clipboard
+    mako
     dmenu
     gnome-terminal
     firefox
@@ -129,7 +134,17 @@ in
     wdisplays
     swaybg
     swayidle
-    kitty
+    foot
+    nwg-displays
+    grim
+    slurp
+    openvpn3
+    openvpn
+    netdiscover
+    wezterm
+    alacritty
+    lshw
+    dmidecode
     (vscode-with-extensions.override {
       vscodeExtensions = with vscode-extensions; [
         bbenoist.nix

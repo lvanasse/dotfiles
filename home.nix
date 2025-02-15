@@ -64,7 +64,6 @@
     ];
   };
 
-
   programs.nh = {
     enable = true;
     clean.enable = true;
@@ -72,12 +71,20 @@
     flake = "/home/ludovic/Code/dotfiles";
   };
 
+
+
+  home.sessionPath = [
+    "/home/ludovic/.local/share/Steam/compatibilitytools.d/GE-Proton9-24"
+  ];
+
   ######################################
   # Personal user packages
   ######################################
   home.packages = with pkgs; [
+    p7zip
+    unzip
+    unrar
     qbittorrent
-    discord-canary
     gamescope
     gamemode
     btop
@@ -145,6 +152,7 @@
     alacritty
     lshw
     dmidecode
+    home-manager
     (vscode-with-extensions.override {
       vscodeExtensions = with vscode-extensions; [
         bbenoist.nix

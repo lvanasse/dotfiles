@@ -28,12 +28,24 @@
           xkb_variant = "intl";
         };
       };
+      terminal = "gnome-terminal";
+      menu = "bemenu-run -p \"\"";
+      bars = [ ];
     };
     extraConfig = "
         include ~/.config/sway/outputs
         include ~/.config/sway/workspaces
       ";
   };
+
+  programs.bemenu.enable = true;
+
+  # programs.waybar.enable = true;
+  # programs.waybar.settings = {
+  #   # mainBar = {
+  #   #   position = "bottom";
+  #   # };
+  # };
 
   ######################################
   # Shell & Git user-level config
@@ -71,16 +83,20 @@
     flake = "/home/ludovic/Code/dotfiles";
   };
 
-
-
-  home.sessionPath = [
-    "/home/ludovic/.local/share/Steam/compatibilitytools.d/GE-Proton9-24"
-  ];
-
   ######################################
   # Personal user packages
   ######################################
   home.packages = with pkgs; [
+    gnome-calculator
+    gparted
+    vlc 
+    wine
+    winetricks
+    mono
+    gnugrep
+    wget
+    zenity
+    grim
     p7zip
     unzip
     unrar
@@ -92,7 +108,7 @@
     sway
     wl-clipboard
     mako
-    dmenu
+    waybar
     gnome-terminal
     firefox
     slack
@@ -153,6 +169,9 @@
     lshw
     dmidecode
     home-manager
+    gnome-terminal
+    wofi
+    bemenu
     (vscode-with-extensions.override {
       vscodeExtensions = with vscode-extensions; [
         bbenoist.nix

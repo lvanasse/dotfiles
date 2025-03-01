@@ -88,6 +88,8 @@
   ######################################
   home.packages = with pkgs; [
     gnome-calculator
+    vesktop
+    jellyfin-media-player
     gparted
     vlc 
     wine

@@ -174,6 +174,7 @@
     gnome-terminal
     wofi
     bemenu
+    kdePackages.filelight
     (vscode-with-extensions.override {
       vscodeExtensions = with vscode-extensions; [
         bbenoist.nix

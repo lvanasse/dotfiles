@@ -51,6 +51,10 @@
 
   security.polkit.enable = true;
 
+  environment.sessionVariables = rec {
+    POWERDEVIL_NO_DDCUTIL = "1";
+  };
+
   ##########
   # Fonts #
   ##########
@@ -66,8 +70,7 @@
       mplus-outline-fonts.githubRelease
       dina-font
       proggyfonts
-      nerd-fonts.fira-code
-      nerd-fonts.droid-sans-mono
+      (nerdfonts.override { fonts = [ "FiraCode" "DroidSansMono" ]; })
     ];
   };
 

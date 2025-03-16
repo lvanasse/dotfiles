@@ -2,7 +2,6 @@
 # # TODO fix zsh not showing git status -> it's source $ZSH/oh-my-zsh.sh that was not called
 # # TODO fix git to use lvanasse instead of random user
 # # TODO Add sway config
-
 { config, pkgs, ... }:
 {
   home.username = "ludovic";
@@ -13,7 +12,7 @@
   home.stateVersion = "24.11";
 
   programs.home-manager.enable = true;
-
+  nixpkgs.config.allowUnfree = true;
 
   ######################################
   # Wayland user-level config
@@ -83,6 +82,9 @@
     flake = "/home/ludovic/Code/dotfiles";
   };
 
+  # environment.variables.BROWSER = "${pkgs.firefox}/bin/firefox";
+
+
   ######################################
   # Personal user packages
   ######################################
@@ -91,7 +93,7 @@
     vesktop
     jellyfin-media-player
     gparted
-    vlc 
+    vlc
     wine
     winetricks
     mono
@@ -172,9 +174,18 @@
     dmidecode
     home-manager
     gnome-terminal
+    ungoogled-chromium
     wofi
     bemenu
+    calibre
+    docker
     kdePackages.filelight
+    kdePackages.spectacle
+    kdePackages.polkit-kde-agent-1
+    kdePackages.xwaylandvideobridge
+    kdePackages.xdg-desktop-portal-kde
+    kdePackages.sddm-kcm
+    retroarch
     (vscode-with-extensions.override {
       vscodeExtensions = with vscode-extensions; [
         bbenoist.nix

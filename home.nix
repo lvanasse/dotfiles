@@ -82,9 +82,6 @@
     flake = "/home/ludovic/Code/dotfiles";
   };
 
-  # environment.variables.BROWSER = "${pkgs.firefox}/bin/firefox";
-
-
   ######################################
   # Personal user packages
   ######################################
@@ -93,7 +90,7 @@
     vesktop
     jellyfin-media-player
     gparted
-    vlc
+    vlc 
     wine
     winetricks
     mono

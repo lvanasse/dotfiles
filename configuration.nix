@@ -66,7 +66,8 @@
       mplus-outline-fonts.githubRelease
       dina-font
       proggyfonts
-      (nerdfonts.override { fonts = [ "FiraCode" "DroidSansMono" ]; })
+      nerd-fonts.fira-code
+      nerd-fonts.droid-sans-mono
     ];
   };
 

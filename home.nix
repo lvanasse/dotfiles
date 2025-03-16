@@ -6,9 +6,6 @@
 {
   home.username = "ludovic";
   home.homeDirectory = "/home/ludovic";
-
-  # We need this line for older versions of HM or if you want an explicit
-  # declaration of state version. For 24.11 usage:
   home.stateVersion = "24.11";
 
   programs.home-manager.enable = true;

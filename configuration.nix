@@ -1,7 +1,7 @@
 { config, pkgs, ... }:
 {
   imports = [
-    ./etc/nixos/hardware-configuration.nix
+    /etc/nixos/hardware-configuration.nix
   ];
 
   ########################

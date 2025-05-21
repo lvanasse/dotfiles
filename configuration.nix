@@ -23,12 +23,27 @@
 
   services.gnome.gnome-keyring.enable = true;
 
+  time.hardwareClockInLocalTime = true;
+
+  ############
+  # Network  #
+  ############
+
+  services.openvpn.servers = {
+    lux = {
+      config = ''
+        config /home/ludovic/Downloads/lux_mtl-connect-config.ovpn
+      '';
+      autoStart = false;
+    };
+  };
+
   ###########
   # Gaming  #
   ###########
 
   boot.initrd.kernelModules = [ "amdgpu" ];
-  
+
   hardware.graphics = {
     enable = true;
     enable32Bit = true;
@@ -42,7 +57,7 @@
   # Wayland #
   ###########
 
-  # Display manager (SDDM) + plasma	
+  # Display manager (SDDM) + plasma
   services.displayManager.sddm.enable = true;
   services.displayManager.sddm.wayland.enable = true;
   services.desktopManager.plasma6.enable = true;
@@ -70,10 +85,21 @@
       mplus-outline-fonts.githubRelease
       dina-font
       proggyfonts
-      (nerdfonts.override { fonts = [ "FiraCode" "DroidSansMono" ]; })
+      # (nerdfonts.override {
+      #   fonts = [
+      #     "FiraCode"
+      #     "DroidSansMono"
+      #   ];
+      # })
+      nerd-fonts.fira-code
+      nerd-fonts.droid-sans-mono
     ];
   };
 
+  programs.firefox = {
+    enable = true;
+    package = pkgs.firefox-bin;
+  };
 
   ############
   # Packages #
@@ -86,8 +112,13 @@
     heroic
     mesa
     nh
+    kdePackages.sddm-kcm
+    nixfmt-rfc-style
   ];
 
+  nixpkgs.config.permittedInsecurePackages = [
+    "electron-33.4.11"
+  ];
 
   ########
   # Sound #
@@ -107,11 +138,15 @@
   users.users.ludovic = {
     isNormalUser = true;
     description = "ludovic";
-    extraGroups = [ "networkmanager" "wheel" "docker" "input" ];
+    extraGroups = [
+      "networkmanager"
+      "wheel"
+      "docker"
+      "input"
+    ];
     shell = pkgs.zsh;
     ignoreShellProgramCheck = true;
   };
-
 
   ##################
   # System Services#
@@ -119,7 +154,10 @@
   services.printing.enable = true;
   virtualisation.docker.enable = true;
 
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nix.settings.experimental-features = [
+    "nix-command"
+    "flakes"
+  ];
 
   system.stateVersion = "24.11";
 }

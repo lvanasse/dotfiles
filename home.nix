@@ -36,13 +36,6 @@
 
   programs.bemenu.enable = true;
 
-  # programs.waybar.enable = true;
-  # programs.waybar.settings = {
-  #   # mainBar = {
-  #   #   position = "bottom";
-  #   # };
-  # };
-
   ######################################
   # Shell & Git user-level config
   ######################################
@@ -51,7 +44,11 @@
     oh-my-zsh = {
       enable = true;
       theme = "minimal";
-      plugins = [ "git" "sudo" "docker" ];
+      plugins = [
+        "git"
+        "sudo"
+        "docker"
+      ];
     };
   };
 
@@ -80,6 +77,10 @@
   };
 
   ######################################
+  # Programs config
+  ######################################
+
+  ######################################
   # Personal user packages
   ######################################
   home.packages = with pkgs; [
@@ -87,7 +88,7 @@
     vesktop
     jellyfin-media-player
     gparted
-    vlc 
+    vlc
     wine
     winetricks
     mono
@@ -105,7 +106,7 @@
     nvtopPackages.full
     sway
     wl-clipboard
-    mako
+    # mako
     waybar
     gnome-terminal
     firefox
@@ -116,7 +117,6 @@
     vim
     wget
     tree
-    firefox
     git
     zsh
     oh-my-zsh
@@ -179,7 +179,11 @@
     kdePackages.xwaylandvideobridge
     kdePackages.xdg-desktop-portal-kde
     kdePackages.sddm-kcm
+    libreoffice
+    openvpn3
+    docker
     retroarch
+    element-desktop
     (vscode-with-extensions.override {
       vscodeExtensions = with vscode-extensions; [
         bbenoist.nix
@@ -198,6 +202,5 @@
     })
 
   ];
-
 
 }

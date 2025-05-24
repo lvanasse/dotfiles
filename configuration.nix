@@ -90,15 +90,11 @@
     ];
   };
 
-  programs.firefox = {
-    enable = true;
-    package = pkgs.firefox-bin;
-  };
-
   ############
   # Packages #
   ############
   environment.systemPackages = with pkgs; [
+    firefox
     mangohud
     protonup-qt
     lutris

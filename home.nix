@@ -109,7 +109,7 @@
     # mako
     waybar
     gnome-terminal
-    firefox
+    # firefox
     slack
     discord
     spotify

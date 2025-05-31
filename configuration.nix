@@ -25,6 +25,8 @@
 
   time.hardwareClockInLocalTime = true;
 
+  nix.settings.lazy-trees = true;
+
   ############
   # Network  #
   ############

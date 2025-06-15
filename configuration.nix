@@ -153,6 +153,11 @@
     gcc-arm-embedded
   ];
 
+  programs.vim = {
+    enable = true;
+    defaultEditor = true; # Exports EDITOR="vim" globally
+  };
+
   nixpkgs.config.permittedInsecurePackages = [
     "electron-33.4.11"
   ];

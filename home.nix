@@ -9,7 +9,11 @@
   home.stateVersion = "24.11";
 
   programs.home-manager.enable = true;
-  nixpkgs.config.allowUnfree = true;
+
+
+  home.sessionVariables = {
+    NH_FLAKE = "${config.home.homeDirectory}/Code/dotfiles";
+  };
 
   ######################################
   # Wayland user-level config

@@ -205,9 +205,9 @@
         vadimcn.vscode-lldb
         streetsidesoftware.code-spell-checker
         foxundermoon.shell-format
+        vscode-icons-team.vscode-icons
       ];
     })
-
   ];
 
 }

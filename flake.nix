@@ -8,7 +8,7 @@
   };
 
   outputs =
-    {
+    inputs@{
       self,
       nixpkgs,
       home-manager,
@@ -41,18 +41,17 @@
         "${username}@${hostname}" = home-manager.lib.homeManagerConfiguration {
           inherit system;
           pkgs = import nixpkgs { inherit system; };
+
+          username = username;
+          homeDirectory = "/home/${username}";
+          stateVersion = "25.05";
+
           modules = [
             ./home.nix
-            {
-              home.username = username;
-              home.homeDirectory = "/home/${username}";
-              home.stateVersion = "24.11"; # Adjust to your Home Manager version
-            }
+
             determinate.nixosModules.default
           ];
         };
       };
     };
 }
-
-

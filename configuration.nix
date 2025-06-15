@@ -27,6 +27,16 @@
 
   nix.settings.lazy-trees = true;
 
+  ###############
+  # Fan control #
+  ###############
+
+  boot.kernelParams = [ "acpi_enforce_resources=lax" ];
+  boot.kernelModules = [
+    "coretemp"
+    "nct6775"
+  ];
+
   ############
   # Network  #
   ############

@@ -106,6 +106,8 @@
   # Packages #
   ############
   environment.systemPackages = with pkgs; [
+    fanctl
+    fan2go
     firefox
     mangohud
     protonup-qt
@@ -116,6 +118,39 @@
     nh
     kdePackages.sddm-kcm
     nixfmt-rfc-style
+    zlib
+    kconfig-frontends
+    python3Packages.kconfiglib # For a nicer menuconfig with NuttX
+    pyenv
+    # core build chain
+    bison
+    flex
+    gettext
+    texinfo
+    ncurses
+    vim
+    git
+    gperf
+    automake
+    autoconf
+    libtool
+    pkg-config
+    # libs & utils
+    gmp
+    libmpc
+    mpfr
+    isl
+    binutils
+    elfutils
+    expat
+    genromfs
+    picocom
+    ubootTools
+    utillinux
+    # NuttX‑specific bits
+    kconfig-frontends
+    python3Packages.kconfiglib
+    gcc-arm-embedded
   ];
 
   nixpkgs.config.permittedInsecurePackages = [

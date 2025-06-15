@@ -15,9 +15,10 @@
     NH_FLAKE = "${config.home.homeDirectory}/Code/dotfiles";
   };
 
-  ######################################
-  # Wayland user-level config
-  ######################################
+
+  #############################
+  # Wayland user-level config #
+  #############################
   wayland.windowManager.sway = {
     enable = true;
     config = rec {
@@ -40,9 +41,9 @@
 
   programs.bemenu.enable = true;
 
-  ######################################
-  # Shell & Git user-level config
-  ######################################
+  #################################
+  # Shell & Git user-level config #
+  #################################
   programs.zsh = {
     enable = true;
     oh-my-zsh = {
@@ -62,9 +63,9 @@
     userEmail = "lvanasse@luxaerobot.com";
   };
 
-  ######################################
-  # Emacs user-level config
-  ######################################
+  ###########################
+  # Emacs user-level config #
+  ###########################
   programs.emacs = {
     enable = true;
     package = pkgs.emacs;
@@ -80,13 +81,13 @@
     flake = "/home/ludovic/Code/dotfiles";
   };
 
-  ######################################
-  # Programs config
-  ######################################
+  ###################
+  # Programs config #
+  ###################
 
-  ######################################
-  # Personal user packages
-  ######################################
+  ##########################
+  # Personal user packages #
+  ##########################
   home.packages = with pkgs; [
     gnome-calculator
     vesktop

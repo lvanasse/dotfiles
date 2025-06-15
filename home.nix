@@ -89,6 +89,10 @@
   # Personal user packages #
   ##########################
   home.packages = with pkgs; [
+    lm_sensors
+    fanctl
+    gcc-arm-embedded
+    genromfs
     gnome-calculator
     vesktop
     jellyfin-media-player

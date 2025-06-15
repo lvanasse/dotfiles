@@ -115,10 +115,8 @@
     nvtopPackages.full
     sway
     wl-clipboard
-    # mako
     waybar
     gnome-terminal
-    # firefox
     slack
     discord
     spotify

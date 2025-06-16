@@ -117,8 +117,8 @@ set $workspace6 "6"
 set $workspace7 "7"
 set $workspace8 "8" 
 set $workspace9 "9" 
-set $workspace10 "10"
-set $workspace11 "11"
+set $workspace10 "10: Music"
+set $workspace11 "11: Discord"
 set $workspace12 "12"
 set $workspace13 "13"
 set $workspace14 "14"
@@ -181,34 +181,18 @@ bindsym $mod+Shift+Control+0 move container to workspace $workspace20
 #Assigning program to workspace
 
 assign [class="Pavucontrol"] $workspace10
-assign [class="Thunderbird"] $workspace9
-assign [class="Blockify"] $workspace10
 assign [class="discord"] $workspace11
 
 #Assigning workspace to screen 
 workspace $workspace1 output DVI-D-0
 
 #Language change keybind 
-#exec --no-startup-id "setxkbmap -model pc105 -layout us,ca -option grp:alt_shift_toggle"
 exec --no-startup-id "setxkbmap ca multix"
 #Starting program
 
-exec xinput set-prop "DELL08AF:00 06CB:76AF Touchpad" "libinput Tapping Enabled" 1
-exec ~/.screenlayout/screenleft.sh
 exec pavucontrol
 exec discord
-#exec spotify
-#exec blockify-ui
-#exec rhythmbox
-#exec_always compton  
 exec_always feh --bg-scale /home/ludovic/.config/i3/wallpaper/dlFRxgU.jpg
-#exec --no-startup-id "setxkbmap -model pc105 -layout us,ca -option grp:alt_shift_toggle"
-#exec_always --no-startup-id $HOME/.config/polybar/launch.sh
-#exec thunderbird
-exec slack
-# Inner gaps setting
-gaps inner 10 
-gaps outer 10 
 # Start the network manager for wifi.
 exec --no-startup-id nm-applet
 # Setup the screenlayout

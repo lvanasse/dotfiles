@@ -234,8 +234,10 @@ exec_always feh --bg-scale /home/ludovic/.config/i3/wallpaper/dlFRxgU.jpg
 exec thunderbird
 exec slack
 # Inner gaps setting
-#gaps inner 10 
-#gaps outer 10 
+gaps inner 10 
+gaps outer 10 
+# fix the black bar in i3-gaps
+for_window [class=".*"] border pixel 0
 # Start the network manager for wifi.
 exec --no-startup-id nm-applet
 # Setup the screenlayout

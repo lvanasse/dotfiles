@@ -52,6 +52,8 @@
     };
   };
 
+  networking.enableIPv6 = false;
+
   ###########
   # Gaming  #
   ###########
@@ -62,6 +64,11 @@
     enable = true;
     enable32Bit = true;
   };
+
+  hardware.graphics.extraPackages = with pkgs; [
+    mesa
+    libva-utils
+  ];
 
   programs.steam.enable = true;
   programs.steam.gamescopeSession.enable = true;
@@ -109,8 +116,7 @@
   ############
   environment.systemPackages = with pkgs; [
     fanctl
-    fan2go
-    firefox
+    firefox-bin
     mangohud
     protonup-qt
     lutris

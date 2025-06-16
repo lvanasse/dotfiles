@@ -12,4 +12,4 @@ UUID=A239-9088  /boot/efi       vfat    umask=0077      0       1
 /swapfile                                 none            swap    sw              0       0
 
 # SMB Share
-//nas.local/Storage /media/ludovic/Storage cifs uid=ludovic,vers=1.0,username=ludovic,password=<pw>        0       0
+//nas.local/Storage /media/ludovic/Storage cifs uid=ludovic,vers=1.0,username=ludovic,password=<pwd>        0       0

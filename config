@@ -113,8 +113,8 @@ set $workspace4 "4"
 set $workspace5 "5"
 set $workspace6 "6"
 set $workspace7 "7"
-set $workspace8 "8: IM" 
-set $workspace9 "9: Mail" 
+set $workspace8 "8" 
+set $workspace9 "9" 
 set $workspace10 "10: Music"
 set $workspace11 "11: Discord"
 set $workspace12 "12"
@@ -194,25 +194,13 @@ exec --no-startup-id "setxkbmap -model pc105 -layout us,ca -option grp:alt_shift
 
 #Starting program
 
-exec ~/.screenlayout/screenleft.sh
 exec pavucontrol
 exec discord
-#exec spotify
-#exec blockify-ui
-#exec rhythmbox
 #exec_always compton  
 exec_always feh --bg-scale /home/ludovic/.config/i3/wallpaper/dlFRxgU.jpg
-#exec --no-startup-id "setxkbmap -model pc105 -layout us,ca -option grp:alt_shift_toggle"
-#exec_always --no-startup-id $HOME/.config/polybar/launch.sh
-#exec thunderbird
-#exec slack
-# Inner gaps setting
-gaps inner 10 
-gaps outer 10 
 # Start the network manager for wifi.
 exec --no-startup-id nm-applet
 # Setup the screenlayout
-exec /home/ludovic/.screenlayout/default.sh
 # Start xcompmgr to fix screen artecfact
 exec xcompmgr
 exec slimbookbattery

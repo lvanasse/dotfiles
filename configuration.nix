@@ -37,6 +37,8 @@
     "nct6775"
   ];
 
+  programs.coolercontrol.enable = true;
+
   ############
   # Network  #
   ############
@@ -122,6 +124,10 @@
     kconfig-frontends
     python3Packages.kconfiglib # For a nicer menuconfig with NuttX
     pyenv
+    coolercontrol.coolercontrold
+    coolercontrol.coolercontrol-gui
+    coolercontrol.coolercontrol-ui-data
+    coolercontrol.coolercontrol-liqctld
     # core build chain
     bison
     flex

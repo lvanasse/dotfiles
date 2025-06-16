@@ -105,6 +105,10 @@ bindsym XF86AudioMute exec --no-startup-id pactl set-sink-mute 0 toggle # mute s
 bindsym XF86MonBrightnessUp exec xbacklight -inc 20 # increase screen brightness
 bindsym XF86MonBrightnessDown exec xbacklight -dec 20 # decrease screen brightness
 
+# Sreen brightness controls
+bindsym XF86MonBrightnessUp exec xbacklight -inc 20 # increase screen brightness
+bindsym XF86MonBrightnessDown exec xbacklight -dec 20 # decrease screen brightness
+
 # alt-tab to switch back to previous place you were.
 bindsym $mod+Tab workspace back_and_forth
 
@@ -241,6 +245,7 @@ exec --no-startup-id "setxkbmap -model pc105 -layout us,ca -option grp:alt_shift
 exec --no-startup-id "setxkbmap us intl"
 #Starting program
 
+exec ~/.screenlayout/screenleft.sh
 exec pavucontrol
 #exec discord
 #exec spotify
@@ -253,13 +258,11 @@ exec --no-startup-id "setxkbmap -model pc105 -layout us,ca -option grp:alt_shift
 #exec_always --no-startup-id $HOME/.config/polybar/launch.sh
 exec thunderbird
 exec slack
+# Inner gaps setting
+gaps inner 10 
+gaps outer 10 
 # Start the network manager for wifi.
 exec --no-startup-id nm-applet
-# Setup the screenlayout
-exec /home/ludovic/.screenlayout/default.sh
-# Start xcompmgr to fix screen artecfact
-exec xcompmgr
-exec --no-startup-id nitrogen --restore
 
 
 # reload the configuration file

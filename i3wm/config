@@ -105,33 +105,8 @@ bindsym XF86AudioMute exec --no-startup-id pactl set-sink-mute 0 toggle # mute s
 bindsym XF86MonBrightnessUp exec xbacklight -inc 20 # increase screen brightness
 bindsym XF86MonBrightnessDown exec xbacklight -dec 20 # decrease screen brightness
 
-# Sreen brightness controls
-bindsym XF86MonBrightnessUp exec xbacklight -inc 20 # increase screen brightness
-bindsym XF86MonBrightnessDown exec xbacklight -dec 20 # decrease screen brightness
-
 # alt-tab to switch back to previous place you were.
 bindsym $mod+Tab workspace back_and_forth
-
-set $workspace1 "1"
-set $workspace2 "2"
-set $workspace3 "3"
-set $workspace4 "4"
-set $workspace5 "5"
-set $workspace6 "6"
-set $workspace7 "7"
-set $workspace8 "8" 
-set $workspace9 "9" 
-set $workspace10 "10: Music"
-set $workspace11 "11: IM"
-set $workspace12 "12"
-set $workspace13 "13"
-set $workspace14 "14"
-set $workspace15 "15"
-set $workspace16 "16"
-set $workspace17 "17"
-set $workspace18 "18"
-set $workspace19 "19"
-set $workspace20 "20"
 
 set $workspace1 "1"
 set $workspace2 "2"

@@ -187,7 +187,7 @@ assign [class="discord"] $workspace11
 workspace $workspace1 output DVI-D-0
 
 #Language change keybind 
-exec --no-startup-id "setxkbmap ca multix"
+exec --no-startup-id "setxkbmap us intl"
 #Starting program
 
 exec pavucontrol
@@ -269,7 +269,7 @@ set $base0F #fcc09e
 # finds out, if available)
 bar {
         #status_command i3status
-        status_command i3blocks -vv -c ~/.config/i3/i3blocks.conf
+        status_command i3blocks -c ~/.config/i3/i3blocks.conf
         font pango: System San Francisco Display, FontAwesome 14
         position bottom
         tray_output HDMI-A-0

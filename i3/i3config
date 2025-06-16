@@ -273,7 +273,7 @@ set $base0F #fcc09e
 # finds out, if available)
 bar {
         #status_command i3status
-        status_command i3blocks -vv -c ~/.config/i3/i3blocks.conf
+        status_command i3blocks -vv -c ~/Code/dotfiles/i3/i3blocks.conf
         font pango: System San Francisco Display, FontAwesome 14
         position bottom
         tray_output HDMI-A-0

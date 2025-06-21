@@ -2,19 +2,23 @@
 # # TODO fix zsh not showing git status -> it's source $ZSH/oh-my-zsh.sh that was not called
 # # TODO fix git to use lvanasse instead of random user
 # # TODO Add sway config
-{ config, pkgs, ... }:
 {
+  config,
+  pkgs,
+  inputs,
+  ...
+}:
+{
+
+  nixpkgs.config.allowUnfree = true;
+
   home.username = "ludovic";
   home.homeDirectory = "/home/ludovic";
-  home.stateVersion = "24.11";
-
-  programs.home-manager.enable = true;
-
+  home.stateVersion = "25.05";
 
   home.sessionVariables = {
     NH_FLAKE = "${config.home.homeDirectory}/Code/dotfiles";
   };
-
 
   #############################
   # Wayland user-level config #
@@ -78,17 +82,26 @@
     enable = true;
     clean.enable = true;
     clean.extraArgs = "--keep-since 4d --keep 3";
-    flake = "/home/ludovic/Code/dotfiles";
+    flake = "${config.home.homeDirectory}/Code/dotfiles";
   };
 
   ###################
   # Programs config #
   ###################
 
+  programs.plasma = {
+    enable = true;
+    workspace = {
+      theme = "Ant-Dark";
+      wallpaper = "${config.home.homeDirectory}/Code/dotfiles/wallpapers/1458678242783.jpg";
+    };
+  };
+
   ##########################
   # Personal user packages #
   ##########################
   home.packages = with pkgs; [
+    htop
     lm_sensors
     fanctl
     gcc-arm-embedded
@@ -186,7 +199,7 @@
     kdePackages.xwaylandvideobridge
     kdePackages.xdg-desktop-portal-kde
     kdePackages.sddm-kcm
-    libreoffice
+    onlyoffice-desktopeditors
     openvpn3
     docker
     retroarch

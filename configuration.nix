@@ -46,11 +46,13 @@
   services.openvpn.servers = {
     lux = {
       config = ''
-        config /home/ludovic/Downloads/lux_mtl-connect-config.ovpn
+        config /home/ludovic/Downloads/lux_mtl-config_most-clients.ovpn
       '';
       autoStart = false;
     };
   };
+
+  services.tailscale.enable = true;
 
   networking.enableIPv6 = false;
 
@@ -115,6 +117,7 @@
   # Packages #
   ############
   environment.systemPackages = with pkgs; [
+    tailscale
     fanctl
     firefox-bin
     mangohud

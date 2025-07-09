@@ -1,4 +1,4 @@
-{ inputs, hostname, ... }:
+{ inputs, hostname, username, overlays, ... }:
 {
   imports = [
     ./hardware-configuration.nix

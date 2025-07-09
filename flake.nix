@@ -32,11 +32,10 @@
         });
       };
 
-      username = "ludovic";
-
       mkHost =
         {
           hostname,
+          username ? "ludovic",
           system ? "x86_64-linux",
           overlays ? [ ],
         }:
@@ -50,15 +49,18 @@
                 nixpkgs.overlays = overlays;
               }
             )
-            ./host/${hostname}/${hostname}.nix
+            ./hosts/${hostname}/${hostname}.nix
             determinate.nixosModules.default
             home-manager.nixosModules.home-manager
-            plasma-manager.homeManagerModules.plasma-manager
             (
               { pkgs, ... }:
               {
                 home-manager.useUserPackages = true;
+                home-manager.extraSpecialArgs = { inherit username hostname inputs; };
                 home-manager.users.${username} = import ./home/default.nix;
+                home-manager.sharedModules = [
+                  plasma-manager.homeManagerModules.plasma-manager
+                ];
               }
             )
           ];
@@ -68,7 +70,7 @@
       nixosConfigurations = {
         pc = mkHost {
           hostname = "pc";
-          overlays = [ self.overlays.qbittorrent510 ];
+          overlays = [ qbittorrent510 ];
         };
 
         laptop = mkHost {
@@ -77,8 +79,8 @@
       };
 
       homeConfigurations = {
-        "${username}@pc" = self.nixosConfigurations.pc.config.home-manager.users.${username};
-        "${username}@laptop" = self.nixosConfigurations.laptop.config.home-manager.users.${username};
+        "ludovic@pc" = self.nixosConfigurations.pc.config.home-manager.users.ludovic;
+        "ludovic@laptop" = self.nixosConfigurations.laptop.config.home-manager.users.ludovic;
       };
     };
 

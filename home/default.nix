@@ -43,11 +43,12 @@
       ";
   };
 
+  ###################
+  # Programs config #
+  ###################
+
   programs.bemenu.enable = true;
 
-  #################################
-  # Shell & Git user-level config #
-  #################################
   programs.zsh = {
     enable = true;
     oh-my-zsh = {
@@ -67,9 +68,6 @@
     userEmail = "lvanasse@luxaerobot.com";
   };
 
-  ###########################
-  # Emacs user-level config #
-  ###########################
   programs.emacs = {
     enable = true;
     package = pkgs.emacs;
@@ -85,15 +83,26 @@
     flake = "${config.home.homeDirectory}/Code/dotfiles";
   };
 
-  ###################
-  # Programs config #
-  ###################
-
   programs.plasma = {
     enable = true;
     workspace = {
       theme = "Ant-Dark";
       wallpaper = "${config.home.homeDirectory}/Code/dotfiles/wallpapers/1458678242783.jpg";
+    };
+    powerdevil = {
+      AC = {
+        autoSuspend.action = "nothing";
+        autoSuspend.idleTimeout = null;
+        whenSleepingEnter = "standby";
+
+        dimDisplay.enable = false;
+        turnOffDisplay.idleTimeout = 600;
+        turnOffDisplay.idleTimeoutWhenLocked = "whenLockedAndUnlocked";
+      };
+    };
+    kscreenlocker = {
+      autoLock = true;
+      timeout = 5;
     };
   };
 
@@ -101,7 +110,9 @@
   # Personal user packages #
   ##########################
   home.packages = with pkgs; [
+    netcat-gnu
     htop
+    firefox
     lm_sensors
     fanctl
     gcc-arm-embedded
@@ -179,8 +190,6 @@
     nwg-displays
     grim
     slurp
-    openvpn3
-    openvpn
     netdiscover
     wezterm
     alacritty
@@ -193,6 +202,8 @@
     bemenu
     calibre
     docker
+    protonplus
+    popsicle
     kdePackages.filelight
     kdePackages.spectacle
     kdePackages.polkit-kde-agent-1
@@ -201,9 +212,18 @@
     kdePackages.sddm-kcm
     onlyoffice-desktopeditors
     openvpn3
-    docker
-    retroarch
-    element-desktop
+    xemu
+    pcsx2
+    (retroarch.withCores (
+      cores: with cores; [
+        snes9x # Super NES
+        mupen64plus # Nintendo 64
+        genesis-plus-gx # Mega Drive / SMS / GG
+        pcsx2 # PlayStation 2
+        dolphin # GameCube / Wii
+      ]
+    ))
+    retroarch-assets
     (vscode-with-extensions.override {
       vscodeExtensions = with vscode-extensions; [
         bbenoist.nix

@@ -27,6 +27,14 @@
 
   nix.settings.lazy-trees = true;
 
+  nix.gc = {
+    automatic = true; # enable periodic GC
+    dates = "weekly"; # run once per week
+    options = "--delete-generations +5";
+  };
+
+  nix.settings.auto-optimise-store = true;
+
   ###############
   # Fan control #
   ###############
@@ -52,9 +60,33 @@
     };
   };
 
-  services.tailscale.enable = true;
+  services.tailscale.enable = false;
 
   networking.enableIPv6 = false;
+
+  networking.useNetworkd = true;
+  networking.interfaces.enp5s0.useDHCP = true;
+
+  # Specifically for MAM private tracker
+  networking.firewall = {
+    enable = true;
+    allowedTCPPorts = [ 59793 ];
+  };
+
+  # Fix DNS latency issues
+  services.resolved = {
+    enable = true;
+    dnssec = "false";
+    fallbackDns = [
+      "1.1.1.1"
+      "9.9.9.9"
+    ];
+    extraConfig = ''
+      Cache=no-negative                  # avoid long NXDOMAIN waits
+      TrustAnchor=false                  # strips the “trust-ad” bit
+    '';
+  };
+  networking.networkmanager.dns = "systemd-resolved";
 
   ###########
   # Gaming  #
@@ -75,6 +107,18 @@
   programs.steam.enable = true;
   programs.steam.gamescopeSession.enable = true;
   programs.gamemode.enable = true;
+
+  # Torrent
+  systemd.user.services.qbittorrent-tray = {
+    description = "qBittorrent (GUI, tray only)";
+    wantedBy = [ "graphical-session.target" ];
+    after = [ "graphical-session.target" ];
+
+    serviceConfig = {
+      ExecStart = "${pkgs.qbittorrent}/bin/qbittorrent --no-splash";
+      Restart = "on-abort";
+    };
+  };
 
   ###########
   # Wayland #
@@ -119,7 +163,6 @@
   environment.systemPackages = with pkgs; [
     tailscale
     fanctl
-    firefox-bin
     mangohud
     protonup-qt
     lutris
@@ -216,5 +259,5 @@
     "flakes"
   ];
 
-  system.stateVersion = "24.11";
+  system.stateVersion = "25.05";
 }

@@ -145,7 +145,6 @@
     discord
     spotify
     bitwarden-desktop
-    vim
     wget
     tree
     git
@@ -202,7 +201,6 @@
     bemenu
     calibre
     docker
-    protonplus
     popsicle
     kdePackages.filelight
     kdePackages.spectacle
@@ -212,6 +210,37 @@
     kdePackages.sddm-kcm
     onlyoffice-desktopeditors
     openvpn3
+
+    bison
+    flex
+    gettext
+    texinfo
+    ncurses
+    git
+    gperf
+    automake
+    autoconf
+    libtool
+    pkg-config
+    usbutils
+    bison
+    flex
+    gettext
+    texinfo
+    ncurses
+    git
+    gperf
+    automake
+    autoconf
+    libtool
+    pkg-config
+    tailscale
+    nixfmt-rfc-style
+    zlib
+    gcc-arm-embedded
+    kconfig-frontends
+    python3Packages.kconfiglib # For a nicer menuconfig with NuttX
+    pyenv
     xemu
     pcsx2
     (retroarch.withCores (

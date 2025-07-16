@@ -11,6 +11,16 @@
       url = "github:nix-community/plasma-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nix-flatpak.url = "github:gmodena/nix-flatpak/?ref=latest";
+    nix-ld = {
+      url = "github:Mic92/nix-ld";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    stylix = {
+      url = "github:danth/stylix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
   };
   outputs =
     inputs@{
@@ -19,6 +29,9 @@
       home-manager,
       determinate,
       plasma-manager,
+      nix-flatpak,
+      nix-ld,
+      stylix,
       ...
     }:
     let
@@ -52,12 +65,18 @@
             ./hosts/${hostname}/${hostname}.nix
             determinate.nixosModules.default
             home-manager.nixosModules.home-manager
+            nix-flatpak.nixosModules.nix-flatpak
+            nix-ld.nixosModules.nix-ld
+            stylix.nixosModules.stylix
             (
               { pkgs, ... }:
               {
                 home-manager.useUserPackages = true;
                 home-manager.extraSpecialArgs = { inherit username hostname inputs; };
-                home-manager.users.${username} = import ./home/default.nix;
+                home-manager.users.${username}.imports = [
+                  ./home/default.nix
+                  ./home/${hostname}.nix
+                ];
                 home-manager.sharedModules = [
                   plasma-manager.homeManagerModules.plasma-manager
                 ];
@@ -83,82 +102,4 @@
         "ludovic@laptop" = self.nixosConfigurations.laptop.config.home-manager.users.ludovic;
       };
     };
-
-  # outputs =
-  #   inputs@{
-  #     self,
-  #     nixpkgs,
-  #     home-manager,
-  #     determinate,
-  #     plasma-manager,
-  #     ...
-  #   }:
-  #   let
-  #     system = "x86_64-linux";
-  #     username = "ludovic";
-  #     hostname = "pc";
-
-  #     qbittorrent510 = final: prev: {
-  #       qbittorrent = prev.qbittorrent.overrideAttrs (_: {
-  #         version = "5.1.0";
-  #         src = prev.fetchurl {
-  #           url = "https://github.com/qbittorrent/qBittorrent/archive/refs/tags/release-5.1.0.tar.gz";
-  #           sha256 = "sha256-rFTNizxgNc/NaEvlr9DszIxfu8MAiptvm6QvbvkRBa8=";
-  #         };
-  #       });
-  #     };
-  #   in
-  #   {
-  #     overlays.default = qbittorrent510;
-
-  #     nixosConfigurations.${hostname} = nixpkgs.lib.nixosSystem {
-  #       inherit system;
-  #       specialArgs = { inherit inputs username hostname; };
-
-  #       modules = [
-  #         ./configuration.nix
-  #         determinate.nixosModules.default
-
-  #         (
-  #           { config, ... }:
-  #           {
-  #             nixpkgs.overlays = [ qbittorrent510 ];
-  #           }
-  #         )
-
-  #         home-manager.nixosModules.home-manager
-  #         (
-  #           { pkgs, ... }:
-  #           {
-  #             home-manager.useUserPackages = true;
-  #             home-manager.users.${username} = import ./home.nix;
-
-  #             home-manager.sharedModules = [
-  #               plasma-manager.homeManagerModules.plasma-manager
-  #               (
-  #                 { config, ... }:
-  #                 {
-  #                   nixpkgs.overlays = [ qbittorrent510 ];
-  #                 }
-  #               )
-  #             ];
-  #           }
-  #         )
-  #       ];
-  #     };
-
-  #     homeConfigurations."${username}@${hostname}" = home-manager.lib.homeManagerConfiguration {
-  #       pkgs = import nixpkgs {
-  #         inherit system;
-  #         overlays = [ qbittorrent510 ];
-  #       };
-
-  #       extraSpecialArgs = { inherit inputs username hostname; };
-
-  #       modules = [
-  #         ./home.nix
-  #         plasma-manager.homeManagerModules.plasma-manager
-  #       ];
-  #     };
-  #   };
 }

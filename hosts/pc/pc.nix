@@ -18,10 +18,13 @@
   boot.loader.grub.device = "nodev";
   boot.loader.grub.useOSProber = true;
   boot.loader.grub.efiSupport = true;
+
   boot.loader.efi.canTouchEfiVariables = true;
 
   # Fan control
-  boot.kernelParams = [ "acpi_enforce_resources=lax" ];
+  boot.kernelParams = [
+    "acpi_enforce_resources=lax"
+  ];
   boot.kernelModules = [
     "coretemp"
     "nct6775"
@@ -92,20 +95,6 @@
   };
 
   networking.hostName = hostname;
-  # users.users.${username} = {
-  #   isNormalUser = true;
-  #   description = "ludovic";
-  #   extraGroups = [
-  #     "networkmanager"
-  #     "wheel"
-  #     "docker"
-  #     "input"
-  #   ];
-  #   shell = pkgs.zsh;
-  #   ignoreShellProgramCheck = true;
-  # };
-
-  system.stateVersion = "25.05";
 
   environment.systemPackages = with pkgs; [
     openvpn3
@@ -129,12 +118,6 @@
     libmpc
     mpfr
     isl
-    binutils
-    elfutils
-    expat
-    genromfs
-    picocom
-    ubootTools
-    utillinux
+    xivlauncher
   ];
 }

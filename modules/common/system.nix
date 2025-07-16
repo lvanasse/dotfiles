@@ -1,3 +1,5 @@
+# Add us-intl as default keyboard layout
+
 { config, pkgs, ... }:
 {
   networking.networkmanager.enable = true;
@@ -20,6 +22,14 @@
   };
 
   nix.settings.auto-optimise-store = true;
+
+  console.keyMap = "us-acentos";
+
+  system.stateVersion = "25.05";
+
+  stylix.enable = true;
+  stylix.autoEnable = true;
+  stylix.targets.gnome.enable = false;
 
   ###########
   # Wayland #
@@ -62,7 +72,7 @@
     "electron-33.4.11"
   ];
 
-  # Sound 
+  # Sound
   services.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
@@ -72,19 +82,37 @@
     pulse.enable = true;
   };
 
-  # Thermal management
-  services.thermald = {
+  services.flatpak = {
     enable = true;
-    ignoreCpuidCheck = true;
+    update.auto = {
+      enable = true;
+      onCalendar = "weekly";
+    };
   };
 
   environment.systemPackages = with pkgs; [
     vim
+    binutils
+    elfutils
+    expat
+    genromfs
+    picocom
+    ubootTools
+    utillinux
   ];
 
   programs.vim = {
     enable = true;
-    defaultEditor = true; # Exports EDITOR="vim" globally
+    defaultEditor = true;
+  };
+
+  services.openssh = {
+    enable = true;
+    openFirewall = true;
+    settings = {
+      PermitRootLogin = "no";
+      PasswordAuthentication = false;
+    };
   };
 
   services.printing.enable = true;

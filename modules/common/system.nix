@@ -112,8 +112,8 @@
     settings = {
       PermitRootLogin = "no";
       PasswordAuthentication = true;
-      authorizedKeysInHomedir = true;
     };
+    authorizedKeysInHomedir = true;
   };
 
   services.printing.enable = true;

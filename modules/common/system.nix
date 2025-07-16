@@ -27,9 +27,9 @@
 
   system.stateVersion = "25.05";
 
-  stylix.enable = true;
-  stylix.autoEnable = true;
-  stylix.targets.gnome.enable = false;
+  # stylix.enable = true;
+  # stylix.autoEnable = true;
+  # stylix.targets.gnome.enable = false;
 
   ###########
   # Wayland #

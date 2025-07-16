@@ -67,7 +67,7 @@
             home-manager.nixosModules.home-manager
             nix-flatpak.nixosModules.nix-flatpak
             nix-ld.nixosModules.nix-ld
-            stylix.nixosModules.stylix
+            # stylix.nixosModules.stylix
             (
               { pkgs, ... }:
               {

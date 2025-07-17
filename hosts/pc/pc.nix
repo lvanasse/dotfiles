@@ -94,6 +94,26 @@
     };
   };
 
+  services.flatpak = {
+    remotes = lib.mkOptionDefault [
+      {
+        name = "flathub";
+        location = "https://dl.flathub.org/repo/flathub.flatpakrepo";
+      }
+      {
+        name = "woblight";
+        location = "https://woblight.gitlab.io/flatpak-repo";
+      }
+    ];
+
+    packages = [
+      {
+        appId = "io.gitlab.woblight.GitAddonsManager//master";
+        origin = "woblight";
+      }
+    ];
+  };
+
   networking.hostName = hostname;
 
   environment.systemPackages = with pkgs; [

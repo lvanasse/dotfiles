@@ -18,7 +18,7 @@
   nix.gc = {
     automatic = true; # enable periodic GC
     dates = "weekly"; # run once per week
-    options = "--delete-generations +5";
+    delete_generations = "+5";
   };
 
   nix.settings.auto-optimise-store = true;

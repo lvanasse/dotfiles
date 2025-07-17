@@ -20,6 +20,7 @@
       url = "github:danth/stylix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nix-gc-env.url = "github:Julow/nix-gc-env";
 
   };
   outputs =
@@ -32,6 +33,7 @@
       nix-flatpak,
       nix-ld,
       stylix,
+      nix-gc-env,
       ...
     }:
     let
@@ -54,7 +56,7 @@
         }:
         nixpkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit inputs username hostname; };
+          specialArgs = { inherit inputs username hostname nix-gc-env; };
           modules = [
             (
               { ... }:
@@ -67,6 +69,7 @@
             home-manager.nixosModules.home-manager
             nix-flatpak.nixosModules.nix-flatpak
             nix-ld.nixosModules.nix-ld
+            nix-gc-env.nixosModules.default
             # stylix.nixosModules.stylix
             (
               { pkgs, ... }:

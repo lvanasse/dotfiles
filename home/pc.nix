@@ -9,26 +9,26 @@
   ...
 }:
 {
-  programs.plasma = {
-    enable = true;
-    workspace = {
-      theme = "Ant-Dark";
-      wallpaper = "${config.home.homeDirectory}/Code/dotfiles/wallpapers/1458678242783.jpg";
-    };
-    powerdevil = {
-      AC = {
-        autoSuspend.action = "nothing";
-        autoSuspend.idleTimeout = null;
-        whenSleepingEnter = "standby";
+  # programs.plasma = {
+  #   enable = true;
+  #   workspace = {
+  #     theme = "Ant-Dark";
+  #     wallpaper = "${config.home.homeDirectory}/Code/dotfiles/wallpapers/1458678242783.jpg";
+  #   };
+  #   powerdevil = {
+  #     AC = {
+  #       autoSuspend.action = "nothing";
+  #       autoSuspend.idleTimeout = null;
+  #       whenSleepingEnter = "standby";
 
-        dimDisplay.enable = false;
-        turnOffDisplay.idleTimeout = 600;
-        turnOffDisplay.idleTimeoutWhenLocked = "whenLockedAndUnlocked";
-      };
-    };
-    kscreenlocker = {
-      autoLock = true;
-      timeout = 5;
-    };
-  };
+  #       dimDisplay.enable = false;
+  #       turnOffDisplay.idleTimeout = 600;
+  #       turnOffDisplay.idleTimeoutWhenLocked = "whenLockedAndUnlocked";
+  #     };
+  #   };
+  #   kscreenlocker = {
+  #     autoLock = true;
+  #     timeout = 5;
+  #   };
+  # };
 }

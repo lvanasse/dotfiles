@@ -9,27 +9,20 @@
   ...
 }:
 {
-  programs.plasma = {
-    enable = true;
-    workspace = {
-      theme = "Ant-Dark";
-      wallpaper = "${config.home.homeDirectory}/Code/dotfiles/wallpapers/1458678242783.jpg";
-    };
-    powerdevil = {
-      AC = {
-        autoSuspend.action = "nothing";
-        autoSuspend.idleTimeout = null;
-        whenSleepingEnter = "standby";
 
-        dimDisplay.enable = false;
-        turnOffDisplay.idleTimeout = 600;
-        turnOffDisplay.idleTimeoutWhenLocked = "whenLockedAndUnlocked";
-        whenLaptopLidClosed = "turnOffScreen";
-      };
-    };
-    kscreenlocker = {
-      autoLock = true;
-      timeout = 5;
+  wayland.windowManager.sway = {
+    enable = true;
+    systemd.enable = true;
+
+    config = {
+      modifier = "Mod4";
+
+      bars = [
+        {
+          command = "waybar";
+          position = "bottom";
+        }
+      ];
     };
   };
 }

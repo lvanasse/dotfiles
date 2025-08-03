@@ -12,6 +12,8 @@
     ./hardware-configuration.nix
     ../../modules/common/system.nix
     ../../modules/common/users.nix
+    ../../modules/common/de.nix
+    ../../modules/common/gaming.nix
   ];
 
   boot.loader.grub.enable = true;
@@ -124,20 +126,15 @@
     coolercontrol.coolercontrol-liqctld
     coolercontrol.coolercontrol-gui
     coolercontrol.coolercontrol-ui-data
-    mangohud
-    protonplus
-    lutris
-    bottles
-    heroic
-    gamescope
-    gamemode
     mesa
-    nh
     kdePackages.sddm-kcm
     gmp
     libmpc
     mpfr
     isl
-    xivlauncher
   ];
+
+  services.displayManager.sddm.enable = true;
+  services.displayManager.sddm.wayland.enable = true;
+  services.desktopManager.plasma6.enable = true;
 }

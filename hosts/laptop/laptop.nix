@@ -12,6 +12,7 @@
     ./hardware-configuration.nix
     ../../modules/common/system.nix
     ../../modules/common/users.nix
+    ../../modules/common/de.nix
   ];
 
   networking.hostName = hostname;
@@ -45,7 +46,26 @@
   # Enable touchpad support (enabled default in most desktopManager).
   # services.xserver.libinput.enable = true;
 
+  programs.sway = {
+    enable = true; # pulls sway + helpers
+    wrapperFeatures.gtk = true; # ensures GTK themes pick Wayland
+    extraPackages = with pkgs; [
+      waybar
+      swaybg
+      foot
+      wofi
+      brightnessctl
+      wl-clipboard
+      mako
+    ];
+  };
+
+  # programs.waybar.enable = true;
+
+  services.displayManager.sddm.enable = true;
+  services.displayManager.sddm.wayland.enable = true;
+
   environment.systemPackages = with pkgs; [
-    openssh
+
   ];
 }

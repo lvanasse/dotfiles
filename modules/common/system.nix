@@ -27,21 +27,6 @@
 
   system.stateVersion = "25.05";
 
-  # stylix.enable = true;
-  # stylix.autoEnable = true;
-  # stylix.targets.gnome.enable = false;
-
-  ###########
-  # Wayland #
-  ###########
-
-  # Display manager (SDDM) + plasma
-  services.displayManager.sddm.enable = true;
-  services.displayManager.sddm.wayland.enable = true;
-  services.desktopManager.plasma6.enable = true;
-
-  programs.sway.enable = true;
-
   security.polkit.enable = true;
 
   environment.sessionVariables = rec {
@@ -99,6 +84,9 @@
     picocom
     ubootTools
     utillinux
+    pavucontrol
+    openssh
+    nh
   ];
 
   programs.vim = {

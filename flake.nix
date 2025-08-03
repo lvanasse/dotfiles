@@ -4,7 +4,7 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
     determinate.url = "github:DeterminateSystems/determinate";
     home-manager = {
-      url = "github:nix-community/home-manager/release-25.05";
+      url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     plasma-manager = {
@@ -12,16 +12,17 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nix-flatpak.url = "github:gmodena/nix-flatpak/?ref=latest";
-    nix-ld = {
-      url = "github:Mic92/nix-ld";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    # nix-ld = {
+    #   url = "github:Mic92/nix-ld";
+    #   inputs.nixpkgs.follows = "nixpkgs";
+    # };
     stylix = {
-      url = "github:danth/stylix";
+      url = "github:nix-community/stylix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    nix-gc-env.url = "github:Julow/nix-gc-env";
-
+    nix-gc-env = {
+      url = "github:Julow/nix-gc-env";
+    };
   };
   outputs =
     inputs@{
@@ -31,7 +32,7 @@
       determinate,
       plasma-manager,
       nix-flatpak,
-      nix-ld,
+      # nix-ld,
       stylix,
       nix-gc-env,
       ...
@@ -68,9 +69,8 @@
             determinate.nixosModules.default
             home-manager.nixosModules.home-manager
             nix-flatpak.nixosModules.nix-flatpak
-            nix-ld.nixosModules.nix-ld
+            # nix-ld.nixosModules.nix-ld
             nix-gc-env.nixosModules.default
-            # stylix.nixosModules.stylix
             (
               { pkgs, ... }:
               {
@@ -82,6 +82,7 @@
                 ];
                 home-manager.sharedModules = [
                   plasma-manager.homeManagerModules.plasma-manager
+                  stylix.homeModules.stylix
                 ];
               }
             )

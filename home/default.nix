@@ -9,6 +9,7 @@
   ...
 }:
 {
+  home.enableNixpkgsReleaseCheck = false;
 
   nixpkgs.config.allowUnfree = true;
 
@@ -23,25 +24,26 @@
   #############################
   # Wayland user-level config #
   #############################
-  wayland.windowManager.sway = {
-    enable = true;
-    config = rec {
-      modifier = "Mod4";
-      input = {
-        "*" = {
-          xkb_layout = "us";
-          xkb_variant = "intl";
-        };
-      };
-      terminal = "gnome-terminal";
-      menu = "bemenu-run -p \"\"";
-      bars = [ ];
-    };
-    extraConfig = "
-        include ~/.config/sway/outputs
-        include ~/.config/sway/workspaces
-      ";
-  };
+  # wayland.windowManager.sway = {
+  #   enable = true;
+  #   systemd.enable = true; # creates sway‑session.target
+  #   config = rec {
+  #     modifier = "Mod4";
+  #     input = {
+  #       "*" = {
+  #         xkb_layout = "us";
+  #         xkb_variant = "intl";
+  #       };
+  #     };
+  #     terminal = "gnome-terminal";
+  #     menu = "bemenu-run -p \"\"";
+  #     bars = [ ];
+  #   };
+  #   extraConfig = "
+  #       include ~/.config/sway/outputs
+  #       include ~/.config/sway/workspaces
+  #     ";
+  # };
 
   ###################
   # Programs config #
@@ -83,26 +85,42 @@
     flake = "${config.home.homeDirectory}/Code/dotfiles";
   };
 
-  # programs.plasma = {
-  #   enable = true;
-  #   workspace = {
-  #     theme = "Ant-Dark";
-  #     wallpaper = "${config.home.homeDirectory}/Code/dotfiles/wallpapers/1458678242783.jpg";
-  #   };
-  #   powerdevil = {
-  #     AC = {
-  #       autoSuspend.action = "nothing";
-  #       autoSuspend.idleTimeout = null;
-  #       whenSleepingEnter = "standby";
+  # stylix.enable = true;
+  # stylix.autoEnable = true;
+  # stylix.targets.gnome.enable = false;
 
-  #       dimDisplay.enable = false;
-  #       turnOffDisplay.idleTimeout = 600;
-  #       turnOffDisplay.idleTimeoutWhenLocked = "whenLockedAndUnlocked";
-  #     };
+  # stylix.image = ../wallpapers/1458678242783.jpg;
+  # stylix.base16Scheme = "${pkgs.base16-schemes}/share/themes/gruvbox-dark-hard.yaml";
+
+  # stylix.fonts = {
+  #   emoji = {
+  #     package = pkgs.noto-fonts-emoji-blob-bin;
+  #     name = "Noto Emoji with extended Blob support";
   #   };
-  #   kscreenlocker = {
-  #     autoLock = true;
-  #     timeout = 5;
+  # };
+
+  # services.mako.enable = false;
+
+  # systemd.user.services.mako = {
+  #   Unit = {
+  #     Description = "Mako notification daemon (Wayland WMs only)";
+  #     PartOf = [
+  #       "sway-session.target"
+  #     ];
+  #     # stop automatically when you switch back to KDE
+  #     StopWhenUnneeded = true;
+  #   };
+
+  #   Service = {
+  #     ExecStart = "${pkgs.mako}/bin/mako";
+  #     Restart = "on-failure";
+  #     Environment = "XDG_CURRENT_DESKTOP=wayland"; # harmless fallback
+  #   };
+
+  #   Install = {
+  #     WantedBy = [
+  #       "sway-session.target"
+  #     ];
   #   };
   # };
 
@@ -110,6 +128,8 @@
   # Personal user packages #
   ##########################
   home.packages = with pkgs; [
+    devenv
+    direnv
     netcat-gnu
     htop
     firefox
@@ -137,9 +157,6 @@
     gamemode
     btop
     nvtopPackages.full
-    sway
-    wl-clipboard
-    waybar
     gnome-terminal
     slack
     discord
@@ -197,8 +214,6 @@
     home-manager
     gnome-terminal
     ungoogled-chromium
-    wofi
-    bemenu
     calibre
     docker
     popsicle

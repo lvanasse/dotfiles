@@ -9,7 +9,6 @@
   ...
 }:
 {
-
   home.enableNixpkgsReleaseCheck = false;
 
   nixpkgs.config.allowUnfree = true;
@@ -20,14 +19,6 @@
 
   home.sessionVariables = {
     NH_FLAKE = "${config.home.homeDirectory}/Code/dotfiles";
-  };
-
-  programs.vscode = {
-    enable = true;
-    package = pkgs.vscode;
-    extensions = [
-      pkgs.vscode-marketplace.codium.codium
-    ];
   };
 
   #############################

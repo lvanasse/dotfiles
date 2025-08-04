@@ -10,19 +10,19 @@
 }:
 {
 
-  wayland.windowManager.sway = {
-    enable = true;
-    systemd.enable = true;
+  # wayland.windowManager.sway = {
+  #   enable = true;
+  #   systemd.enable = true;
 
-    config = {
-      modifier = "Mod4";
+  #   config = {
+  #     modifier = "Mod4";
 
-      bars = [
-        {
-          command = "waybar";
-          position = "bottom";
-        }
-      ];
-    };
-  };
+  #     bars = [
+  #       {
+  #         command = "waybar";
+  #         position = "bottom";
+  #       }
+  #     ];
+  #   };
+  # };
 }

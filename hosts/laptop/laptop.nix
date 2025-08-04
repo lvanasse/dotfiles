@@ -50,4 +50,14 @@
 
   services.desktopManager.plasma6.enable = true;
   security.polkit.enable = true;
+
+  hardware.bluetooth.enable = true;
+
+  services.blueman.enable = true;
+
+  nix.settings.trusted-users = [ "root" "ludovic" ];
+
+  programs.ssh.startAgent = true;
+  users.users.ludovic.linger = true;
+
 }

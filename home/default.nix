@@ -9,6 +9,7 @@
   ...
 }:
 {
+
   home.enableNixpkgsReleaseCheck = false;
 
   nixpkgs.config.allowUnfree = true;
@@ -19,6 +20,14 @@
 
   home.sessionVariables = {
     NH_FLAKE = "${config.home.homeDirectory}/Code/dotfiles";
+  };
+
+  programs.vscode = {
+    enable = true;
+    package = pkgs.vscode;
+    extensions = [
+      pkgs.vscode-marketplace.codium.codium
+    ];
   };
 
   #############################
@@ -49,8 +58,6 @@
   # Programs config #
   ###################
 
-  programs.bemenu.enable = true;
-
   programs.zsh = {
     enable = true;
     oh-my-zsh = {
@@ -62,12 +69,6 @@
         "docker"
       ];
     };
-  };
-
-  programs.git = {
-    enable = true;
-    userName = "Ludovic Vanasse";
-    userEmail = "lvanasse@luxaerobot.com";
   };
 
   programs.emacs = {
@@ -83,6 +84,12 @@
     clean.enable = true;
     clean.extraArgs = "--keep-since 4d --keep 3";
     flake = "${config.home.homeDirectory}/Code/dotfiles";
+  };
+
+  programs.direnv = {
+    enable = true;
+    enableZshIntegration = true;
+    nix-direnv.enable = true;
   };
 
   # stylix.enable = true;

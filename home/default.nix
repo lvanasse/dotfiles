@@ -19,6 +19,8 @@
 
   home.sessionVariables = {
     NH_FLAKE = "${config.home.homeDirectory}/Code/dotfiles";
+    NPM_CONFIG_PREFIX = "${config.home.homeDirectory}/.npm-global";
+
   };
 
   #############################
@@ -60,6 +62,10 @@
         "docker"
       ];
     };
+    initExtra = ''
+      # for npm global installs
+      export PATH="$HOME/.npm-global/bin:$PATH"
+    '';
   };
 
   programs.emacs = {
@@ -121,6 +127,26 @@
   #     ];
   #   };
   # };
+
+  programs.vscode = {
+    enable = true;
+    package = pkgs.vscode;
+    profiles.default.extensions = with pkgs.vscode-marketplace; [
+      codium.codium
+      bbenoist.nix
+      jdinhlife.gruvbox
+      jnoortheen.nix-ide
+      rust-lang.rust-analyzer
+      ms-vscode.cpptools-extension-pack
+      ms-vscode.cpptools
+      ms-vscode.cmake-tools
+      ms-vscode.makefile-tools
+      # vadimcn.vscode-lldb
+      streetsidesoftware.code-spell-checker
+      foxundermoon.shell-format
+      vscode-icons-team.vscode-icons
+    ];
+  };
 
   ##########################
   # Personal user packages #
@@ -207,6 +233,7 @@
     netdiscover
     wezterm
     alacritty
+    nodejs
     lshw
     dmidecode
     home-manager
@@ -265,23 +292,6 @@
       ]
     ))
     retroarch-assets
-    (vscode-with-extensions.override {
-      vscodeExtensions = with vscode-extensions; [
-        bbenoist.nix
-        jdinhlife.gruvbox
-        jnoortheen.nix-ide
-        rust-lang.rust-analyzer
-        ms-vscode.cpptools-extension-pack
-        twxs.cmake
-        ms-vscode.cpptools
-        ms-vscode.cmake-tools
-        ms-vscode.makefile-tools
-        vadimcn.vscode-lldb
-        streetsidesoftware.code-spell-checker
-        foxundermoon.shell-format
-        vscode-icons-team.vscode-icons
-      ];
-    })
   ];
 
 }

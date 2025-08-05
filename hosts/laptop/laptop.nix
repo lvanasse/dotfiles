@@ -55,7 +55,10 @@
 
   services.blueman.enable = true;
 
-  nix.settings.trusted-users = [ "root" "ludovic" ];
+  nix.settings.trusted-users = [
+    "root"
+    "ludovic"
+  ];
 
   programs.ssh.startAgent = true;
   users.users.ludovic.linger = true;

@@ -23,6 +23,10 @@
     nix-gc-env = {
       url = "github:Julow/nix-gc-env";
     };
+    nix-vscode-extensions = {
+      url = "github:nix-community/nix-vscode-extensions";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
   outputs =
     inputs@{
@@ -35,6 +39,7 @@
       # nix-ld,
       stylix,
       nix-gc-env,
+      nix-vscode-extensions,
       ...
     }:
     let
@@ -57,7 +62,14 @@
         }:
         nixpkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit inputs username hostname nix-gc-env; };
+          specialArgs = {
+            inherit
+              inputs
+              username
+              hostname
+              nix-gc-env
+              ;
+          };
           modules = [
             (
               { ... }:
@@ -74,12 +86,16 @@
             (
               { pkgs, ... }:
               {
+                # home-manager.useGlobalPkgs = true;
                 home-manager.useUserPackages = true;
-                home-manager.extraSpecialArgs = { inherit username hostname inputs; };
-                home-manager.users.${username}.imports = [
-                  ./home/default.nix
-                  ./home/${hostname}.nix
-                ];
+                home-manager.users.${username} = {
+                  nixpkgs.overlays = overlays ++ [ inputs.nix-vscode-extensions.overlays.default ];
+                  nixpkgs.config.allowUnfree = true;
+                  imports = [
+                    ./home/default.nix
+                    ./home/${hostname}.nix
+                  ];
+                };
                 home-manager.sharedModules = [
                   plasma-manager.homeManagerModules.plasma-manager
                   stylix.homeModules.stylix
@@ -93,11 +109,15 @@
       nixosConfigurations = {
         pc = mkHost {
           hostname = "pc";
-          overlays = [ qbittorrent510 ];
+          overlays = [
+            qbittorrent510
+            nix-vscode-extensions.overlays.default
+          ];
         };
 
         laptop = mkHost {
           hostname = "laptop";
+          overlays = [ nix-vscode-extensions.overlays.default ];
         };
       };
 

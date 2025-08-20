@@ -18,8 +18,7 @@
   home.stateVersion = "25.05";
 
   home.sessionVariables = {
-    NH_FLAKE = "${config.home.homeDirectory}/Code/dotfiles";
-    NPM_CONFIG_PREFIX = "${config.home.homeDirectory}/.npm-global";
+        NPM_CONFIG_PREFIX = "${config.home.homeDirectory}/.npm-global";
 
   };
 
@@ -80,7 +79,7 @@
     enable = true;
     clean.enable = true;
     clean.extraArgs = "--keep-since 4d --keep 3";
-    flake = "${config.home.homeDirectory}/Code/dotfiles";
+    flake = "${config.home.homeDirectory}/Code/personal/dotfiles";
   };
 
   programs.direnv = {
@@ -152,6 +151,9 @@
   # Personal user packages #
   ##########################
   home.packages = with pkgs; [
+    screenfetch
+    jq
+    saleae-logic-2
     devenv
     direnv
     netcat-gnu

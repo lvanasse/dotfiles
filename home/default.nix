@@ -147,6 +147,9 @@
       sonarsource.sonarlint-vscode
       jeff-hykin.better-c-syntax
       marus25.cortex-debug
+      mcu-debug.memory-view
+      mcu-debug.rtos-views
+      mcu-debug.peripheral-viewer
       redhat.vscode-yaml
       jeff-hykin.better-cpp-syntax
       mkhl.direnv
@@ -289,6 +292,7 @@
     python3Packages.kconfiglib # For a nicer menuconfig with NuttX
     pyenv
     xemu
+    jre_minimal
     pcsx2
     (retroarch.withCores (
       cores: with cores; [

@@ -144,6 +144,12 @@
       streetsidesoftware.code-spell-checker
       foxundermoon.shell-format
       vscode-icons-team.vscode-icons
+      sonarsource.sonarlint-vscode
+      jeff-hykin.better-c-syntax
+      marus25.cortex-debug
+      redhat.vscode-yaml
+      jeff-hykin.better-cpp-syntax
+      mkhl.direnv
     ];
   };
 

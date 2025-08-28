@@ -153,6 +153,7 @@
       redhat.vscode-yaml
       jeff-hykin.better-cpp-syntax
       mkhl.direnv
+      microhobby.linuxkerneldev
     ];
   };
 

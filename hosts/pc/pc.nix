@@ -33,6 +33,7 @@
   ];
 
   programs.coolercontrol.enable = true;
+  
 
   services.openvpn.servers = {
     lux = {
@@ -132,6 +133,7 @@
     libmpc
     mpfr
     isl
+    jre_minimal
   ];
 
   services.displayManager.sddm.enable = true;

@@ -94,6 +94,9 @@
     defaultEditor = true;
   };
 
+  programs.java.enable = true;
+  programs.java.package = pkgs.jre_minimal;
+
   services.openssh = {
     enable = true;
     openFirewall = true;
@@ -112,5 +115,8 @@
     "flakes"
   ];
 
-  nix.settings.trusted-users = [ "root" "ludovic" ];
+  nix.settings.trusted-users = [
+    "root"
+    "ludovic"
+  ];
 }

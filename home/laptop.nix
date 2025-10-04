@@ -25,31 +25,6 @@
   #   };
   # };
 
-  programs.git = {
-    enable = true;
-
-    # default identity when no condition matches
-    userName = "Ludovic Vanasse";
-    userEmail = "ludovicvanasse@gmail.com";
-
-    includes = [
-      {
-        # personal projects
-        condition = "gitdir:~/Code/personal/";
-        contents.user = {
-          name = "Ludovic Vanasse";
-          email = "ludovicvanasse@gmail.com";
-        };
-      }
-      {
-        # work projects
-        condition = "gitdir:~/Code/work/";
-        contents.user = {
-          name = "Ludovic Vanasse";
-          email = "lvanasse@luxaerobot.com";
-        };
-      }
-    ];
-  };
+  # Git configuration moved to modules/home/programs/development/git.nix
 
 }

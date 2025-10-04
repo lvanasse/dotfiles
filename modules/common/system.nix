@@ -13,7 +13,9 @@
 
   time.hardwareClockInLocalTime = true;
 
+  # DetSys Nix settings
   nix.settings.lazy-trees = true;
+  nix.settings.eval-cores = 0; # parallel eval from
 
   nix.gc = {
     automatic = true; # enable periodic GC
@@ -113,6 +115,7 @@
   nix.settings.experimental-features = [
     "nix-command"
     "flakes"
+    "parallel-eval"
   ];
 
   nix.settings.trusted-users = [

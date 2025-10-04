@@ -33,7 +33,6 @@
   ];
 
   programs.coolercontrol.enable = true;
-  
 
   services.openvpn.servers = {
     lux = {

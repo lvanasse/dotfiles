@@ -148,11 +148,32 @@
             };
           };
 
-          # Home Manager configurations
-          homeConfigurations = {
-            "ludovic@pc" = inputs.self.nixosConfigurations.pc.config.home-manager.users.ludovic;
-            "ludovic@laptop" = inputs.self.nixosConfigurations.laptop.config.home-manager.users.ludovic;
-          };
+          # Home Manager configurations (standalone)
+          homeConfigurations = 
+            let
+              mkHome = hostname: inputs.home-manager.lib.homeManagerConfiguration {
+                pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
+                modules = [
+                  {
+                    nixpkgs.overlays = [ inputs.nix-vscode-extensions.overlays.default ];
+                    nixpkgs.config.allowUnfree = true;
+                  }
+                  ./home/default-new.nix
+                  ./home/${hostname}.nix
+                  inputs.plasma-manager.homeModules.plasma-manager
+                  inputs.stylix.homeModules.stylix
+                ];
+                extraSpecialArgs = {
+                  inherit inputs;
+                  hostname = hostname;
+                  username = "ludovic";
+                };
+              };
+            in
+            {
+              "ludovic@pc" = mkHome "pc";
+              "ludovic@laptop" = mkHome "laptop";
+            };
         };
     };
 }

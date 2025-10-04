@@ -37,7 +37,7 @@
             name = "Ludovic Vanasse";
             email = "mail@ludovicvanasse.com";
           };
-          core.sshCommand = "ssh -i ~/.ssh/id_rsa_personal";
+          core.sshCommand = "ssh -i ~/.ssh/id_ed25519_personal";
         };
       }
       {
@@ -48,7 +48,7 @@
             name = "Ludovic Vanasse";
             email = "lvanasse@luxaerobot.com";
           };
-          core.sshCommand = "ssh -i ~/.ssh/id_rsa_work";
+          core.sshCommand = "ssh -i ~/.ssh/id_ed25519_work";
         };
       }
     ];
@@ -57,14 +57,13 @@
   # SSH configuration for different keys
   programs.ssh = {
     enable = true;
-    enableDefaultConfig = false;
     
     matchBlocks = {
       # Personal GitHub account
       "github-personal" = {
         hostname = "github.com";
         user = "git";
-        identityFile = "~/.ssh/id_rsa_personal";
+        identityFile = "~/.ssh/id_ed25519_personal";
         identitiesOnly = true;
       };
       
@@ -72,7 +71,7 @@
       "bitbucket-work" = {
         hostname = "bitbucket.org";
         user = "git";
-        identityFile = "~/.ssh/id_rsa_work";
+        identityFile = "~/.ssh/id_ed25519_work";
         identitiesOnly = true;
       };
       
@@ -80,7 +79,7 @@
       "github.com" = {
         hostname = "github.com";
         user = "git";
-        identityFile = "~/.ssh/id_rsa_personal";
+        identityFile = "~/.ssh/id_ed25519_personal";
         identitiesOnly = true;
       };
       

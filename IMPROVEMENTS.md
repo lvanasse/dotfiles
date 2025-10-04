@@ -20,8 +20,7 @@
 - **Pre-commit hooks**: Automated quality checks on git commits
 - **Multiple linters**: statix for Nix linting, deadnix for dead code detection
 
-#### 4. **Command Runner (Just)**
-- **justfile** with 20+ useful recipes
+#### 4. **Development Workflow**
 - **Common workflows**: build, switch, validate, format, clean, update
 - **Development helpers**: search packages, show diffs, dry-run rebuilds
 - **Quality assurance**: check formatting, run all checks, install hooks
@@ -50,7 +49,7 @@ dotfiles/
 │   └── packages.nix            # Custom packages/overlays
 ├── lib/                         # Custom library functions
 │   └── default.nix
-├── justfile                     # Command runner recipes
+
 ├── treefmt.toml                 # Formatting configuration
 ├── .pre-commit-config.yaml      # Git hooks configuration
 ├── TOOLING.md                   # Documentation for new tools
@@ -64,27 +63,23 @@ dotfiles/
 nix develop
 
 # Format all files
-just fmt
 nix fmt
 
 # Validate configurations
-just validate
-just check
+nix flake check
 
 # Build and switch
-just build pc
-just switch pc
-just home pc
+nh os switch -H pc
+home-manager switch --flake .#ludovic@pc
 
 # Maintenance
-just update
-just clean
-just install-hooks
+nix flake update
+nix-collect-garbage -d
+pre-commit install
 
 # Development
-just search <package>
-just show <package>
-just diff pc
+nix search nixpkgs <package>
+nvd diff /run/current-system result
 ```
 
 ## 🔄 Phase 2: Module Organization (RECOMMENDED NEXT STEPS)
@@ -219,19 +214,19 @@ home/
 ```bash
 # Daily workflow
 nix develop                     # Enter dev environment
-just fmt                       # Format code
-just validate                   # Check everything builds
-just switch pc                  # Apply changes
+nix fmt                         # Format code
+nix flake check                 # Check everything builds
+nh os switch -H pc              # Apply changes
 
 # Maintenance
-just update                     # Update flake inputs
-just clean                      # Clean old generations
-just install-hooks              # Set up git hooks
+nix flake update                # Update flake inputs
+nix-collect-garbage -d          # Clean old generations
+pre-commit install              # Set up git hooks
 
 # Development
-just search firefox             # Find packages
-just build pc                   # Test build without switching
-just dry-run pc                 # See what would change
+nix search nixpkgs firefox      # Find packages
+nix build .#nixosConfigurations.pc.config.system.build.toplevel  # Test build
+nixos-rebuild dry-run --flake .#pc  # See what would change
 ```
 
 The foundation is now in place for a much more organized and maintainable NixOS configuration. The tooling will help ensure code quality and make development much more pleasant!

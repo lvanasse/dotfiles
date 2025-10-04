@@ -27,7 +27,7 @@
             # Development tools
             git
             gh # GitHub CLI
-            just # Command runner
+
             treefmt # Formatting
             pre-commit # Git hooks
 

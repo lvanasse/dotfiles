@@ -20,39 +20,7 @@
           };
         });
 
-        # Documentation generator
-        docs = pkgs.writeShellScriptBin "generate-docs" ''
-          echo "Generating documentation for dotfiles..."
-          # Add documentation generation logic here
-        '';
 
-        # Configuration validator
-        validate-config = pkgs.writeShellScriptBin "validate-config" ''
-          echo "Validating NixOS configurations..."
-          nix flake check
-          echo "✅ All configurations are valid!"
-        '';
-
-        # Quick rebuild script
-        rebuild = pkgs.writeShellScriptBin "rebuild" ''
-          set -e
-
-          if [ $# -eq 0 ]; then
-            echo "Usage: rebuild <pc|laptop>"
-            exit 1
-          fi
-
-          HOST=$1
-          echo "🔄 Rebuilding $HOST configuration..."
-
-          # Format code first
-          treefmt
-
-          # Build and switch
-          nh os switch -H "$HOST"
-
-          echo "✅ Rebuild complete!"
-        '';
       };
 
     };

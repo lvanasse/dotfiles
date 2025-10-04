@@ -104,7 +104,7 @@
                     nixpkgs.overlays = overlays;
                   }
                 )
-                ./hosts/${hostname}/${hostname}.nix
+                ./hosts/${hostname}/${hostname}-new.nix
                 inputs.determinate.nixosModules.default
                 inputs.home-manager.nixosModules.home-manager
                 inputs.nix-flatpak.nixosModules.nix-flatpak
@@ -117,7 +117,7 @@
                       nixpkgs.overlays = overlays ++ [ inputs.nix-vscode-extensions.overlays.default ];
                       nixpkgs.config.allowUnfree = true;
                       imports = [
-                        ./home/default.nix
+                        ./home/default-new.nix
                         ./home/${hostname}.nix
                       ];
                     };

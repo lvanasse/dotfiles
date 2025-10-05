@@ -52,6 +52,19 @@
       url = "github:cachix/pre-commit-hooks.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # Secrets management
+    agenix = {
+      url = "github:ryantm/agenix";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
+    };
+
+    # Private secrets repository (non-flake)
+    secrets = {
+      url = "git+ssh://git@codeberg.org/lvanasse/secrets.git?ref=main";
+      flake = false;
+    };
   };
 
   outputs =
@@ -104,6 +117,7 @@
                   nixpkgs.overlays = overlays;
                 })
                 ./hosts/${hostname}/${hostname}.nix
+                inputs.agenix.nixosModules.default
                 inputs.determinate.nixosModules.default
                 inputs.home-manager.nixosModules.home-manager
                 inputs.nix-flatpak.nixosModules.nix-flatpak
@@ -148,27 +162,28 @@
             };
           };
 
-          # Home Manager configurations (standalone)
-          homeConfigurations =
-            let
-              mkHome =
-                hostname:
-                inputs.home-manager.lib.homeManagerConfiguration {
-                  pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
-                  modules = [
-                    {
-                      nixpkgs.overlays = [ inputs.nix-vscode-extensions.overlays.default ];
-                      nixpkgs.config.allowUnfree = true;
-                    }
-                    ./modules/home
-                    inputs.plasma-manager.homeModules.plasma-manager
-                    inputs.stylix.homeModules.stylix
-                  ];
-                  extraSpecialArgs = {
-                    inherit inputs hostname;
-                    username = "ludovic";
-                  };
-                };
+      # Home Manager configurations (standalone)
+      homeConfigurations =
+        let
+          mkHome =
+            hostname:
+            inputs.home-manager.lib.homeManagerConfiguration {
+              pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
+              modules = [
+                {
+                  nixpkgs.overlays = [ inputs.nix-vscode-extensions.overlays.default ];
+                  nixpkgs.config.allowUnfree = true;
+                }
+                ./modules/home
+                inputs.plasma-manager.homeModules.plasma-manager
+                inputs.stylix.homeModules.stylix
+                # inputs.agenix.homeManagerModules.default  # Uncomment if you want HM-managed secrets
+              ];
+              extraSpecialArgs = {
+                inherit inputs hostname;
+                username = "ludovic";
+              };
+            };
             in
             {
               "ludovic@pc" = mkHome "pc";

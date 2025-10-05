@@ -2,6 +2,7 @@
   hostname,
   lib,
   pkgs,
+  inputs,
   ...
 }:
 {
@@ -146,4 +147,23 @@
     mpfr
     isl
   ];
+
+  # Deploy SSH keys via agenix (system-level) using encrypted files from the
+  # private secrets repository. Decrypts using host SSH keys by default.
+  age.secrets = {
+    "ssh-id_ed25519_personal" = {
+      file = "${inputs.secrets}/ssh/id_ed25519_personal.age";
+      path = "/home/ludovic/.ssh/id_ed25519_personal";
+      mode = "0600";
+      owner = "ludovic";
+      group = "users";
+    };
+    "ssh-id_ed25519_work" = {
+      file = "${inputs.secrets}/ssh/id_ed25519_work.age";
+      path = "/home/ludovic/.ssh/id_ed25519_work";
+      mode = "0600";
+      owner = "ludovic";
+      group = "users";
+    };
+  };
 }

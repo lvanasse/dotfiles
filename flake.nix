@@ -162,28 +162,28 @@
             };
           };
 
-      # Home Manager configurations (standalone)
-      homeConfigurations =
-        let
-          mkHome =
-            hostname:
-            inputs.home-manager.lib.homeManagerConfiguration {
-              pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
-              modules = [
-                {
-                  nixpkgs.overlays = [ inputs.nix-vscode-extensions.overlays.default ];
-                  nixpkgs.config.allowUnfree = true;
-                }
-                ./modules/home
-                inputs.plasma-manager.homeModules.plasma-manager
-                inputs.stylix.homeModules.stylix
-                # inputs.agenix.homeManagerModules.default  # Uncomment if you want HM-managed secrets
-              ];
-              extraSpecialArgs = {
-                inherit inputs hostname;
-                username = "ludovic";
-              };
-            };
+          # Home Manager configurations (standalone)
+          homeConfigurations =
+            let
+              mkHome =
+                hostname:
+                inputs.home-manager.lib.homeManagerConfiguration {
+                  pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
+                  modules = [
+                    {
+                      nixpkgs.overlays = [ inputs.nix-vscode-extensions.overlays.default ];
+                      nixpkgs.config.allowUnfree = true;
+                    }
+                    ./modules/home
+                    inputs.plasma-manager.homeModules.plasma-manager
+                    inputs.stylix.homeModules.stylix
+                    # inputs.agenix.homeManagerModules.default  # Uncomment if you want HM-managed secrets
+                  ];
+                  extraSpecialArgs = {
+                    inherit inputs hostname;
+                    username = "ludovic";
+                  };
+                };
             in
             {
               "ludovic@pc" = mkHome "pc";

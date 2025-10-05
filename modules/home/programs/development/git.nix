@@ -57,6 +57,7 @@
   # SSH configuration for different keys
   programs.ssh = {
     enable = true;
+    enableDefaultConfig = false;  # Disable default config to avoid future warnings
     
     matchBlocks = {
       # Personal GitHub account
@@ -83,10 +84,15 @@
         identitiesOnly = true;
       };
       
-      # Default SSH settings for all other hosts
+      # Default SSH settings for all hosts
       "*" = {
         serverAliveInterval = 60;
         serverAliveCountMax = 3;
+        # Common SSH defaults that we want to keep
+        compression = true;
+        controlMaster = "auto";
+        controlPath = "~/.ssh/master-%r@%h:%p";
+        controlPersist = "10m";
       };
     };
   };

@@ -22,8 +22,8 @@
       # Directory module - show full logical path with home collapsed to ~
       directory = {
         format = "[$path]($style)";
-        style = "white";  # White color as requested
-        truncation_length = 0;  # Disable truncation to keep ~/subdir style
+        style = "white"; # White color as requested
+        truncation_length = 0; # Disable truncation to keep ~/subdir style
         truncate_to_repo = false;
         home_symbol = "~";
       };

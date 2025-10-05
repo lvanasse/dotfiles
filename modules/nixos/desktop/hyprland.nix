@@ -1,5 +1,10 @@
 # Hyprland desktop (system-level)
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 {
   programs.hyprland = {
     enable = true;
@@ -13,4 +18,3 @@
     extraPortals = with pkgs; [ xdg-desktop-portal-gtk ];
   };
 }
-

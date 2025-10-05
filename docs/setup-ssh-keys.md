@@ -28,20 +28,22 @@ ssh-add ~/.ssh/id_ed25519_work
 ## 3. Add Public Keys to Git Hosting Services
 
 ### Personal GitHub Account
+
 1. Copy your personal public key:
    ```bash
    cat ~/.ssh/id_ed25519_personal.pub
    ```
-2. Go to GitHub.com → Settings → SSH and GPG keys → New SSH key
-3. Paste the public key and save
+1. Go to GitHub.com → Settings → SSH and GPG keys → New SSH key
+1. Paste the public key and save
 
 ### Work Bitbucket Account
+
 1. Copy your work public key:
    ```bash
    cat ~/.ssh/id_ed25519_work.pub
    ```
-2. Go to Bitbucket.org → Personal settings → SSH keys → Add key
-3. Paste the public key and save
+1. Go to Bitbucket.org → Personal settings → SSH keys → Add key
+1. Paste the public key and save
 
 ## 4. Test the Configuration
 
@@ -59,6 +61,7 @@ ssh -T git@github.com
 ## 5. Directory Structure
 
 Make sure your directories exist:
+
 ```bash
 mkdir -p ~/Code/personal
 mkdir -p ~/Code/work
@@ -67,6 +70,7 @@ mkdir -p ~/Code/work
 ## 6. Usage Examples
 
 ### Personal repositories (in ~/Code/personal/)
+
 ```bash
 cd ~/Code/personal
 git clone git@github.com:lvanasse/some-repo.git
@@ -74,6 +78,7 @@ git clone git@github.com:lvanasse/some-repo.git
 ```
 
 ### Work repositories (in ~/Code/work/)
+
 ```bash
 cd ~/Code/work  
 git clone git@bitbucket-work:company/some-repo.git
@@ -83,6 +88,7 @@ git clone git@bitbucket-work:company/some-repo.git
 ## 7. Verify Configuration
 
 You can check which account is being used:
+
 ```bash
 # In personal directory
 cd ~/Code/personal/some-repo
@@ -96,6 +102,7 @@ git config user.email  # Should show: lvanasse@luxaerobot.com
 ## 8. Apply the Configuration
 
 After setting up the SSH keys, apply your NixOS configuration:
+
 ```bash
 # Apply the new configuration
 nh os switch -H pc  # or laptop
@@ -114,7 +121,8 @@ home-manager switch --flake .#ludovic@pc  # or laptop
 ## Troubleshooting
 
 If you have issues:
+
 1. Check SSH agent is running: `ssh-add -l`
-2. Verify key permissions: `ls -la ~/.ssh/`
-3. Test SSH connections with verbose output: `ssh -vT github-personal`
-4. Check git configuration: `git config --list --show-origin`
+1. Verify key permissions: `ls -la ~/.ssh/`
+1. Test SSH connections with verbose output: `ssh -vT github-personal`
+1. Check git configuration: `git config --list --show-origin`

@@ -153,25 +153,27 @@
           };
 
           # Home Manager configurations (standalone)
-          homeConfigurations = 
+          homeConfigurations =
             let
-              mkHome = hostname: inputs.home-manager.lib.homeManagerConfiguration {
-                pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
-                modules = [
-                  {
-                    nixpkgs.overlays = [ inputs.nix-vscode-extensions.overlays.default ];
-                    nixpkgs.config.allowUnfree = true;
-                  }
-                  ./modules/home
-                  inputs.plasma-manager.homeModules.plasma-manager
-                  inputs.stylix.homeModules.stylix
-                ];
-                extraSpecialArgs = {
-                  inherit inputs;
-                  hostname = hostname;
-                  username = "ludovic";
+              mkHome =
+                hostname:
+                inputs.home-manager.lib.homeManagerConfiguration {
+                  pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
+                  modules = [
+                    {
+                      nixpkgs.overlays = [ inputs.nix-vscode-extensions.overlays.default ];
+                      nixpkgs.config.allowUnfree = true;
+                    }
+                    ./modules/home
+                    inputs.plasma-manager.homeModules.plasma-manager
+                    inputs.stylix.homeModules.stylix
+                  ];
+                  extraSpecialArgs = {
+                    inherit inputs;
+                    hostname = hostname;
+                    username = "ludovic";
+                  };
                 };
-              };
             in
             {
               "ludovic@pc" = mkHome "pc";

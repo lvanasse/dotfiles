@@ -11,7 +11,7 @@
     qbittorrent
     gamescope
     gamemode
-    
+
     # Emulation
     xemu
     pcsx2

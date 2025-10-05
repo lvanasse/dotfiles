@@ -29,6 +29,6 @@
 
   programs.java = {
     enable = true;
-    package = pkgs.openjdk21;  # Full JDK instead of minimal JRE
+    package = pkgs.openjdk21; # Full JDK instead of minimal JRE
   };
 }

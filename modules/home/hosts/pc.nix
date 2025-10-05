@@ -1,4 +1,9 @@
-{ config, pkgs, inputs, ... }:
+{
+  config,
+  pkgs,
+  inputs,
+  ...
+}:
 {
   programs.plasma = {
     enable = true;
@@ -11,7 +16,8 @@
   };
 
   # Ensure the wallpaper file is present in the user's home
-  home.file.".local/share/wallpapers/13-Ventura-Dark.jpg".source = ../../../wallpapers/13-Ventura-Dark.jpg;
+  home.file.".local/share/wallpapers/13-Ventura-Dark.jpg".source =
+    ../../../wallpapers/13-Ventura-Dark.jpg;
 
   # Hyprland (Home Manager, PC-only). Scoped to hyprland-session via systemd integration
   wayland.windowManager.hyprland = {

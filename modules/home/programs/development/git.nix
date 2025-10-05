@@ -9,24 +9,24 @@
 {
   programs.git = {
     enable = true;
-    
+
     # Default configuration (personal) - use mkDefault to allow overrides
     userName = lib.mkDefault "Ludovic Vanasse";
     userEmail = lib.mkDefault "mail@ludovicvanasse.com";
-    
+
     # Global git settings
     extraConfig = {
       init.defaultBranch = "main";
       pull.rebase = true;
       push.autoSetupRemote = true;
       core.editor = "vim";
-      
+
       # URL rewrites for SSH hosts
       url."git@bitbucket-work:" = {
         insteadOf = "git@bitbucket.org:";
       };
     };
-    
+
     # Conditional includes for different directories
     includes = [
       {
@@ -57,8 +57,8 @@
   # SSH configuration for different keys
   programs.ssh = {
     enable = true;
-    enableDefaultConfig = false;  # Disable default config to avoid future warnings
-    
+    enableDefaultConfig = false; # Disable default config to avoid future warnings
+
     matchBlocks = {
       # Personal GitHub account
       "github-personal" = {
@@ -67,7 +67,7 @@
         identityFile = "~/.ssh/id_ed25519_personal";
         identitiesOnly = true;
       };
-      
+
       # Work Bitbucket account
       "bitbucket-work" = {
         hostname = "bitbucket.org";
@@ -75,7 +75,7 @@
         identityFile = "~/.ssh/id_ed25519_work";
         identitiesOnly = true;
       };
-      
+
       # Default GitHub (personal)
       "github.com" = {
         hostname = "github.com";
@@ -83,7 +83,7 @@
         identityFile = "~/.ssh/id_ed25519_personal";
         identitiesOnly = true;
       };
-      
+
       # Default SSH settings for all hosts
       "*" = {
         serverAliveInterval = 60;

@@ -7,13 +7,13 @@
     lazy-trees = true;
     eval-cores = 0; # parallel eval
     auto-optimise-store = true;
-    
+
     experimental-features = [
       "nix-command"
       "flakes"
       "parallel-eval"
     ];
-    
+
     trusted-users = [
       "root"
       "ludovic"
@@ -29,7 +29,7 @@
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
-  
+
   # Permitted insecure packages
   nixpkgs.config.permittedInsecurePackages = [
     "electron-33.4.11"

@@ -1,6 +1,6 @@
-# SSH Key Setup Instructions
+# SSH Key Setup for Your Git Accounts
 
-This guide will help you generate and configure SSH keys for your personal and work Git accounts.
+This guide will help you set up SSH keys for your personal and work Git accounts on a new machine. Your NixOS config automatically handles the Git configuration based on directory, but you need to generate the SSH keys first.
 
 ## 1. Generate SSH Keys
 
@@ -8,10 +8,10 @@ Run these commands to generate separate SSH keys:
 
 ```bash
 # Generate personal key for GitHub
-ssh-keygen -t ed25519 -C "mail@ludovicvanasse.com" -f ~/.ssh/id_rsa_personal
+ssh-keygen -t ed25519 -C "mail@ludovicvanasse.com" -f ~/.ssh/id_ed25519_personal
 
 # Generate work key for Bitbucket
-ssh-keygen -t ed25519 -C "lvanasse@luxaerobot.com" -f ~/.ssh/id_rsa_work
+ssh-keygen -t ed25519 -C "lvanasse@luxaerobot.com" -f ~/.ssh/id_ed25519_work
 ```
 
 ## 2. Add Keys to SSH Agent
@@ -21,8 +21,8 @@ ssh-keygen -t ed25519 -C "lvanasse@luxaerobot.com" -f ~/.ssh/id_rsa_work
 eval "$(ssh-agent -s)"
 
 # Add both keys
-ssh-add ~/.ssh/id_rsa_personal
-ssh-add ~/.ssh/id_rsa_work
+ssh-add ~/.ssh/id_ed25519_personal
+ssh-add ~/.ssh/id_ed25519_work
 ```
 
 ## 3. Add Public Keys to Git Hosting Services
@@ -30,7 +30,7 @@ ssh-add ~/.ssh/id_rsa_work
 ### Personal GitHub Account
 1. Copy your personal public key:
    ```bash
-   cat ~/.ssh/id_rsa_personal.pub
+   cat ~/.ssh/id_ed25519_personal.pub
    ```
 2. Go to GitHub.com → Settings → SSH and GPG keys → New SSH key
 3. Paste the public key and save
@@ -38,7 +38,7 @@ ssh-add ~/.ssh/id_rsa_work
 ### Work Bitbucket Account
 1. Copy your work public key:
    ```bash
-   cat ~/.ssh/id_rsa_work.pub
+   cat ~/.ssh/id_ed25519_work.pub
    ```
 2. Go to Bitbucket.org → Personal settings → SSH keys → Add key
 3. Paste the public key and save

@@ -1,44 +1,37 @@
-# Dotfiles Nix Flake
+# Personal NixOS Dotfiles
 
-This repository contains NixOS configurations and Home Manager setups
-maintained as a flake. Two hosts are provided:
+My personal NixOS configuration using flakes, supporting both my desktop PC and laptop.
 
-- `pc`
-- `laptop`
-
-## Prerequisites
-
-- Nix 2.4 or later with flakes enabled
-
-## Building
-
-Switch the system configuration on the target machine with:
+## Quick Start
 
 ```bash
-nh os switch -H pc
-```
+# Switch system configuration
+nh os switch -H pc        # Desktop
+nh os switch -H laptop    # Laptop
 
-or for the laptop:
-
-```bash
-nh os switch -H pc
-```
-
-The Home Manager configuration can be applied separately:
-
-```bash
+# Apply user environment
 home-manager switch --flake .#ludovic@pc
-```
-
-or
-
-```bash
 home-manager switch --flake .#ludovic@laptop
+
+# Development
+nix develop               # Enter dev environment
+nix fmt                   # Format code
+nix flake check          # Validate everything
 ```
 
-## Repository Layout
+## Documentation
 
-- `hosts/` – machine-specific NixOS modules
-- `home/` – Home Manager modules
-- `modules/` – common NixOS module code
-- `flake.nix` – flake entrypoint
+All documentation is in the [`docs/`](docs/) directory:
+
+- **[Quick Reference](docs/README.md)** - Start here for daily commands and overview
+- **[Repository Overview](docs/architecture/repository-overview.md)** - Complete structure guide
+- **[Tooling Guide](docs/development/tooling.md)** - Development tools and workflow
+- **[SSH Setup](docs/guides/setup-ssh-keys.md)** - Git SSH configuration for work/personal
+
+## Key Features
+
+- **Modular Configuration**: Clean, organized modules instead of monolithic files
+- **Multi-Host Support**: Separate configs for PC and laptop
+- **Work/Personal Git**: Automatic account switching based on directory
+- **Development Tooling**: Rich dev environment with formatting, linting, validation
+- **Home Manager**: Declarative user environment management

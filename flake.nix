@@ -39,6 +39,9 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Additional package sources
+    "nixpkgs-unstable".url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+
     # Tooling
     treefmt-nix = {
       url = "github:numtide/treefmt-nix";

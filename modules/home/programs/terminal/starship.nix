@@ -53,8 +53,8 @@ _: {
       # Character module - the prompt symbol ($ or #)
       character = {
         success_symbol = " [»](white)";
-        error_symbol = " [»](red)";
-        vimcmd_symbol = " [»](green)";
+        error_symbol = " [»](white)";
+        vimcmd_symbol = " [»](white)";
       };
 
       # Disable modules we don't want in minimal theme

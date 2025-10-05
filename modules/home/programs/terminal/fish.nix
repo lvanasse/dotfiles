@@ -6,7 +6,7 @@ _: {
     # Fish with Starship prompt (minimal theme)
     interactiveShellInit = ''
       # Set fish greeting
-      set fish_greeting "Welcome to fish shell! 🐟 Using Starship with minimal theme!"
+      set fish_greeting
 
       # Add npm global to PATH
       set -gx PATH $HOME/.npm-global/bin $PATH

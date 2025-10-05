@@ -13,53 +13,43 @@
     # This recreates the oh-my-zsh minimal theme
     settings = {
       # Global format - defines the overall prompt structure
+      # Show directory, then branch (with its own brackets), dirty marker, and prompt char
+      # Use git_status for dirty detection to ensure compatibility
       format = "$directory$git_branch$git_status$character";
       
       # Right format (empty for minimal theme)
       right_format = "";
       
-      # Directory module - shows current directory (basename only, like minimal)
+      # Directory module - show full logical path with home collapsed to ~
       directory = {
         format = "[$path]($style)";
         style = "white";  # White color as requested
-        truncation_length = 1;  # Show only current directory name
+        truncation_length = 0;  # Disable truncation to keep ~/subdir style
         truncate_to_repo = false;
         home_symbol = "~";
       };
       
-      # Git branch module - shows current branch in yellow parentheses
+      # Git branch module - render only the branch name, brackets handled in format
       git_branch = {
-        format = " ($branch)";
-        style = "yellow";
+        # Include a leading space so it only appears when in a repo
+        # Wrap branch name in literal brackets and apply style
+        format = " [$branch]($style)";
+        style = "white";
         symbol = "";  # No symbol, just branch name
       };
       
-      # Git status module - shows red ✗ when dirty (simplified)
+      # Git status - show a simple red dot when anything is present (dirty or stashed)
       git_status = {
-        format = "[$all_status]($style)";
-        style = "red";
-        # Simplified - just show ✗ for any changes
-        conflicted = " ✗";
-        ahead = "";
-        behind = "";
-        diverged = " ✗";
-        up_to_date = "";
-        untracked = " ✗";
-        stashed = "";
-        modified = " ✗";
-        staged = "";
-        renamed = "";
-        deleted = " ✗";
-        # Disable some indicators to avoid duplicates
-        ignore_submodules = true;
         disabled = false;
+        format = " [●]($style)";
+        style = "red";
       };
       
       # Character module - the prompt symbol ($ or #)
       character = {
-        success_symbol = " [\\$](white)";
-        error_symbol = " [\\$](red)";
-        vimcmd_symbol = " [\\$](green)";
+        success_symbol = " [»](white)";
+        error_symbol = " [»](red)";
+        vimcmd_symbol = " [»](green)";
       };
       
       # Disable modules we don't want in minimal theme

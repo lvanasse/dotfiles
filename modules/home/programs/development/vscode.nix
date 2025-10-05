@@ -49,9 +49,10 @@
       "workbench.iconTheme" = "vscode-icons";
       "workbench.colorTheme" = "Gruvbox Dark Hard";
       "sonarlint.pathToNodeExecutable" = "${pkgs.nodejs}";
-      "sonarlint.ls.javaHome" = "/run/current-system/sw/lib/openjdk";
+      "sonarlint.ls.javaHome" = "${pkgs.openjdk21}";
       "sonarlint.disableTelemetry" = true;
       "sonarlint.rules" = { };
+      "sonarlint.output.showVerboseLogs" = true;  # Enable verbose logging for debugging
     };
   };
 }

@@ -29,6 +29,10 @@
   home.file.".local/share/wallpapers/13-Ventura-Dark.jpg".source =
     ../../../wallpapers/13-Ventura-Dark.jpg;
 
+  # Ensure public SSH keys are present for reproducibility
+  home.file.".ssh/id_ed25519_personal.pub".source = "${inputs.secrets}/keys/id_ed25519_personal.pub";
+  home.file.".ssh/id_ed25519_work.pub".source = "${inputs.secrets}/keys/id_ed25519_work.pub";
+
   # Hyprland (Home Manager, PC-only). Scoped to hyprland-session via systemd integration
   wayland.windowManager.hyprland = {
     enable = true;

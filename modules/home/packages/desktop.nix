@@ -93,5 +93,9 @@
     # Fonts
     font-awesome
     ibus
+
+    # Themes for Plasma theming
+    tela-icon-theme
+    whitesur-cursors
   ];
 }

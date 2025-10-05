@@ -7,8 +7,21 @@
       wallpaper = "${config.home.homeDirectory}/.local/share/wallpapers/13-Ventura-Dark.jpg";
       # Set color scheme to MacVentura-Dark
       colorScheme = "MacVentura-Dark";
-      # Optional: use the matching Look-and-Feel package if available
-      lookAndFeel = "com.github.vinceliuice.MacVentura-Dark";
+      # Global Look-and-Feel removed to avoid overriding explicit pieces
+
+      # Requested theming via plasma-manager
+      iconTheme = "Tela-dark";
+      cursor = {
+        theme = "WhiteSur-cursors";
+      };
+      splashScreen.theme = "MacVentura-dark";
+    };
+
+    # KWin options
+    kwin = {
+      # Disable edge barrier so the pointer can cross screens freely
+      edgeBarrier = 0;
+      cornerBarrier = false;
     };
   };
 

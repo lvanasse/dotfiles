@@ -1,10 +1,5 @@
 # Hyprland desktop (system-level)
-{
-  config,
-  pkgs,
-  lib,
-  ...
-}:
+{ pkgs, ... }:
 {
   programs.hyprland = {
     enable = true;

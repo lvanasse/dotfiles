@@ -9,7 +9,7 @@
     git
     rustup
     nodejs
-    (inputs."nixpkgs-unstable".legacyPackages.${pkgs.system}.codex)
+    inputs."nixpkgs-unstable".legacyPackages.${pkgs.system}.codex
     home-manager
     fish # Fish shell
     starship # Cross-shell prompt

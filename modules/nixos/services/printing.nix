@@ -1,5 +1,4 @@
 # Printing services
-{ config, pkgs, ... }:
-{
+_: {
   services.printing.enable = true;
 }

@@ -1,5 +1,5 @@
 # KDE Plasma desktop environment
-{ config, pkgs, ... }:
+{ pkgs, ... }:
 {
   # Display manager
   services.displayManager.sddm = {

@@ -1,5 +1,5 @@
 # Font configuration
-{ config, pkgs, ... }:
+{ pkgs, ... }:
 {
   fonts = {
     fontDir.enable = true;

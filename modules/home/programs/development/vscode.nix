@@ -1,10 +1,5 @@
 # Visual Studio Code configuration
-{
-  config,
-  pkgs,
-  inputs,
-  ...
-}:
+{ pkgs, ... }:
 {
   programs.vscode = {
     enable = true;

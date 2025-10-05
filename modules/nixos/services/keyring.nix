@@ -1,5 +1,4 @@
 # Keyring and credential management
-{ config, pkgs, ... }:
-{
+_: {
   services.gnome.gnome-keyring.enable = true;
 }

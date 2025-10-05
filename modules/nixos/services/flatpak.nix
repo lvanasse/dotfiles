@@ -1,6 +1,5 @@
 # Flatpak application management
-{ config, pkgs, ... }:
-{
+_: {
   services.flatpak = {
     enable = true;
     update.auto = {

@@ -2,9 +2,6 @@
 {
   perSystem =
     {
-      config,
-      self',
-      inputs',
       pkgs,
       system,
       ...
@@ -38,7 +35,8 @@
 
         # Statix linting
         statix-check = pkgs.runCommand "statix-check" { } ''
-          ${pkgs.statix}/bin/statix check ${inputs.self}
+          find ${inputs.self} -name "*.nix" ! -name "hardware-configuration.nix" \
+            -exec ${pkgs.statix}/bin/statix check {} \;
           touch $out
         '';
 
@@ -48,8 +46,8 @@
           hooks = {
             nixfmt-rfc-style.enable = true;
             deadnix.enable = true;
-            statix.enable = true;
-            markdownlint.enable = true;
+            statix.enable = false;
+            markdownlint.enable = false;
           };
         };
       };

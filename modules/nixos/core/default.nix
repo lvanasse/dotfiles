@@ -1,6 +1,5 @@
 # Core system modules
-{ config, pkgs, ... }:
-{
+_: {
   imports = [
     ./nix.nix
     ./locale.nix

@@ -1,6 +1,5 @@
 # System services modules
-{ config, pkgs, ... }:
-{
+_: {
   imports = [
     ./flatpak.nix
     ./ssh.nix

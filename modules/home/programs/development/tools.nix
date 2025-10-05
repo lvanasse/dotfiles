@@ -1,10 +1,5 @@
 # Development tools and environment
-{
-  config,
-  pkgs,
-  inputs,
-  ...
-}:
+{ config, pkgs, ... }:
 {
   programs.emacs = {
     enable = true;

@@ -1,6 +1,5 @@
 # System programs modules
-{ config, pkgs, ... }:
-{
+_: {
   imports = [
     ./system.nix
     ./gaming.nix

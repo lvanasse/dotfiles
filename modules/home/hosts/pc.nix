@@ -2,12 +2,14 @@
 {
   programs.plasma = {
     enable = true;
-    # Set desktop wallpaper for PC only (install into home and reference absolute path)
-    workspace.wallpaper = "${config.home.homeDirectory}/.local/share/wallpapers/13-Ventura-Dark.jpg";
-    # Set color scheme to MacVentura-Dark
-    workspace.colorScheme = "MacVentura-Dark";
-    # Optional: use the matching Look-and-Feel package if available
-    workspace.lookAndFeel = "com.github.vinceliuice.MacVentura-Dark";
+    workspace = {
+      # Set desktop wallpaper for PC only (install into home and reference absolute path)
+      wallpaper = "${config.home.homeDirectory}/.local/share/wallpapers/13-Ventura-Dark.jpg";
+      # Set color scheme to MacVentura-Dark
+      colorScheme = "MacVentura-Dark";
+      # Optional: use the matching Look-and-Feel package if available
+      lookAndFeel = "com.github.vinceliuice.MacVentura-Dark";
+    };
   };
 
   # Ensure the wallpaper file is present in the user's home

@@ -1,6 +1,5 @@
 # Virtualization services
-{ config, pkgs, ... }:
-{
+_: {
   # Docker
   virtualisation.docker.enable = true;
 }

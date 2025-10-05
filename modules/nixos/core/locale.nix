@@ -1,6 +1,5 @@
 # Locale, timezone, and keyboard configuration
-{ config, pkgs, ... }:
-{
+_: {
   # Timezone
   time.timeZone = "America/Toronto";
   time.hardwareClockInLocalTime = true;

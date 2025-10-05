@@ -1,6 +1,5 @@
 # Desktop environment modules
-{ config, pkgs, ... }:
-{
+_: {
   imports = [
     ./fonts.nix
     ./audio.nix

@@ -22,22 +22,18 @@
           ;
       };
       modules = [
-        (
-          { ... }:
-          {
-            nixpkgs.overlays = overlays;
-          }
-        )
+        (_: {
+          nixpkgs.overlays = overlays;
+        })
         ./hosts/${hostname}/${hostname}.nix
         inputs.determinate.nixosModules.default
         inputs.home-manager.nixosModules.home-manager
         inputs.nix-flatpak.nixosModules.nix-flatpak
         inputs.nix-gc-env.nixosModules.default
-        (
-          { pkgs, ... }:
-          {
-            home-manager.useUserPackages = true;
-            home-manager.users.${username} = {
+        (_: {
+          home-manager = {
+            useUserPackages = true;
+            users.${username} = {
               nixpkgs.overlays = overlays ++ [ inputs.nix-vscode-extensions.overlays.default ];
               nixpkgs.config.allowUnfree = true;
               imports = [
@@ -45,12 +41,12 @@
                 ./home/${hostname}.nix
               ];
             };
-            home-manager.sharedModules = [
+            sharedModules = [
               inputs.plasma-manager.homeModules.plasma-manager
               inputs.stylix.homeModules.stylix
             ];
-          }
-        )
+          };
+        })
       ]
       ++ extraModules;
     };
@@ -59,7 +55,7 @@
   getNixFiles =
     dir:
     let
-      files = lib.attrNames (lib.filterAttrs (name: type: type == "regular") (builtins.readDir dir));
+      files = lib.attrNames (lib.filterAttrs (_: type: type == "regular") (builtins.readDir dir));
       nixFiles = lib.filter (lib.hasSuffix ".nix") files;
     in
     map (file: dir + "/${file}") nixFiles;
@@ -68,7 +64,7 @@
   importNixFiles =
     dir:
     let
-      files = lib.attrNames (lib.filterAttrs (name: type: type == "regular") (builtins.readDir dir));
+      files = lib.attrNames (lib.filterAttrs (_: type: type == "regular") (builtins.readDir dir));
       nixFiles = lib.filter (lib.hasSuffix ".nix") files;
     in
     map (file: import (dir + "/" + file)) nixFiles;

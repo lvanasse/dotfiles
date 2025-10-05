@@ -100,37 +100,33 @@
                   ;
               };
               modules = [
-                (
-                  { ... }:
-                  {
-                    nixpkgs.overlays = overlays;
-                  }
-                )
+                (_: {
+                  nixpkgs.overlays = overlays;
+                })
                 ./hosts/${hostname}/${hostname}.nix
                 inputs.determinate.nixosModules.default
                 inputs.home-manager.nixosModules.home-manager
                 inputs.nix-flatpak.nixosModules.nix-flatpak
                 inputs.nix-gc-env.nixosModules.default
-                (
-                  { ... }:
-                  {
-                    home-manager.useUserPackages = true;
-                    home-manager.users.${username} = {
+                (_: {
+                  home-manager = {
+                    useUserPackages = true;
+                    users.${username} = {
                       nixpkgs.overlays = overlays ++ [ inputs.nix-vscode-extensions.overlays.default ];
                       nixpkgs.config.allowUnfree = true;
                       imports = [
                         ./modules/home
                       ];
                     };
-                    home-manager.extraSpecialArgs = {
+                    extraSpecialArgs = {
                       inherit inputs username hostname;
                     };
-                    home-manager.sharedModules = [
+                    sharedModules = [
                       inputs.plasma-manager.homeModules.plasma-manager
                       inputs.stylix.homeModules.stylix
                     ];
-                  }
-                )
+                  };
+                })
               ]
               ++ extraModules;
             };
@@ -169,8 +165,7 @@
                     inputs.stylix.homeModules.stylix
                   ];
                   extraSpecialArgs = {
-                    inherit inputs;
-                    hostname = hostname;
+                    inherit inputs hostname;
                     username = "ludovic";
                   };
                 };

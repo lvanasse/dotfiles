@@ -1,6 +1,5 @@
 # Main NixOS configuration modules
-{ config, pkgs, ... }:
-{
+_: {
   imports = [
     ./core
     ./desktop

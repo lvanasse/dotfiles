@@ -1,6 +1,5 @@
 # Fish shell configuration
-{ ... }:
-{
+_: {
   programs.fish = {
     enable = true;
 

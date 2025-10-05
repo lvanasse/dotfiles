@@ -1,14 +1,6 @@
-{ inputs, ... }:
-{
+_: {
   perSystem =
-    {
-      config,
-      self',
-      inputs',
-      pkgs,
-      system,
-      ...
-    }:
+    { pkgs, ... }:
     {
       packages = {
         # Custom qBittorrent 5.1.0 package
@@ -19,8 +11,6 @@
             sha256 = "sha256-rFTNizxgNc/NaEvlr9DszIxfu8MAiptvm6QvbvkRBa8=";
           };
         });
-
       };
-
     };
 }

@@ -1,6 +1,5 @@
 # SSH server configuration
-{ config, pkgs, ... }:
-{
+_: {
   services.openssh = {
     enable = true;
     openFirewall = true;

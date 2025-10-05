@@ -1,6 +1,5 @@
 # Audio configuration with PipeWire
-{ config, pkgs, ... }:
-{
+_: {
   # Disable PulseAudio
   services.pulseaudio.enable = false;
 

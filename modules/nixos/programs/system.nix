@@ -1,5 +1,5 @@
 # System programs and packages
-{ config, pkgs, ... }:
+{ pkgs, ... }:
 {
   # System packages
   environment.systemPackages = with pkgs; [

@@ -1,6 +1,5 @@
 # Basic networking configuration
-{ config, pkgs, ... }:
-{
+_: {
   # Enable NetworkManager
   networking.networkmanager.enable = true;
 

@@ -1,6 +1,5 @@
 # Main Home Manager configuration modules
 {
-  inputs,
   hostname ? null,
   ...
 }:

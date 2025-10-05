@@ -1,6 +1,5 @@
 # Nix package manager configuration
-{ config, pkgs, ... }:
-{
+_: {
   # Nix settings and experimental features
   nix.settings = {
     # DetSys Nix settings

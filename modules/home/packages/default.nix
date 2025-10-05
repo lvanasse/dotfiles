@@ -1,11 +1,5 @@
 # Home Manager packages
-{
-  config,
-  pkgs,
-  inputs,
-  ...
-}:
-{
+_: {
   imports = [
     ./development.nix
     ./desktop.nix

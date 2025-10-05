@@ -14,6 +14,7 @@
     git
     rustup
     nodejs
+    (inputs."nixpkgs-unstable".legacyPackages.${pkgs.system}.codex)
     home-manager
     fish  # Fish shell for testing
     zsh   # Zsh shell

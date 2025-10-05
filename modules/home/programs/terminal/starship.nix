@@ -31,11 +31,11 @@
       
       # Git branch module - render only the branch name, brackets handled in format
       git_branch = {
-        # Include a leading space so it only appears when in a repo
-        # Wrap branch name in literal brackets and apply style
-        format = " [$branch]($style)";
-        style = "white";
-        symbol = "";  # No symbol, just branch name
+        # Make branch more visible with a subtle symbol and bold style
+        # Uses Nerd Font/Powerline glyph; falls back gracefully if unsupported
+        symbol = " ";
+        format = " [$symbol$branch]($style)";
+        style = "bold white";
       };
       
       # Git status: print a single red dot only when working tree/index has changes

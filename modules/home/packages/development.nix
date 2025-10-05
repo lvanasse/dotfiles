@@ -15,6 +15,10 @@
     rustup
     nodejs
     home-manager
+    fish  # Fish shell for testing
+    zsh   # Zsh shell
+    oh-my-zsh  # Manual oh-my-zsh installation
+    starship  # Cross-shell prompt
     
     # Build tools
     gnumake

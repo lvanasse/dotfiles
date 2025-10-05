@@ -59,7 +59,6 @@
 
       # Import flake-parts modules
       imports = [
-        ./flake/devshells.nix
         ./flake/checks.nix
         ./flake/formatter.nix
         ./flake/packages.nix
@@ -104,7 +103,7 @@
                     nixpkgs.overlays = overlays;
                   }
                 )
-                ./hosts/${hostname}/${hostname}-new.nix
+                ./hosts/${hostname}/${hostname}.nix
                 inputs.determinate.nixosModules.default
                 inputs.home-manager.nixosModules.home-manager
                 inputs.nix-flatpak.nixosModules.nix-flatpak
@@ -117,7 +116,7 @@
                       nixpkgs.overlays = overlays ++ [ inputs.nix-vscode-extensions.overlays.default ];
                       nixpkgs.config.allowUnfree = true;
                       imports = [
-                        ./home/default-new.nix
+                        ./home/default.nix
                         ./home/${hostname}.nix
                       ];
                     };
@@ -158,7 +157,7 @@
                     nixpkgs.overlays = [ inputs.nix-vscode-extensions.overlays.default ];
                     nixpkgs.config.allowUnfree = true;
                   }
-                  ./home/default-new.nix
+                  ./home/default.nix
                   ./home/${hostname}.nix
                   inputs.plasma-manager.homeModules.plasma-manager
                   inputs.stylix.homeModules.stylix

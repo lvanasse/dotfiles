@@ -6,6 +6,5 @@
     ./desktop
     ./services
     ./programs
-    ../common/users.nix  # Keep the existing users module
   ];
 }

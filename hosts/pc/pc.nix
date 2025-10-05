@@ -10,20 +10,22 @@
 {
   imports = [
     ./hardware-configuration.nix
-    ../../modules/common/system.nix
-    ../../modules/common/users.nix
-    ../../modules/common/de.nix
-    ../../modules/common/gaming.nix
+    ../../modules/nixos
   ];
 
-  boot.loader.grub.enable = true;
-  boot.loader.grub.device = "nodev";
-  boot.loader.grub.useOSProber = true;
-  boot.loader.grub.efiSupport = true;
+  # Set hostname
+  networking.hostName = hostname;
 
+  # Boot configuration
+  boot.loader.grub = {
+    enable = true;
+    device = "nodev";
+    useOSProber = true;
+    efiSupport = true;
+  };
   boot.loader.efi.canTouchEfiVariables = true;
 
-  # Fan control
+  # PC-specific hardware configuration
   boot.kernelParams = [
     "acpi_enforce_resources=lax"
   ];
@@ -31,30 +33,30 @@
     "coretemp"
     "nct6775"
   ];
+  boot.initrd.kernelModules = [ "amdgpu" ];
 
-  programs.coolercontrol.enable = true;
-
-  services.openvpn.servers = {
-    lux = {
-      config = ''
-        config /home/ludovic/Downloads/lux_mtl-config_most-clients.ovpn
-      '';
-      autoStart = false;
-    };
+  # Graphics
+  hardware.graphics = {
+    enable = true;
+    enable32Bit = true;
+    extraPackages = with pkgs; [
+      mesa
+      libva-utils
+    ];
   };
 
-  services.tailscale.enable = false;
-
+  # PC-specific networking
   networking.useNetworkd = true;
   networking.interfaces.enp5s0.useDHCP = true;
+  networking.networkmanager.dns = "systemd-resolved";
 
-  # Specifically for MAM private tracker
+  # Firewall for torrenting
   networking.firewall = {
     enable = true;
     allowedTCPPorts = [ 59793 ];
   };
 
-  # Fix DNS latency issues
+  # DNS configuration
   services.resolved = {
     enable = true;
     dnssec = "false";
@@ -64,38 +66,43 @@
     ];
     extraConfig = ''
       Cache=no-negative                  # avoid long NXDOMAIN waits
-      TrustAnchor=false                  # strips the “trust-ad” bit
+      TrustAnchor=false                  # strips the "trust-ad" bit
     '';
   };
-  networking.networkmanager.dns = "systemd-resolved";
 
-  boot.initrd.kernelModules = [ "amdgpu" ];
+  # PC-specific services
+  programs.coolercontrol.enable = true;
+  services.tailscale.enable = false;
 
-  hardware.graphics = {
-    enable = true;
-    enable32Bit = true;
+  # VPN configuration
+  services.openvpn.servers = {
+    lux = {
+      config = ''
+        config /home/ludovic/Downloads/lux_mtl-config_most-clients.ovpn
+      '';
+      autoStart = false;
+    };
   };
 
-  hardware.graphics.extraPackages = with pkgs; [
-    mesa
-    libva-utils
-  ];
-
-  programs.steam.enable = true;
-  programs.steam.gamescopeSession.enable = true;
+  # Gaming
+  programs.steam = {
+    enable = true;
+    gamescopeSession.enable = true;
+  };
   programs.gamemode.enable = true;
 
+  # qBittorrent service
   systemd.user.services.qbittorrent-tray = {
     description = "qBittorrent (GUI, tray only)";
     wantedBy = [ "graphical-session.target" ];
     after = [ "graphical-session.target" ];
-
     serviceConfig = {
       ExecStart = "${pkgs.qbittorrent}/bin/qbittorrent --no-splash";
       Restart = "on-abort";
     };
   };
 
+  # PC-specific Flatpak configuration
   services.flatpak = {
     remotes = lib.mkOptionDefault [
       {
@@ -107,7 +114,6 @@
         location = "https://woblight.gitlab.io/flatpak-repo";
       }
     ];
-
     packages = [
       {
         appId = "io.gitlab.woblight.GitAddonsManager//master";
@@ -116,8 +122,7 @@
     ];
   };
 
-  networking.hostName = hostname;
-
+  # PC-specific packages
   environment.systemPackages = with pkgs; [
     openvpn3
     fanctl
@@ -127,15 +132,9 @@
     coolercontrol.coolercontrol-gui
     coolercontrol.coolercontrol-ui-data
     mesa
-    kdePackages.sddm-kcm
     gmp
     libmpc
     mpfr
     isl
-    jre_minimal
   ];
-
-  services.displayManager.sddm.enable = true;
-  services.displayManager.sddm.wayland.enable = true;
-  services.desktopManager.plasma6.enable = true;
 }

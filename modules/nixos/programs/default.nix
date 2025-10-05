@@ -3,5 +3,6 @@
 {
   imports = [
     ./system.nix
+    ./gaming.nix
   ];
 }

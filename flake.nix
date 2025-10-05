@@ -120,6 +120,9 @@
                         ./home/${hostname}.nix
                       ];
                     };
+                    home-manager.extraSpecialArgs = {
+                      inherit inputs username hostname;
+                    };
                     home-manager.sharedModules = [
                       inputs.plasma-manager.homeModules.plasma-manager
                       inputs.stylix.homeModules.stylix

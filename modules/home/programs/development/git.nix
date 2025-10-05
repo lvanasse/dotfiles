@@ -78,6 +78,14 @@
         identitiesOnly = true;
       };
 
+      # Codeberg (personal)
+      "codeberg.org" = {
+        hostname = "codeberg.org";
+        user = "git";
+        identityFile = "~/.ssh/id_ed25519_personal";
+        identitiesOnly = true;
+      };
+
       # Default SSH settings for all hosts
       "*" = {
         serverAliveInterval = 60;

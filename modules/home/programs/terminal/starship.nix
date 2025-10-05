@@ -14,7 +14,7 @@
     settings = {
       # Global format - defines the overall prompt structure
       # Show directory, then branch (with its own brackets), dirty marker, and prompt char
-      # Use git_status for dirty detection to ensure compatibility
+      # Use git_status with $all_status gating (ignores stash/ahead/behind)
       format = "$directory$git_branch$git_status$character";
       
       # Right format (empty for minimal theme)
@@ -38,11 +38,24 @@
         symbol = "";  # No symbol, just branch name
       };
       
-      # Git status - show a simple red dot when anything is present (dirty or stashed)
+      # Git status: print a single red dot only when working tree/index has changes
+      # Gate on $all_status so clean repos show nothing. Disable ahead/behind and stash.
       git_status = {
         disabled = false;
-        format = " [●]($style)";
+        format = " [$all_status]($style)";
         style = "red";
+        # Only working tree/index changes contribute to $all_status
+        stashed = "";
+        ahead = "";
+        behind = "";
+        diverged = "";
+        # Map any present status to a dot; multiple statuses will yield repeated dots
+        conflicted = "●";
+        staged = "●";
+        modified = "●";
+        renamed = "●";
+        deleted = "●";
+        untracked = "●";
       };
       
       # Character module - the prompt symbol ($ or #)

@@ -1,9 +1,4 @@
-{
-  config,
-  pkgs,
-  inputs,
-  ...
-}:
+{ config, ... }:
 {
   programs.plasma = {
     enable = true;
@@ -24,7 +19,8 @@
     enable = true;
     xwayland.enable = true;
     systemd.enable = true; # ensures Hyprland user services don't run under KDE
-    # Keep config minimal for now; we’ll extend later.
+    # Minimal config to silence HM warning; real config can be added later.
     settings = { };
+    extraConfig = "# managed by Home Manager";
   };
 }

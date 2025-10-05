@@ -20,7 +20,7 @@
 
         # Formatting check
         formatting = pkgs.runCommand "check-formatting" { } ''
-          ${pkgs.nixfmt-rfc-style}/bin/nixfmt-rfc-style --check ${inputs.self}/**/*.nix
+          ${pkgs.nixfmt-rfc-style}/bin/nixfmt --check ${inputs.self}/**/*.nix
           touch $out
         '';
 

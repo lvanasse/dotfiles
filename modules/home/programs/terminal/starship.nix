@@ -1,10 +1,5 @@
 # Starship prompt configuration
-{
-  config,
-  pkgs,
-  inputs,
-  ...
-}:
+{ ... }:
 {
   programs.starship = {
     enable = true;

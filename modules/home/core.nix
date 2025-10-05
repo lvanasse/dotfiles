@@ -1,11 +1,5 @@
 # Core Home Manager configuration
-{
-  config,
-  pkgs,
-  inputs,
-  username ? "ludovic",
-  ...
-}:
+{ config, username ? "ludovic", ... }:
 {
   home.enableNixpkgsReleaseCheck = false;
   nixpkgs.config.allowUnfree = true;

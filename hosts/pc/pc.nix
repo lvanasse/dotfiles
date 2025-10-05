@@ -1,8 +1,5 @@
 {
-  inputs,
   hostname,
-  username,
-  overlays,
   lib,
   pkgs,
   ...

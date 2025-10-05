@@ -42,6 +42,8 @@
           "result*"
           ".git/**"
           "tmp/**"
+          # Ignore removed zsh config lingering in HEAD until next commit
+          "modules/home/programs/terminal/zsh.nix"
         ];
       };
 

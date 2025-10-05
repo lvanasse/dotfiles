@@ -1,10 +1,5 @@
 # Desktop applications and utilities
-{
-  config,
-  pkgs,
-  inputs,
-  ...
-}:
+{ pkgs, ... }:
 {
   home.packages = with pkgs; [
     # Web browsers

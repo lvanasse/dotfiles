@@ -1,11 +1,5 @@
 # Git configuration with SSH keys for work/personal
-{
-  config,
-  pkgs,
-  lib,
-  inputs,
-  ...
-}:
+{ lib, ... }:
 {
   programs.git = {
     enable = true;

@@ -1,7 +1,5 @@
 # Main Home Manager configuration modules
 {
-  config,
-  pkgs,
   inputs,
   hostname ? null,
   ...

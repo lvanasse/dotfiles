@@ -1,10 +1,5 @@
 # Creative and design packages
-{
-  config,
-  pkgs,
-  inputs,
-  ...
-}:
+{ pkgs, ... }:
 {
   home.packages = with pkgs; [
     # CAD and design

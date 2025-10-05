@@ -1,10 +1,5 @@
 # Development packages
-{
-  config,
-  pkgs,
-  inputs,
-  ...
-}:
+{ pkgs, inputs, ... }:
 {
   home.packages = with pkgs; [
     # Development tools
@@ -16,9 +11,7 @@
     nodejs
     (inputs."nixpkgs-unstable".legacyPackages.${pkgs.system}.codex)
     home-manager
-    fish # Fish shell for testing
-    zsh # Zsh shell
-    oh-my-zsh # Manual oh-my-zsh installation
+    fish # Fish shell
     starship # Cross-shell prompt
 
     # Build tools

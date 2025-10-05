@@ -1,11 +1,4 @@
-# Laptop-specific Home Manager configuration
+# Laptop-specific Home Manager configuration (placeholder)
+{ ... }:
 {
-  config,
-  pkgs,
-  inputs,
-  ...
-}:
-{
-  # Laptop-specific home configuration
-  # Add any laptop-specific packages or configurations here
 }

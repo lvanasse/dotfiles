@@ -1,10 +1,5 @@
 # Fish shell configuration
-{
-  config,
-  pkgs,
-  inputs,
-  ...
-}:
+{ ... }:
 {
   programs.fish = {
     enable = true;

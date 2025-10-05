@@ -71,7 +71,7 @@
       flake =
         let
           # Custom qBittorrent overlay
-          qbittorrent510 = final: prev: {
+          qbittorrent510 = _final: prev: {
             qbittorrent = prev.qbittorrent.overrideAttrs (_: {
               version = "5.1.0";
               src = prev.fetchurl {
@@ -112,7 +112,7 @@
                 inputs.nix-flatpak.nixosModules.nix-flatpak
                 inputs.nix-gc-env.nixosModules.default
                 (
-                  { pkgs, ... }:
+                  { ... }:
                   {
                     home-manager.useUserPackages = true;
                     home-manager.users.${username} = {

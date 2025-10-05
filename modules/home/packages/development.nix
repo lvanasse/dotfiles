@@ -54,9 +54,6 @@
     # Hardware tools
     saleae-logic-2
     
-    # Java
-    jre_minimal
-    
     # Python environment
     pyenv
   ];

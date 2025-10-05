@@ -24,6 +24,6 @@
 
   programs.java = {
     enable = true;
-    package = pkgs.jre_minimal;
+    package = pkgs.openjdk21;
   };
 }

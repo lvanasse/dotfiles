@@ -166,4 +166,13 @@
       group = "users";
     };
   };
+
+  # Ensure ssh-agent for convenience
+  programs.ssh.startAgent = true;
+
+  # Passwordless auth using the single public key
+  users.users.ludovic.openssh.authorizedKeys.keys = [
+    (builtins.readFile "${inputs.secrets}/keys/id_ed25519_personal.pub")
+    (builtins.readFile "${inputs.secrets}/keys/id_ed25519_work.pub")
+  ];
 }

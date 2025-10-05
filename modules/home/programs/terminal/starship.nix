@@ -8,18 +8,17 @@
 {
   programs.starship = {
     enable = true;
-    
+
     # Starship configuration in TOML format
     # This recreates the oh-my-zsh minimal theme
     settings = {
       # Global format - defines the overall prompt structure
       # Show directory, then branch (with its own brackets), dirty marker, and prompt char
-      # Use git_status with $all_status gating (ignores stash/ahead/behind)
       format = "$directory$git_branch$git_status$character";
-      
+
       # Right format (empty for minimal theme)
       right_format = "";
-      
+
       # Directory module - show full logical path with home collapsed to ~
       directory = {
         format = "[$path]($style)";
@@ -28,7 +27,7 @@
         truncate_to_repo = false;
         home_symbol = "~";
       };
-      
+
       # Git branch module - render only the branch name, brackets handled in format
       git_branch = {
         # Make branch more visible with a subtle symbol and bold style
@@ -37,34 +36,33 @@
         format = " [$symbol$branch]($style)";
         style = "bold white";
       };
-      
-      # Git status: print a single red dot only when working tree/index has changes
-      # Gate on $all_status so clean repos show nothing. Disable ahead/behind and stash.
+
+      # Git status: always show a single red dot for any state (dirty, stash, ahead/behind)
+      # Use $all_status only for gating, render it as zero-width so it won't repeat dots
       git_status = {
         disabled = false;
-        format = " [$all_status]($style)";
+        format = " ([●]($style)$all_status)";
         style = "red";
-        # Only working tree/index changes contribute to $all_status
-        stashed = "";
-        ahead = "";
-        behind = "";
-        diverged = "";
-        # Map any present status to a dot; multiple statuses will yield repeated dots
-        conflicted = "●";
-        staged = "●";
-        modified = "●";
-        renamed = "●";
-        deleted = "●";
-        untracked = "●";
+        # Zero-width space characters to keep $all_status non-empty but invisible
+        conflicted = "​";
+        staged = "​";
+        modified = "​";
+        renamed = "​";
+        deleted = "​";
+        untracked = "​";
+        ahead = "​";
+        behind = "​";
+        diverged = "​";
+        stashed = "​";
       };
-      
+
       # Character module - the prompt symbol ($ or #)
       character = {
         success_symbol = " [»](white)";
         error_symbol = " [»](red)";
         vimcmd_symbol = " [»](green)";
       };
-      
+
       # Disable modules we don't want in minimal theme
       aws.disabled = true;
       azure.disabled = true;

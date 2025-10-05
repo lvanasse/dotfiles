@@ -116,8 +116,7 @@
                       nixpkgs.overlays = overlays ++ [ inputs.nix-vscode-extensions.overlays.default ];
                       nixpkgs.config.allowUnfree = true;
                       imports = [
-                        ./home/default.nix
-                        ./home/${hostname}.nix
+                        ./modules/home
                       ];
                     };
                     home-manager.extraSpecialArgs = {
@@ -160,8 +159,7 @@
                     nixpkgs.overlays = [ inputs.nix-vscode-extensions.overlays.default ];
                     nixpkgs.config.allowUnfree = true;
                   }
-                  ./home/default.nix
-                  ./home/${hostname}.nix
+                  ./modules/home
                   inputs.plasma-manager.homeModules.plasma-manager
                   inputs.stylix.homeModules.stylix
                 ];

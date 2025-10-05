@@ -14,6 +14,7 @@
     pavucontrol
     openssh
     nh
+    codex
   ];
 
   # System programs

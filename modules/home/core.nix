@@ -3,14 +3,15 @@
   config,
   pkgs,
   inputs,
+  username ? "ludovic",
   ...
 }:
 {
   home.enableNixpkgsReleaseCheck = false;
   nixpkgs.config.allowUnfree = true;
 
-  home.username = "ludovic";
-  home.homeDirectory = "/home/ludovic";
+  home.username = username;
+  home.homeDirectory = "/home/${username}";
   home.stateVersion = "25.05";
 
   home.sessionVariables = {

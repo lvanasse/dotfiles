@@ -6,5 +6,6 @@ _: {
     ./printing.nix
     ./virtualization.nix
     ./keyring.nix
+    ./power.nix
   ];
 }

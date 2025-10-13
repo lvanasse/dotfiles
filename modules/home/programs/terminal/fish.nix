@@ -17,6 +17,13 @@ _: {
       # Clear starship cache if needed (for config changes)
       # starship cache clear
 
+      # Make autocomplete/suggestions and arguments less colorful
+      # - Keep arguments neutral white instead of blue
+      # - Show autosuggestions as dim gray
+      set -g fish_color_param white
+      set -g fish_color_valid_path white
+      set -g fish_color_autosuggestion brblack
+
       # Set some useful aliases
       alias ll "ls -la"
       alias la "ls -la"

@@ -84,6 +84,7 @@
     swayidle
     nwg-displays
     rofi
+    wofi
 
     # System info
     lm_sensors

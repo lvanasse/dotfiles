@@ -6,8 +6,70 @@
     package = pkgs.emacs;
     extraPackages = epkgs: [
       epkgs.gruvbox-theme
+      epkgs.use-package
+      epkgs.evil
+      epkgs.general
+      epkgs.which-key
     ];
   };
+
+  # Minimal Emacs config: gruvbox-dark-hard, Evil, which-key, Spacemacs-like leader
+  home.file.".config/emacs/init.el".text = ''
+    ;; UI minimalism
+    (when (fboundp 'menu-bar-mode) (menu-bar-mode -1))
+    (when (fboundp 'tool-bar-mode) (tool-bar-mode -1))
+    (when (fboundp 'scroll-bar-mode) (scroll-bar-mode -1))
+    (setq inhibit-startup-screen t)
+
+    ;; Use packages installed by Nix; don't auto-install from ELPA
+    (setq use-package-always-ensure nil)
+
+    ;; Theme: Gruvbox dark hard (closest to "gruvbox-dark-harder")
+    (load-theme 'gruvbox-dark-hard t)
+
+    ;; which-key for discoverability
+    (use-package which-key
+      :config
+      (which-key-mode 1)
+      (setq which-key-idle-delay 0.25))
+
+    ;; Vim keybindings via Evil
+    (use-package evil
+      :init
+      (setq evil-want-keybinding nil)
+      :config
+      (evil-mode 1))
+
+    ;; Spacemacs-like leader key using general.el
+    (use-package general
+      :config
+      (general-evil-setup t)
+      (general-create-definer my/leader
+        :states '(normal visual emacs)
+        :keymaps 'override
+        :prefix "SPC"
+        :global-prefix "C-SPC")
+
+      ;; Minimal leader map (extend as you go)
+      (my/leader
+        "SPC" '(execute-extended-command :which-key "M-x")
+        "f"   '(:ignore t :which-key "files")
+        "ff"  '(find-file :which-key "find file")
+        "fs"  '(save-buffer :which-key "save file")
+
+        "b"   '(:ignore t :which-key "buffers")
+        "bb"  '(switch-to-buffer :which-key "switch buffer")
+        "bd"  '(kill-this-buffer :which-key "kill buffer")
+
+        "w"   '(:ignore t :which-key "windows")
+        "wv"  '(split-window-right :which-key "vsplit")
+        "ws"  '(split-window-below :which-key "hsplit")
+        "wd"  '(delete-window :which-key "delete window")
+
+        "p"   '(:ignore t :which-key "project")
+        "pp"  '(project-switch-project :which-key "switch project")
+        "pf"  '(project-find-file :which-key "find file (project)")))
+  '';
 
   programs.nh = {
     enable = true;

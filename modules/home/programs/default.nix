@@ -3,5 +3,7 @@ _: {
   imports = [
     ./terminal
     ./development
+    ./waybar.nix
+    ./wofi.nix
   ];
 }

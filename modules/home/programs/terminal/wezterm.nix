@@ -22,7 +22,6 @@
         use_fancy_tab_bar = false,
         hide_tab_bar_if_only_one_tab = true,
         window_decorations = 'RESIZE',
-        copy_on_select = true,
 
         -- Gruvbox Dark Hard palette
         colors = {
@@ -63,6 +62,12 @@
 
         -- Mouse: right-click copy-or-paste
         mouse_bindings = {
+          -- Copy selection to Clipboard on left mouse release
+          {
+            event = { Up = { streak = 1, button = 'Left' } },
+            mods = 'NONE',
+            action = wezterm.action.CompleteSelection 'Clipboard',
+          },
           {
             event = { Up = { streak = 1, button = 'Right' } },
             mods = 'NONE',

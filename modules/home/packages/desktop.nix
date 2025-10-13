@@ -85,6 +85,7 @@
     nwg-displays
     rofi
     wofi
+    mako
 
     # System info
     lm_sensors

@@ -3,10 +3,9 @@
 {
   programs.waybar = {
     enable = true;
-    systemd = {
-      enable = true;
-      target = "hyprland-session.target";
-    };
+    # Start Waybar via Hyprland's exec-once instead of a user service.
+    # This avoids target mismatches and ensures it only runs under Hyprland.
+    systemd.enable = false;
 
     settings = [
       {
@@ -20,7 +19,8 @@
           "network"
           "battery"
           "custom/weather"
-          "clock"
+          "clock#local"
+          "clock#utc"
           "tray"
         ];
 
@@ -30,9 +30,16 @@
           on-click = "activate";
         };
 
-        clock = {
-          # ISO-8601 time
-          format = "{:%FT%T%z}";
+        "clock#local" = {
+          interval = 5;
+          format = "{:%Y-%m-%d %H:%M:%S}";
+          tooltip = false;
+        };
+
+        "clock#utc" = {
+          interval = 5;
+          timezone = "UTC";
+          format = "UTC {:%Y-%m-%d %H:%M:%S}";
           tooltip = false;
         };
 
@@ -69,7 +76,7 @@
         "custom/weather" = {
           interval = 600;
           exec = "bash -lc 'curl -sf https://wttr.in/?format=1'";
-          return-type = "json";
+          # Use plain text output from wttr.in
           format = "{}";
           tooltip = false;
         };

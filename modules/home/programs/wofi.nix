@@ -2,7 +2,7 @@
 _: {
   home.file.".config/wofi/config".text = ''
     mode=drun
-    show=drun
+    show=drun,run
     location=top
     anchor=top
     width=100%
@@ -10,6 +10,7 @@ _: {
     allow_images=false
     allow_markup=false
     insensitive=true
+    matching=fuzzy
     hide_scroll=true
     no_actions=true
     prompt=

@@ -111,30 +111,26 @@ in
   systemd.user.services.waybar = {
     Unit = {
       Description = "Waybar status bar";
-      PartOf = [ "sway-session.target" ];
-      After = [ "sway-session.target" ];
+      PartOf = [ "graphical-session.target" ];
+      After = [ "graphical-session.target" ];
     };
     Service = {
-      # Ensure we're in a Wayland session
-      ExecCondition = "${pkgs.bash}/bin/bash -lc 'test -n \"$WAYLAND_DISPLAY\"'";
+      # Ensure we're in a Wayland Sway session
+      ExecCondition = "${pkgs.bash}/bin/bash -lc 'test -n \"$WAYLAND_DISPLAY\" -a -n \"$SWAYSOCK\"'";
       ExecStart = "${pkgs.bash}/bin/bash";
       ExecStartArgs = [
         "-lc"
         ''
-          if [ -n "$SWAYSOCK" ]; then
-            exec ${pkgs.waybar}/bin/waybar \
-              -c ${config.home.homeDirectory}/.config/waybar/config-sway.jsonc \
-              -s ${config.home.homeDirectory}/.config/waybar/style-sway.css
-          else
-            exec ${pkgs.waybar}/bin/waybar
-          fi
+          exec ${pkgs.waybar}/bin/waybar \
+            -c ${config.home.homeDirectory}/.config/waybar/config-sway.jsonc \
+            -s ${config.home.homeDirectory}/.config/waybar/style-sway.css
         ''
       ];
       Restart = "on-failure";
       RestartSec = 1;
     };
     Install = {
-      WantedBy = [ "sway-session.target" ];
+      WantedBy = [ "graphical-session.target" ];
     };
   };
 }

@@ -104,6 +104,19 @@ _: {
         body = "cd $HOME/Code/personal/dotfiles";
         description = "Navigate to dotfiles directory";
       };
+
+      # Set terminal/window title to the full path like Starship's directory module
+      # - Use ~ for home
+      # - No truncation/shortening (matches starship.directory.truncation_length = 0)
+      fish_title = {
+        description = "Set terminal title to current directory path (~ for home)";
+        body = ''
+          set -l cwd $PWD
+          # Replace $HOME with ~ for a cleaner title
+          set cwd (string replace -r "^$HOME" "~" -- $cwd)
+          echo $cwd
+        '';
+      };
     };
   };
 }

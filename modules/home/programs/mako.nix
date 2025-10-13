@@ -7,16 +7,16 @@
   systemd.user.services.mako = {
     Unit = {
       Description = "Mako notification daemon (Wayland)";
-      PartOf = [ "sway-session.target" ];
-      After = [ "sway-session.target" ];
+      PartOf = [ "graphical-session.target" ];
+      After = [ "graphical-session.target" ];
     };
     Service = {
-      ExecCondition = "${pkgs.bash}/bin/bash -lc '! ${pkgs.systemd}/bin/busctl --user list | grep -q org.freedesktop.Notifications'";
+      ExecCondition = "${pkgs.bash}/bin/bash -lc 'test -n \"$WAYLAND_DISPLAY\" -a -n \"$SWAYSOCK\" && ! ${pkgs.systemd}/bin/busctl --user list | grep -q org.freedesktop.Notifications'";
       ExecStart = "${pkgs.mako}/bin/mako";
       Restart = "on-failure";
     };
     Install = {
-      WantedBy = [ "sway-session.target" ];
+      WantedBy = [ "graphical-session.target" ];
     };
   };
   home.file.".config/mako/config".text = ''

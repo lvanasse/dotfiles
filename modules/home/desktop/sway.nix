@@ -42,7 +42,8 @@
           "${mod}+Shift+d" = "exec rofi-run-only";
           "${mod}+Shift+q" = "kill";
           "${mod}+Shift+c" = "reload";
-          "${mod}+Shift+r" = "restart";
+          "${mod}+Shift+r" = "reload";
+          "Ctrl+${mod}+r" = "restart";
           "${mod}+Shift+e" = "exec swaymsg exit";
 
           # Window state
@@ -126,6 +127,10 @@
     };
 
     extraConfig = ''
+      # Make Sway titlebars thinner (reduce vertical/horizontal padding)
+      # Keep font size; just tighten the chrome a bit
+      titlebar_padding 1 4
+
       # Displays (from sway-export-outputs)
       output DVI-D-1 mode 1920x1080@60Hz
       output DVI-D-1 pos 0 1080

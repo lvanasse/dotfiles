@@ -6,6 +6,8 @@ _: {
     # Starship configuration in TOML format
     # This recreates the oh-my-zsh minimal theme
     settings = {
+      # Avoid an extra blank line before the prompt
+      add_newline = false;
       # Global format - defines the overall prompt structure
       # Show directory, then branch (with its own brackets), dirty marker, and prompt char
       format = "$directory$git_branch$git_status$character";

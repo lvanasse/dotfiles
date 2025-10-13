@@ -14,6 +14,7 @@ in
 {
   imports = [
     ./core.nix
+    ./desktop/plasma.nix
     ./programs
     ./packages
   ]

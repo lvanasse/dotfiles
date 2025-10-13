@@ -85,17 +85,17 @@
         font-size: 12px;
       }
       window#waybar {
-        background: rgba(24, 24, 27, 0.85);
-        color: #e5e7eb; /* gray-200 */
+        background: rgba(29, 32, 33, 0.92); /* #1d2021 */
+        color: #ebdbb2; /* gruvbox fg */
       }
       #workspaces button {
         padding: 0 6px;
-        color: #a1a1aa; /* gray-400 */
+        color: #a89984; /* gruvbox gray */
         background: transparent;
       }
       #workspaces button.active {
-        color: #ffffff;
-        background: rgba(255, 255, 255, 0.08);
+        color: #fbf1c7;
+        background: rgba(60, 56, 54, 0.9); /* #3c3836 */
       }
       #battery, #network, #clock, #tray, #custom-weather {
         padding: 0 10px;

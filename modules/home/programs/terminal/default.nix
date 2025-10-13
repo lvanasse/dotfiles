@@ -3,5 +3,6 @@ _: {
   imports = [
     ./fish.nix
     ./starship.nix
+    ./wezterm.nix
   ];
 }

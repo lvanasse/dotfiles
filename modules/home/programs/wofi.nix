@@ -20,19 +20,20 @@ _: {
     window {
       margin: 0px;
       border: none;
-      background-color: rgba(24,24,27,0.96);
-      color: #e5e7eb;
+      background-color: rgba(29,32,33,0.96); /* #1d2021 */
+      color: #ebdbb2;
     }
     #input {
       margin: 0px;
       padding: 6px 10px;
       border: none;
-      background: rgba(255,255,255,0.08);
+      background: rgba(60,56,54,0.9); /* #3c3836 */
+      color: #ebdbb2;
     }
     #outer-box { padding: 0; }
     #inner-box { padding: 4px 6px; }
     #scroll { margin: 0; }
-    #text { padding: 4px 8px; }
-    #entry:selected { background: rgba(255,255,255,0.12); }
+    #text { padding: 4px 8px; color: #ebdbb2; }
+    #entry:selected { background: rgba(60,56,54,0.9); }
   '';
 }

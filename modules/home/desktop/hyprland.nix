@@ -29,6 +29,9 @@
         gaps_out = 0;
         border_size = 2;
         layout = "dwindle";
+        # Gruvbox Dark Hard borders
+        "col.active_border" = "rgb(fabd2f)"; # yellow
+        "col.inactive_border" = "rgb(3c3836)"; # gray1
       };
       decoration = {
         rounding = 0;

@@ -16,7 +16,7 @@
     /* Gruvbox Dark Hard - minimal, valid properties */
     * {
       background-color: #1d2021ff;
-      text-color: #ebdbb2ff;
+      text-color: #ffffffff;
       border-color: #3c3836ff;
     }
 
@@ -31,7 +31,7 @@
     inputbar {
       padding: 6px 10px;
       background-color: #3c3836ff;
-      text-color: #ebdbb2ff;
+      text-color: #ffffffff;
       border: 0px;
     }
 
@@ -46,12 +46,12 @@
     element {
       padding: 4px 8px;
       background-color: transparent;
-      text-color: #ebdbb2ff;
+      text-color: #ffffffff;
     }
 
     element selected {
       background-color: #3c3836ff;
-      text-color: #fbf1c7ff;
+      text-color: #ffffffff;
     }
 
     scrollbar {

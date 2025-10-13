@@ -45,7 +45,8 @@
       "codium.terminalBlockedCommands" = [ ];
       "workbench.iconTheme" = "vscode-icons";
       "workbench.colorTheme" = "Gruvbox Dark Hard";
-      "sonarlint.pathToNodeExecutable" = "${pkgs.nodejs}";
+      # Ensure SonarLint uses a recent Node.js binary
+      "sonarlint.pathToNodeExecutable" = "${pkgs.nodejs}/bin/node";
       "sonarlint.ls.javaHome" = "${pkgs.openjdk21}";
       "sonarlint.disableTelemetry" = true;
       "sonarlint.rules" = { };

@@ -3,6 +3,8 @@
   imports = [
     ./hardware-configuration.nix
     ../../modules/nixos
+    # Enable Hyprland on laptop as well (alongside KDE)
+    ../../modules/nixos/desktop/hyprland.nix
   ];
 
   # Set hostname

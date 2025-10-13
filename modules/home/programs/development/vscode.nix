@@ -27,6 +27,7 @@
       jeff-hykin.better-cpp-syntax
       mkhl.direnv
       jebbs.plantuml
+      openai.chatgpt
     ];
     profiles.default.userSettings = {
       "git.autofetch" = true;

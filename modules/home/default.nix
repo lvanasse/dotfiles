@@ -15,6 +15,7 @@ in
   imports = [
     ./core.nix
     ./desktop/plasma.nix
+    ./desktop/hyprland.nix
     ./programs
     ./packages
   ]

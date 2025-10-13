@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 {
   wayland.windowManager.sway = {
     enable = true;
@@ -9,10 +14,20 @@
       modifier = "Mod4";
       terminal = "wezterm";
 
-      # Start background and tray (Waybar handled by systemd user service)
+      # Start background, tray, and Waybar
       startup = [
-        { command = "swaybg -i ${config.home.homeDirectory}/.local/share/wallpapers/13-Ventura-Dark.jpg -m fill"; always = true; }
-        { command = "nm-applet --indicator"; always = true; }
+        {
+          command = "swaybg -i ${config.home.homeDirectory}/.local/share/wallpapers/13-Ventura-Dark.jpg -m fill";
+          always = true;
+        }
+        {
+          command = "nm-applet --indicator";
+          always = true;
+        }
+        {
+          command = "waybar -c ${config.home.homeDirectory}/.config/waybar/config-sway.jsonc -s ${config.home.homeDirectory}/.config/waybar/style-sway.css";
+          always = true;
+        }
       ];
 
       # Keyboard: US International with dead keys
@@ -22,8 +37,16 @@
           xkb_variant = "intl";
         };
       };
-      fonts = { names = [ "Inter" ]; size = 11.0; };
-      gaps = { inner = 0; outer = 0; smartBorders = "on"; smartGaps = false; };
+      fonts = {
+        names = [ "Inter" ];
+        size = 8.0;
+      };
+      gaps = {
+        inner = 0;
+        outer = 0;
+        smartBorders = "on";
+        smartGaps = false;
+      };
       assigns = { };
       bars = [ ]; # use waybar
       window = {
@@ -44,7 +67,7 @@
           "${mod}+Shift+c" = "reload";
           "${mod}+Shift+r" = "reload";
           "Ctrl+${mod}+r" = "restart";
-          "${mod}+Shift+e" = "exec swaymsg exit";
+          "${mod}+Shift+e" = "exec swaynag -t warning -m 'Exit Sway?' -b 'Yes, exit' 'swaymsg exit'";
 
           # Window state
           "${mod}+f" = "fullscreen toggle";
@@ -59,11 +82,13 @@
           "${mod}+Right" = "focus right";
 
           # Focus movement (vim + i3-style)
-          "${mod}+h" = "focus left";
           "${mod}+j" = "focus down";
           "${mod}+k" = "focus up";
           "${mod}+l" = "focus right";
-          "${mod}+semicolon" = "focus right";
+
+          # Split orientation (i3-style)
+          "${mod}+h" = "split h";
+          "${mod}+v" = "split v";
 
           # Move windows
           "${mod}+Shift+Left" = "move left";
@@ -119,9 +144,20 @@
 
       assigns = {
         # Workspace assignments (i3-inspired)
-        "10" = [ { class = "Pavucontrol"; } { class = "pavucontrol"; } ];
-        "11" = [ { app_id = "discord"; } { app_id = "vesktop"; } { class = "discord"; } ];
-        "9" = [ { class = "Slack"; } { app_id = "Slack"; } { class = "Thunderbird"; } ];
+        "10" = [
+          { class = "Pavucontrol"; }
+          { class = "pavucontrol"; }
+        ];
+        "11" = [
+          { app_id = "discord"; }
+          { app_id = "vesktop"; }
+          { class = "discord"; }
+        ];
+        "9" = [
+          { class = "Slack"; }
+          { app_id = "Slack"; }
+          { class = "Thunderbird"; }
+        ];
         "8" = [ { class = "Pidgin"; } ];
       };
     };
@@ -141,6 +177,13 @@
       output HDMI-A-1 pos 1080 1080
       output DP-2 mode 2560x1080@60Hz
       output DP-2 pos 440 0
+
+      # Treat HDMI-A-1 as the main display by assigning primary workspaces to it
+      workspace number 1 output HDMI-A-1
+      workspace number 2 output HDMI-A-1
+      workspace number 3 output HDMI-A-1
+      workspace number 4 output HDMI-A-1
+      workspace number 5 output HDMI-A-1
 
       # Workspaces 11–20 using Ctrl modifier
       bindsym Ctrl+Mod4+1 workspace number 11

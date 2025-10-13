@@ -1,5 +1,5 @@
-# Waybar (minimal) for Hyprland
-{ lib, pkgs, ... }:
+# Waybar (Sway-focused)
+{ config, lib, pkgs, ... }:
 let
   datetimeScript = pkgs.writeShellScript "waybar-datetime" ''
     date_local=$(date +%Y-%m-%d\ %H:%M:%S)
@@ -10,17 +10,17 @@ in
 {
   programs.waybar = {
     enable = true;
-    # Start Waybar via Hyprland's exec-once instead of a user service.
-    # This avoids target mismatches and ensures it only runs under Hyprland.
+    # Managed via a custom systemd user service (below) so it only runs
+    # under Sway sessions and not under KDE/other DEs.
     systemd.enable = false;
 
     settings = [
       {
         layer = "top";
-        position = "top";
+        position = "bottom";
         height = 28;
         margin = "0";
-        modules-left = [ "hyprland/workspaces" ];
+        modules-left = [ "sway/workspaces" ];
         modules-center = [ ];
         modules-right = [
           "battery"
@@ -29,7 +29,7 @@ in
           "tray"
         ];
 
-        "hyprland/workspaces" = {
+        "sway/workspaces" = {
           format = "{name}";
           sort-by-number = true;
           on-click = "activate";
@@ -99,6 +99,42 @@ in
       #battery, #tray, #custom-weather, #custom-datetime {
         padding: 0 10px;
       }
+      /* Add spacing between individual tray icons */
+      #tray > .passive, #tray > .active, #tray > .needs-attention {
+        padding: 0 5px;
+      }
     '';
+  };
+
+  # Start Waybar only during a Sway session.
+  # Avoids running under KDE Plasma or other sessions.
+  systemd.user.services.waybar = {
+    Unit = {
+      Description = "Waybar status bar";
+      PartOf = [ "sway-session.target" ];
+      After = [ "sway-session.target" ];
+    };
+    Service = {
+      # Ensure we're in a Wayland session
+      ExecCondition = "${pkgs.bash}/bin/bash -lc 'test -n \"$WAYLAND_DISPLAY\"'";
+      ExecStart = "${pkgs.bash}/bin/bash";
+      ExecStartArgs = [
+        "-lc"
+        ''
+          if [ -n "$SWAYSOCK" ]; then
+            exec ${pkgs.waybar}/bin/waybar \
+              -c ${config.home.homeDirectory}/.config/waybar/config-sway.jsonc \
+              -s ${config.home.homeDirectory}/.config/waybar/style-sway.css
+          else
+            exec ${pkgs.waybar}/bin/waybar
+          fi
+        ''
+      ];
+      Restart = "on-failure";
+      RestartSec = 1;
+    };
+    Install = {
+      WantedBy = [ "sway-session.target" ];
+    };
   };
 }

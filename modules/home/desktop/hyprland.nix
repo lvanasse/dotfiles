@@ -1,10 +1,13 @@
-{ config, ... }:
+{ config, pkgs, ... }:
 {
   # Hyprland (Home Manager). Scoped to hyprland-session via systemd integration
   wayland.windowManager.hyprland = {
     enable = true;
     xwayland.enable = true;
     systemd.enable = true; # ensures Hyprland user services don't run under KDE
+
+    # Per-window title bars via hyprbars plugin
+    plugins = [ pkgs.hyprlandPlugins.hyprbars ];
 
     # Sway-like defaults with minimal frills
     settings = {
@@ -55,15 +58,21 @@
       exec-once = [
         "swaybg -i ${config.home.homeDirectory}/.local/share/wallpapers/13-Ventura-Dark.jpg -m fill"
         "nm-applet --indicator"
-        "waybar"
-        "mako"
+        "blueman-applet"
+        "pavucontrol"
+        "discord"
+        # Name a couple workspaces like old i3
+        "hyprctl dispatch renameworkspace 10 '10: Music'"
+        "hyprctl dispatch renameworkspace 11 '11: Discord'"
       ];
 
       # Keybindings (i3-like)
       bind = [
         # Core actions
         "$mod, Return, exec, wezterm"
-        "$mod, D, exec, wofi --show drun"
+        # Rofi: dmenu-like combi (apps + commands) with prefix matching
+        "$mod, D, exec, rofi-combi"
+        "$mod SHIFT, D, exec, rofi-run-only"
         "$mod SHIFT, Q, killactive,"
         "$mod SHIFT, C, exec, hyprctl reload"
         "$mod SHIFT, R, exec, hyprctl reload"
@@ -84,6 +93,11 @@
         "$mod, J, movefocus, d"
         "$mod, K, movefocus, u"
         "$mod, L, movefocus, r"
+        # Focus movement (i3-style: j k l ;)
+        "$mod, j, movefocus, l"
+        "$mod, k, movefocus, d"
+        "$mod, l, movefocus, u"
+        "$mod, semicolon, movefocus, r"
 
         # Move windows (Shift + arrows)
         "$mod SHIFT, left, movewindow, l"
@@ -96,6 +110,16 @@
         "$mod SHIFT, J, movewindow, d"
         "$mod SHIFT, K, movewindow, u"
         "$mod SHIFT, L, movewindow, r"
+        # Move windows (Shift + i3-style: j k l ;)
+        "$mod SHIFT, j, movewindow, l"
+        "$mod SHIFT, k, movewindow, d"
+        "$mod SHIFT, l, movewindow, u"
+        "$mod SHIFT, semicolon, movewindow, r"
+
+        # Tab-like groups (Hyprland groups) similar to i3 tabbed/stacking
+        "$mod, w, togglegroup,"
+        "$mod, a, changegroupactive, b"
+        "$mod, s, changegroupactive, f"
 
         # Workspaces 1-10 (0 = 10)
         "$mod, 1, workspace, 1"
@@ -151,12 +175,28 @@
 
         # Resize mode (i3-like): enter submap
         "$mod, R, submap, resize"
+
+        # Media keys (modern tools)
+        ", XF86AudioRaiseVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+"
+        ", XF86AudioLowerVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"
+        ", XF86AudioMute, exec, wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
+        ", XF86MonBrightnessUp, exec, brightnessctl set +5%"
+        ", XF86MonBrightnessDown, exec, brightnessctl set 5%-"
       ];
 
       # Mouse: Sway's floating modifier behavior
       bindm = [
         "$mod, mouse:272, movewindow"
         "$mod, mouse:273, resizewindow"
+      ];
+
+      # App → workspace assignments (i3-inspired)
+      windowrulev2 = [
+        "workspace 10, class:^(Pavucontrol|pavucontrol)$"
+        "workspace 11, class:^(discord|Vesktop)$"
+        "workspace 9, class:^(Slack)$"
+        "workspace 9, class:^(Thunderbird)$"
+        "workspace 8, class:^(Pidgin)$"
       ];
     };
     
@@ -179,6 +219,12 @@
       bind=,return,submap,reset
       # back to default submap
       submap=reset
+
+      # hyprbars plugin: small title bars
+      plugin:hyprbars {
+        bar_height = 24
+        bar_title_enabled = true
+      }
     '';
   };
 }

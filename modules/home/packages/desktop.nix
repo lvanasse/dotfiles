@@ -75,6 +75,8 @@
     polkit
     pavucontrol
     networkmanagerapplet
+    pamixer
+    brightnessctl
     arandr
 
     # Wayland tools
@@ -83,9 +85,10 @@
     swaybg
     swayidle
     nwg-displays
-    rofi
+    rofi-wayland
     wofi
     mako
+    blueman
 
     # System info
     lm_sensors

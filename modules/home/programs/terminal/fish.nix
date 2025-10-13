@@ -68,6 +68,21 @@ _: {
 
     # Functions
     functions = {
+      # Add bash-like `sudo !!` support for fish
+      sudo = {
+        wraps = "sudo";
+        description = "Run last command with sudo when invoked as `sudo !!`";
+        body = ''
+          if test (count $argv) -eq 1; and test "$argv[1]" = "!!"
+            set -l last (history | head -n1)
+            if test -n "$last"
+              eval command sudo $last
+              return $status
+            end
+          end
+          command sudo $argv
+        '';
+      };
 
       # Custom function to show git status in a nice way
       gitinfo = {

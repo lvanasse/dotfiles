@@ -15,7 +15,7 @@ in
   imports = [
     ./core.nix
     ./desktop/plasma.nix
-    ./desktop/hyprland.nix
+    ./desktop/sway.nix
     ./programs
     ./packages
   ]

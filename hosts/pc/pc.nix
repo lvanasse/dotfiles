@@ -9,8 +9,8 @@
   imports = [
     ./hardware-configuration.nix
     ../../modules/nixos
-    # Enable Hyprland on PC only (keep KDE available too)
-    ../../modules/nixos/desktop/hyprland.nix
+    # Also offer Sway as an alternative Wayland session
+    ../../modules/nixos/desktop/sway.nix
   ];
 
   # Set hostname

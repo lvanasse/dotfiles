@@ -15,6 +15,7 @@
 
     sessionVariables = {
       NPM_CONFIG_PREFIX = "${config.home.homeDirectory}/.npm-global";
+      NH_FLAKE = "${config.home.homeDirectory}/Code/personal/dotfiles";
     };
   };
 }

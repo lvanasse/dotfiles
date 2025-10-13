@@ -22,6 +22,7 @@
         use_fancy_tab_bar = false,
         hide_tab_bar_if_only_one_tab = true,
         window_decorations = 'RESIZE',
+        copy_on_select = true,
 
         -- Gruvbox Dark Hard palette
         colors = {

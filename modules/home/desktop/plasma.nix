@@ -27,6 +27,12 @@
       edgeBarrier = 0;
       cornerBarrier = false;
     };
+
+    # Default terminal emulator (applies to "Open in Terminal" etc.)
+    configFile."kdeglobals"."General" = {
+      TerminalApplication = "wezterm";
+      TerminalService = "org.wezfurlong.wezterm.desktop";
+    };
   };
 
   # Ensure the wallpaper file is present in the user's home

@@ -10,6 +10,7 @@
       liberation_ttf
       fira-code
       fira-code-symbols
+      source-code-pro
       mplus-outline-fonts.githubRelease
       dina-font
       proggyfonts

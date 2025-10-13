@@ -19,7 +19,7 @@ in
     "modules-right" = [ "battery" "custom/weather" "custom/datetime" "tray" ];
 
     "sway/workspaces" = {
-      format = "{name}";
+      format = "{index}"; # always show numeric index (e.g., 1)
       "sort-by-number" = true;
       "on-click" = "activate";
     };

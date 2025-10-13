@@ -53,6 +53,18 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Emacs overlay for up-to-date Emacs and MELPA packages
+    emacs-overlay = {
+      url = "github:nix-community/emacs-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # Editor: Spacemacs pinned via flake input for reproducibility
+    spacemacs = {
+      url = "github:syl20bnr/spacemacs?ref=develop";
+      flake = false;
+    };
+
     # Secrets management
     agenix = {
       url = "github:ryantm/agenix";
@@ -154,12 +166,16 @@
               overlays = [
                 qbittorrent510
                 inputs.nix-vscode-extensions.overlays.default
+                inputs.emacs-overlay.overlays.default
               ];
             };
 
             laptop = mkHost {
               hostname = "laptop";
-              overlays = [ inputs.nix-vscode-extensions.overlays.default ];
+              overlays = [
+                inputs.nix-vscode-extensions.overlays.default
+                inputs.emacs-overlay.overlays.default
+              ];
             };
           };
 
@@ -172,7 +188,10 @@
                   pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
                   modules = [
                     {
-                      nixpkgs.overlays = [ inputs.nix-vscode-extensions.overlays.default ];
+                      nixpkgs.overlays = [
+                        inputs.nix-vscode-extensions.overlays.default
+                        inputs.emacs-overlay.overlays.default
+                      ];
                       nixpkgs.config.allowUnfree = true;
                     }
                     ./modules/home

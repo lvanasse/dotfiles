@@ -1,9 +1,5 @@
 # Core Home Manager configuration
-{
-  config,
-  username ? "ludovic",
-  ...
-}:
+{ config, pkgs, username ? "ludovic", ... }:
 {
   nixpkgs.config.allowUnfree = true;
 
@@ -16,6 +12,9 @@
     sessionVariables = {
       NPM_CONFIG_PREFIX = "${config.home.homeDirectory}/.npm-global";
       NH_FLAKE = "${config.home.homeDirectory}/Code/personal/dotfiles";
+      # Ensure TLS inside Emacs and other tools works for HTTPS package archives
+      SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
+      SSL_CERT_DIR = "${pkgs.cacert}/etc/ssl/certs";
     };
   };
 }

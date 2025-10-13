@@ -63,7 +63,7 @@
       bind = [
         # Core actions
         "$mod, Return, exec, wezterm"
-        "$mod, D, exec, wofi --show drun,run"
+        "$mod, D, exec, wofi --show drun"
         "$mod SHIFT, Q, killactive,"
         "$mod SHIFT, C, exec, hyprctl reload"
         "$mod SHIFT, R, exec, hyprctl reload"

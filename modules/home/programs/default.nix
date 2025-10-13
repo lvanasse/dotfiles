@@ -6,5 +6,6 @@ _: {
     ./waybar.nix
     ./wofi.nix
     ./mako.nix
+    ./hypr-tools.nix
   ];
 }

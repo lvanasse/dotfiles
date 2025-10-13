@@ -1,5 +1,12 @@
 # Waybar (minimal) for Hyprland
-{ lib, ... }:
+{ lib, pkgs, ... }:
+let
+  datetimeScript = pkgs.writeShellScript "waybar-datetime" ''
+    date_local=$(date +%Y-%m-%d\ %H:%M:%S)
+    date_utc=$(date -u +%H:%M:%S)
+    printf "%s | %s" "$date_local" "$date_utc"
+  '';
+in
 {
   programs.waybar = {
     enable = true;
@@ -16,11 +23,9 @@
         modules-left = [ "hyprland/workspaces" ];
         modules-center = [ ];
         modules-right = [
-          "network"
           "battery"
           "custom/weather"
-          "clock#local"
-          "clock#utc"
+          "custom/datetime"
           "tray"
         ];
 
@@ -30,23 +35,10 @@
           on-click = "activate";
         };
 
-        "clock#local" = {
+        "custom/datetime" = {
           interval = 5;
-          format = "{:%Y-%m-%d %H:%M:%S}";
-          tooltip = false;
-        };
-
-        "clock#utc" = {
-          interval = 5;
-          timezone = "UTC";
-          format = "UTC {:%Y-%m-%d %H:%M:%S}";
-          tooltip = false;
-        };
-
-        network = {
-          format-wifi = "  {essid}";
-          format-ethernet = "󰈁  {ifname}";
-          format-disconnected = "";
+          exec = "${datetimeScript}";
+          format = "{}";
           tooltip = false;
         };
 
@@ -104,7 +96,7 @@
         color: #fbf1c7;
         background: rgba(60, 56, 54, 0.9); /* #3c3836 */
       }
-      #battery, #network, #clock, #tray, #custom-weather {
+      #battery, #tray, #custom-weather, #custom-datetime {
         padding: 0 10px;
       }
     '';

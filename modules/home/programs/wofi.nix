@@ -2,7 +2,7 @@
 _: {
   home.file.".config/wofi/config".text = ''
     mode=drun
-    show=drun,run
+    show=drun
     location=top
     anchor=top
     width=100%

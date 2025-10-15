@@ -11,12 +11,6 @@ _: {
       # Add npm global to PATH
       set -gx PATH $HOME/.npm-global/bin $PATH
 
-      # Initialize Starship prompt
-      starship init fish | source
-
-      # Clear starship cache if needed (for config changes)
-      # starship cache clear
-
       # Make autocomplete/suggestions and arguments less colorful
       # - Keep arguments neutral white instead of blue
       # - Show autosuggestions as dim gray

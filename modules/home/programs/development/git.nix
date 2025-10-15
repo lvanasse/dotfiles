@@ -62,8 +62,16 @@
         identitiesOnly = true;
       };
 
-      # Work Bitbucket account
+      # Work Bitbucket account via alias
       "bitbucket-work" = {
+        hostname = "bitbucket.org";
+        user = "git";
+        identityFile = "~/.ssh/id_ed25519_work";
+        identitiesOnly = true;
+      };
+
+      # Work Bitbucket account via canonical host (for initial clones)
+      "bitbucket.org" = {
         hostname = "bitbucket.org";
         user = "git";
         identityFile = "~/.ssh/id_ed25519_work";

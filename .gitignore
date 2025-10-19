@@ -2,3 +2,4 @@ tmp/
 .vscode/
 .qodo/
 .cache/
+managed_context/

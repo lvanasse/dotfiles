@@ -1,5 +1,10 @@
-# Rofi configuration themed as Gruvbox Dark Hard
-{ ... }:
+# Rofi configuration using shared gruvbox-dark-hard palette
+{ config, ... }:
+let
+  palette = config.theme.palette;
+  # Helper: append 0xFF alpha for full opacity
+  opa = c: "${c}ff";
+in
 {
   home.file.".config/rofi/config.rasi".text = ''
     configuration {
@@ -13,11 +18,11 @@
       sort: true;
     }
 
-    /* Gruvbox Dark Hard - minimal, valid properties */
+    /* Gruvbox Dark Hard via shared theme */
     * {
-      background-color: #1d2021ff;
-      text-color: #ffffffff;
-      border-color: #3c3836ff;
+      background-color: ${opa palette.dark0_hard};
+      text-color: ${opa palette.light1};
+      border-color: ${opa palette.dark1};
     }
 
     window {
@@ -25,13 +30,13 @@
       width: 100%;
       border: 0px;
       padding: 6px;
-      background-color: #1d2021ff;
+      background-color: ${opa palette.dark0_hard};
     }
 
     inputbar {
       padding: 6px 10px;
-      background-color: #3c3836ff;
-      text-color: #ffffffff;
+      background-color: ${opa palette.dark1};
+      text-color: ${opa palette.light1};
       border: 0px;
     }
 
@@ -46,17 +51,19 @@
     element {
       padding: 4px 8px;
       background-color: transparent;
-      text-color: #ffffffff;
+      text-color: ${opa palette.light1};
     }
 
     element selected {
-      background-color: #3c3836ff;
-      text-color: #ffffffff;
+      background-color: ${opa palette.dark1};
+      text-color: ${opa palette.light1};
+      border: 2px;
+      border-color: ${opa palette.bright_orange};
     }
 
     scrollbar {
       handle-width: 6px;
-      handle-color: #504945ff;
+      handle-color: ${opa palette.dark2};
       border: 0px;
     }
   '';

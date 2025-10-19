@@ -61,7 +61,6 @@
     unrar
 
     # Image tools
-    flameshot
     scrot
     wl-clipboard
     sway-contrib.grimshot
@@ -75,6 +74,7 @@
 
     # System tools
     wget
+    libnotify # provides notify-send
     zenity
     dos2unix
     polkit

@@ -22,6 +22,9 @@
     defaultEditor = true;
   };
 
+  # Disable legacy command-not-found (uses channels DB and is noisy)
+  programs.command-not-found.enable = false;
+
   programs.java = {
     enable = true;
     package = pkgs.openjdk21;

@@ -62,6 +62,25 @@ _: {
 
     # Functions
     functions = {
+      # Pretty command-not-found hook with helpful Nix hints
+      fish_command_not_found = {
+        description = "Pretty command-not-found with Nix hints";
+        body = ''
+          set -l cmd $argv[1]
+          set -l bold (set_color --bold)
+          set -l red (set_color red)
+          set -l normal (set_color normal)
+
+          echo "$bold$red✗$normal Command not found:$bold $cmd$normal" 1>&2
+          echo "Tips:" 1>&2
+          echo "  • Search in nixpkgs:  nix search nixpkgs $cmd" 1>&2
+          echo "  • Try a package:      nix run nixpkgs#<package> -- <args>" 1>&2
+          echo "  • In a shell:         nix shell nixpkgs#<package> -c <command>" 1>&2
+
+          # Return standard 127 not-found code
+          return 127
+        '';
+      };
       # Add bash-like `sudo !!` support for fish
       sudo = {
         wraps = "sudo";

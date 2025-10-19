@@ -21,11 +21,11 @@
       xdg-desktop-portal-wlr
       xdg-desktop-portal-gtk
     ];
-    # Prefer GTK backend first for broader interface coverage (FileChooser, Settings),
-    # then fall back to wlr for screenshot/screencast under Sway.
+    # Prefer wlr backend first under Sway to avoid portal startup timeouts,
+    # then fall back to GTK for file chooser and generic portals.
     config = {
       sway = {
-        default = lib.mkForce "gtk;wlr";
+        default = lib.mkForce "wlr;gtk";
       };
     };
   };

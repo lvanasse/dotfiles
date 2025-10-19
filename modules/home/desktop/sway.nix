@@ -28,6 +28,11 @@
           command = "waybar -c ${config.home.homeDirectory}/.config/waybar/config-sway.jsonc -s ${config.home.homeDirectory}/.config/waybar/style-sway.css";
           always = true;
         }
+        # Autostart chat apps (Slack + Discord/Vesktop) at login
+        {
+          command = "start-chat-apps";
+          always = false;
+        }
       ];
 
       # Keyboard: US International with dead keys
@@ -50,9 +55,13 @@
       assigns = { };
       bars = [ ]; # use waybar
       window = {
+        # Keep compositor-drawn titlebars, but no surrounding border
         titlebar = true;
-        border = 2;
+        border = 0;
       };
+
+      # Colors sourced from shared theme (Gruvbox Dark Hard)
+      colors = config.theme.sway;
 
       keybindings =
         let
@@ -65,7 +74,9 @@
           "${mod}+Shift+d" = "exec rofi-run-only";
           "${mod}+Shift+q" = "kill";
           "${mod}+Shift+c" = "reload";
-          "${mod}+Shift+r" = "reload";
+          # Reload Sway config and restart Waybar to pick up changes
+          "${mod}+Shift+r" =
+            "exec ${pkgs.bash}/bin/bash -lc '${pkgs.procps}/bin/pkill -x waybar >/dev/null 2>&1 || true; swaymsg reload; ${pkgs.util-linux}/bin/setsid -f ${pkgs.waybar}/bin/waybar -c ${config.home.homeDirectory}/.config/waybar/config-sway.jsonc -s ${config.home.homeDirectory}/.config/waybar/style-sway.css >/dev/null 2>&1'";
           "Ctrl+${mod}+r" = "restart";
           "${mod}+Shift+e" = "exec swaynag -t warning -m 'Exit Sway?' -b 'Yes, exit' 'swaymsg exit'";
 
@@ -108,6 +119,13 @@
           "XF86MonBrightnessUp" = "exec brightnessctl set +5%";
           "XF86MonBrightnessDown" = "exec brightnessctl set 5%-";
 
+          # Screenshots
+          "Print" = "exec screenshot copy area";
+          "Shift+Print" = "exec screenshot save area";
+          "Ctrl+Print" = "exec screenshot copy output";
+          # GUI screenshot with selection + annotation (grim + slurp + swappy)
+          "${mod}+Print" = "exec screenshot-annotate";
+
           # Layouts (i3-like)
           "${mod}+w" = "layout tabbed";
           "${mod}+s" = "layout stacking";
@@ -143,22 +161,26 @@
         };
 
       assigns = {
-        # Workspace assignments (i3-inspired)
+        # Workspace assignments
+        # 10: Chat (Slack, Discord/Vesktop) + audio (Pavucontrol)
         "10" = [
+          { app_id = "vesktop"; }
+          { class = "discord"; }
+          { app_id = "discord"; }
+          { class = "Slack"; }
+          { app_id = "Slack"; }
           { class = "Pavucontrol"; }
           { class = "pavucontrol"; }
         ];
-        "11" = [
-          { app_id = "discord"; }
-          { app_id = "vesktop"; }
-          { class = "discord"; }
-          { class = "Slack"; }
-          { app_id = "Slack"; }
-        ];
-        "9" = [
 
+        # 9: qBittorrent (and mail if running)
+        "9" = [
+          { class = "qBittorrent"; }
+          { app_id = "org.qbittorrent.qBittorrent"; }
           { class = "Thunderbird"; }
         ];
+
+        # 8: IM
         "8" = [ { class = "Pidgin"; } ];
       };
     };
@@ -168,19 +190,9 @@
       # Keep font size; just tighten the chrome a bit
       titlebar_padding 1 4
 
-      # Displays (from sway-export-outputs)
-      output DVI-D-1 mode 1920x1080@60Hz
-      output DVI-D-1 pos 0 1080
-      output DVI-D-1 transform 90
-      output HDMI-A-2 mode 1920x1080@60Hz
-      output HDMI-A-2 pos 3000 1080
-      output HDMI-A-1 mode 1920x1080@60Hz
-      output HDMI-A-1 pos 1080 1080
-      output DP-2 mode 2560x1080@60Hz
-      output DP-2 pos 440 0
-
-      # Treat HDMI-A-1 as the main display by assigning primary workspaces to it
-      workspace 1 output HDMI-A-1
+      # Chat workspace: auto-tab layout when windows appear on workspace 10
+      # This avoids focus flashes by not forcing a workspace switch at startup
+      for_window [workspace="10"] layout tabbed
 
       # Workspaces 11–20 using Ctrl modifier
       bindsym Ctrl+Mod4+1 workspace 11

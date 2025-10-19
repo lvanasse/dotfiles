@@ -1,5 +1,11 @@
 # Development tools and environment
-{ config, pkgs, lib, inputs, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  inputs,
+  ...
+}:
 {
   # Use GNU Emacs with Spacemacs configuration
   programs.emacs = {
@@ -25,6 +31,8 @@
       epkgs.treemacs-evil
       epkgs.treemacs-projectile
       epkgs.gruvbox-theme
+      # Nix syntax highlighting
+      epkgs.nix-mode
     ];
   };
 
@@ -47,6 +55,8 @@
          treemacs
          ;; Choose one completion framework (ivy/helm/vertico). Default to ivy.
         ivy
+        ;; Nix language support (nix-mode)
+        nix
        )
         dotspacemacs-additional-packages '(gruvbox-theme)
         dotspacemacs-excluded-packages '(forge)))

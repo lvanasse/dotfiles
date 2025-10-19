@@ -15,6 +15,7 @@
     jellyfin-media-player
     vlc
     spotify
+    kooha
 
     # Office and productivity
     onlyoffice-desktopeditors
@@ -62,6 +63,10 @@
     # Image tools
     flameshot
     scrot
+    wl-clipboard
+    sway-contrib.grimshot
+    swappy
+    ksnip
     imagemagick_light
     grim
     slurp
@@ -84,6 +89,7 @@
     wdisplays
     swaybg
     swayidle
+    swaylock
     nwg-displays
     rofi-wayland
     wofi

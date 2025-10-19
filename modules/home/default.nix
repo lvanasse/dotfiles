@@ -14,6 +14,7 @@ in
 {
   imports = [
     ./core.nix
+    ./theme/gruvbox-dark-hard.nix
     ./desktop/plasma.nix
     ./desktop/sway.nix
     ./programs

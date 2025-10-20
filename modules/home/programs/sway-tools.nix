@@ -6,6 +6,7 @@
       #!/usr/bin/env bash
       set -euo pipefail
       exec ${pkgs.rofi-wayland}/bin/rofi \
+        -config "$HOME/.config/rofi/config.rasi" \
         -show combi \
         -modi "combi,drun,run" \
         -combi-modi "drun,run" \
@@ -15,6 +16,7 @@
       #!/usr/bin/env bash
       set -euo pipefail
       exec ${pkgs.rofi-wayland}/bin/rofi \
+        -config "$HOME/.config/rofi/config.rasi" \
         -show run \
         -modi "run,drun" \
         -matching prefix
@@ -94,9 +96,11 @@
 
             have() { command -v "$1" >/dev/null 2>&1; }
 
-            # Menu runner: use rofi-wayland dmenu like other launchers
+            # Menu runner: use rofi-wayland dmenu with our config
             dmenu() {
-              "${pkgs.rofi-wayland}/bin/rofi" -dmenu -p "Power" -matching prefix
+              "${pkgs.rofi-wayland}/bin/rofi" \
+                -config "$HOME/.config/rofi/config.rasi" \
+                -dmenu -p "Power" -matching prefix
             }
 
             # Build menu entries

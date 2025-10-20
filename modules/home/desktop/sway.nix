@@ -17,7 +17,7 @@
       # Start background, tray, and Waybar
       startup = [
         {
-          command = "swaybg -i ${config.home.homeDirectory}/.local/share/wallpapers/13-Ventura-Dark.jpg -m fill";
+          command = "swaybg -i ${config.home.homeDirectory}/.local/share/wallpapers/1458678242783.jpg -m fill";
           always = true;
         }
         {

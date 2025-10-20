@@ -4,7 +4,7 @@
     enable = true;
     workspace = {
       # Shared wallpaper and theme across hosts
-      wallpaper = "${config.home.homeDirectory}/.local/share/wallpapers/13-Ventura-Dark.jpg";
+      wallpaper = "${config.home.homeDirectory}/.local/share/wallpapers/1458678242783.jpg";
       # Use MacVentura Dark assets installed via KDE Store
       colorScheme = "MacVenturaDark";
       theme = "MacVentura-Dark";
@@ -36,6 +36,6 @@
   };
 
   # Ensure the wallpaper file is present in the user's home
-  home.file.".local/share/wallpapers/13-Ventura-Dark.jpg".source =
-    ../../../wallpapers/13-Ventura-Dark.jpg;
+  home.file.".local/share/wallpapers/1458678242783.jpg".source =
+    ../../../wallpapers/1458678242783.jpg;
 }

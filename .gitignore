@@ -3,3 +3,4 @@ tmp/
 .qodo/
 .cache/
 managed_context/
+test_suite_analysis/metadata.json

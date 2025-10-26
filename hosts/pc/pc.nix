@@ -49,6 +49,9 @@
     ];
   };
 
+  # Required for Sunshine (virtual input device)
+  hardware.uinput.enable = true;
+
   # PC-specific networking
   networking = {
     useNetworkd = true;
@@ -58,7 +61,26 @@
     # Firewall for torrenting
     firewall = {
       enable = true;
-      allowedTCPPorts = [ 59793 ];
+      allowedTCPPorts = [
+        59793
+        47984
+        47985
+        47986
+        47987
+        47988
+        47989
+        47990
+        48010
+      ];
+      allowedUDPPorts = [
+        47984
+        47985
+        47986
+        47987
+        47988
+        47989
+        47990
+      ];
     };
   };
 
@@ -132,6 +154,19 @@
     };
   };
 
+  # Sunshine user service (GameStream host)
+  # On first run, open http://localhost:47990 to finish setup.
+  systemd.user.services.sunshine = {
+    description = "Sunshine GameStream host";
+    wantedBy = [ "graphical-session.target" ];
+    after = [ "graphical-session.target" ];
+    serviceConfig = {
+      ExecStart = "${pkgs.sunshine}/bin/sunshine";
+      Restart = "on-failure";
+      Environment = [ "XDG_RUNTIME_DIR=%t" ];
+    };
+  };
+
   # PC-specific packages
   environment.systemPackages = with pkgs; [
     openvpn3
@@ -146,6 +181,7 @@
     libmpc
     mpfr
     isl
+    sunshine
   ];
 
   # Deploy SSH keys via agenix (system-level) using encrypted files from the

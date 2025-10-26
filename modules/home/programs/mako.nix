@@ -1,5 +1,10 @@
 # Mako notifications
-{ pkgs, lib, config, ... }:
+{
+  pkgs,
+  lib,
+  config,
+  ...
+}:
 let
   palette = config.theme.palette;
   opa = c: "${c}cc"; # add alpha for translucency

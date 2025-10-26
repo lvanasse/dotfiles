@@ -193,6 +193,17 @@
 
       PGREP="${pkgs.procps}/bin/pgrep"
 
+      # Wait briefly for Secret Service to be ready so Slack can persist login
+      # (provided by gnome-keyring). Succeeds quickly if already active.
+      for svc in gnome-keyring-secrets.service gnome-keyring-daemon.service; do
+        for i in {1..20}; do
+          if systemctl --user --quiet is-active "$svc"; then
+            break 2
+          fi
+          sleep 0.25
+        done
+      done
+
       launch_if_missing() {
         local bin="$1"
         if command -v "$bin" >/dev/null 2>&1; then

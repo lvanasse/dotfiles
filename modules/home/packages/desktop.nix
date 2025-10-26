@@ -24,12 +24,14 @@
     gnome-calculator
     bitwarden-desktop
     bitwarden-menu
+    libsecret
 
     # System utilities
     gparted
     popsicle
 
     # KDE applications
+    kdePackages.dolphin
     kdePackages.filelight
     kdePackages.spectacle
     kdePackages.polkit-kde-agent-1

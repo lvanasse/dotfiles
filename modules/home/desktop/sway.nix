@@ -52,7 +52,8 @@
         smartBorders = "on";
         smartGaps = false;
       };
-      assigns = { };
+      # Workspace assignments are defined further below
+      # (keep this empty placeholder removed to avoid duplicate definitions)
       bars = [ ]; # use waybar
       window = {
         # Keep compositor-drawn titlebars, but no surrounding border
@@ -164,11 +165,15 @@
         # Workspace assignments
         # 10: Chat (Slack, Discord/Vesktop) + audio (Pavucontrol)
         "10" = [
+          # Vesktop/Discord (Wayland/Xwayland)
           { app_id = "vesktop"; }
-          { class = "discord"; }
+          { class = "Vesktop"; }
           { app_id = "discord"; }
-          { class = "Slack"; }
+          { class = "discord"; }
+          # Slack (Wayland/Xwayland)
           { app_id = "Slack"; }
+          { class = "Slack"; }
+          # Pavucontrol for quick audio adjustments
           { class = "Pavucontrol"; }
           { class = "pavucontrol"; }
         ];

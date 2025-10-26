@@ -57,6 +57,8 @@
         ivy
         ;; Nix language support (nix-mode)
         nix
+        ;; Email (mu4e)
+        mu4e
        )
         dotspacemacs-additional-packages '(gruvbox-theme)
         dotspacemacs-excluded-packages '(forge)))

@@ -37,7 +37,7 @@ in
     border-size=2
     border-radius=6
     default-timeout=5000
-    background-color=${opa palette.dark0_hard}
+    background-color=${palette.dark0_hard}
     text-color=${palette.light1}
     border-color=${palette.dark1}
     progress-color=over ${palette.blue}

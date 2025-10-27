@@ -33,6 +33,9 @@
       epkgs.gruvbox-theme
       # Nix syntax highlighting
       epkgs.nix-mode
+      # Email: ensure mu4e and notifications are available to Emacs
+      epkgs.mu4e
+      epkgs.mu4e-alert
     ];
   };
 
@@ -58,7 +61,10 @@
         ;; Nix language support (nix-mode)
         nix
         ;; Email (mu4e)
-        mu4e
+        (mu4e :variables
+              mu4e-enable-notifications t
+              mu4e-enable-mode-line t
+              mu4e-use-maildirs-extension t)
        )
         dotspacemacs-additional-packages '(gruvbox-theme)
         dotspacemacs-excluded-packages '(forge)))
@@ -83,7 +89,27 @@
     (defun dotspacemacs/user-config ()
       ;; Ensure Nix-provided Forge is loaded (without ELPA install)
       (with-eval-after-load 'magit
-        (require 'forge)))
+        (require 'forge))
+
+      ;; mu4e basic wiring for Home Manager accounts
+      (with-eval-after-load 'mu4e
+        ;; maildir base from Home Manager accounts
+        (setq mu4e-maildir (expand-file-name "mail" (getenv "HOME")))
+        ;; Use mbsync for getting mail
+        (setq mu4e-get-mail-command "mbsync -a")
+        ;; Avoid indexing too often in-Emacs; rely on systemd timer, but keep manual update
+        (setq mu4e-index-cleanup nil
+              mu4e-index-lazy-check t)
+
+        ;; Notifications via mu4e-alert (libnotify → mako)
+        (require 'mu4e-alert)
+        (mu4e-alert-set-default-style 'libnotify)
+        ;; Only notify for unread, non-trashed mail in INBOX of the primary account
+        ;; Adjust maildir if your account name differs
+        (setq mu4e-alert-interesting-mail-query
+              "flag:unread and not flag:trashed and maildir:/ludovic/INBOX")
+        (mu4e-alert-enable-mode-line-display)
+        (mu4e-alert-enable-notifications)))
   '';
 
   # Provide Spacemacs from flake input (tracked in flake.lock)

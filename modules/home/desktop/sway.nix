@@ -81,6 +81,10 @@
           "Ctrl+${mod}+r" = "restart";
           "${mod}+Shift+e" = "exec swaynag -t warning -m 'Exit Sway?' -b 'Yes, exit' 'swaymsg exit'";
 
+          # Session
+          "${mod}+Shift+x" =
+            "exec ${pkgs.swaylock}/bin/swaylock -f -i ${config.home.homeDirectory}/.local/share/wallpapers/1458678242783.jpg -s fill";
+
           # Window state
           "${mod}+f" = "fullscreen toggle";
           "${mod}+Shift+space" = "floating toggle";
@@ -226,6 +230,10 @@
       mode "resize" {
         bindsym semicolon resize grow width 10 px or 10 ppt
       }
+
+      # Firefox: ensure no compositor borders; rely on server-side decoration
+      for_window [app_id="firefox"] border pixel 0
+      for_window [class="Firefox"] border pixel 0
     '';
   };
 }

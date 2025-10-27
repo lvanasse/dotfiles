@@ -11,6 +11,7 @@
     picocom
     ubootTools
     utillinux
+    ripgrep
     pavucontrol
     openssh
     nh

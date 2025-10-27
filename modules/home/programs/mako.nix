@@ -7,25 +7,27 @@
 }:
 let
   palette = config.theme.palette;
-  opa = c: "${c}cc"; # add alpha for translucency
+  # Ensure fully opaque colors (some consumers expect explicit alpha)
+  opa = c: "${c}ff";
 in
 {
-  # Run mako only in Sway to avoid conflicts with KDE
+  # Keep Home Manager's built-in mako disabled; we provide our own unit
   services.mako.enable = lib.mkForce false;
 
   systemd.user.services.mako = {
     Unit = {
       Description = "Mako notification daemon (Wayland)";
-      PartOf = [ "sway-session.target" ];
-      After = [ "sway-session.target" ];
+      PartOf = [ "graphical-session.target" ];
+      After = [ "graphical-session.target" ];
     };
     Service = {
-      ExecCondition = "${pkgs.bash}/bin/bash -lc 'test -n \"$WAYLAND_DISPLAY\" -a -n \"$SWAYSOCK\" && ! ${pkgs.systemd}/bin/busctl --user list | grep -q org.freedesktop.Notifications'";
+      # Start only in Wayland sessions and if no other notifier owns the DBus name
+      ExecCondition = "${pkgs.bash}/bin/bash -lc 'test -n \"$WAYLAND_DISPLAY\" && ! ${pkgs.systemd}/bin/busctl --user list | grep -q org.freedesktop.Notifications'";
       ExecStart = "${pkgs.mako}/bin/mako";
       Restart = "on-failure";
     };
     Install = {
-      WantedBy = [ "sway-session.target" ];
+      WantedBy = [ "graphical-session.target" ];
     };
   };
   home.file.".config/mako/config".text = ''
@@ -34,14 +36,15 @@ in
     height=160
     margin=8
     padding=8
-    border-size=2
-    border-radius=6
+    border-size=4
+    border-radius=0
     default-timeout=5000
-    background-color=${palette.dark0_hard}
-    text-color=${palette.light1}
-    border-color=${palette.dark1}
-    progress-color=over ${palette.blue}
+    # Force a high-contrast look to validate config is applied
+    background-color=#FFFFFFFF
+    text-color=#000000FF
+    border-color=#FF0000FF
+    progress-color=over ${opa palette.blue}
     anchor=top-right
-    layer=overlay
+    layer=top
   '';
 }

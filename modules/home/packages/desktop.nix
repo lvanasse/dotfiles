@@ -3,7 +3,6 @@
 {
   home.packages = with pkgs; [
     # Web browsers
-    firefox
     ungoogled-chromium
 
     # Communication

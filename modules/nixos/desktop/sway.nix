@@ -11,6 +11,8 @@
       export QT_QPA_PLATFORM=wayland
       export SDL_VIDEODRIVER=wayland
       export MOZ_ENABLE_WAYLAND=1
+      # Encourage Firefox to use server-side decorations under Sway
+      export MOZ_GTK_TITLEBAR_DECORATION=system
     '';
   };
 

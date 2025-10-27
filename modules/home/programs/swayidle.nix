@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ config, pkgs, ... }:
 {
   # Manage idle behavior within Sway: lock, blank screen, then suspend
   services.swayidle = {
@@ -10,7 +10,7 @@
       # Lock after 5 minutes
       {
         timeout = 300;
-        command = "${pkgs.swaylock}/bin/swaylock -f -c 000000";
+        command = "${pkgs.swaylock}/bin/swaylock -f -i ${config.home.homeDirectory}/.local/share/wallpapers/1458678242783.jpg -s fill";
       }
       # Turn displays off after 10 minutes (resume turns them back on)
       {
@@ -29,7 +29,7 @@
       # Ensure we lock right before system sleep, and wake displays after resume
       {
         event = "before-sleep";
-        command = "${pkgs.swaylock}/bin/swaylock -f -c 000000";
+        command = "${pkgs.swaylock}/bin/swaylock -f -i ${config.home.homeDirectory}/.local/share/wallpapers/1458678242783.jpg -s fill";
       }
       {
         event = "after-resume";
@@ -37,7 +37,7 @@
       }
       {
         event = "lock";
-        command = "${pkgs.swaylock}/bin/swaylock -f -c 000000";
+        command = "${pkgs.swaylock}/bin/swaylock -f -i ${config.home.homeDirectory}/.local/share/wallpapers/1458678242783.jpg -s fill";
       }
     ];
   };

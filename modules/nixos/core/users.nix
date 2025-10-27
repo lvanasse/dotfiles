@@ -8,6 +8,8 @@
       "wheel"
       "docker"
       "input"
+      "video"
+      "render"
     ];
     shell = pkgs.fish;
     ignoreShellProgramCheck = true;

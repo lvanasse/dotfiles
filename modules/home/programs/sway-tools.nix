@@ -118,7 +118,7 @@
             case "''${choice:-}" in
               Lock)
                 if have swaylock; then
-                  exec swaylock -f -c 000000
+                  exec swaylock -f -i "$HOME/.local/share/wallpapers/1458678242783.jpg" -s fill
                 else
                   exec loginctl lock-session
                 fi

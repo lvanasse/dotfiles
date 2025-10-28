@@ -3,6 +3,8 @@ _: {
   imports = [
     ./terminal
     ./development
+    ./codex.nix
+    ./jira.nix
     ./firefox.nix
     ./email.nix
     ./calendar.nix

@@ -7,5 +7,6 @@ _: {
     ./virtualization.nix
     ./keyring.nix
     ./power.nix
+    ./secrets.nix
   ];
 }

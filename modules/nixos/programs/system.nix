@@ -1,5 +1,9 @@
 # System programs and packages
-{ pkgs, ... }:
+{ pkgs, inputs, ... }:
+let
+  # Prefer agenix from flake input; fall back if available in nixpkgs
+  agenixPkg = if pkgs ? agenix then pkgs.agenix else inputs.agenix.packages.${pkgs.system}.default;
+in
 {
   # System packages
   environment.systemPackages = with pkgs; [
@@ -14,6 +18,7 @@
     ripgrep
     pavucontrol
     openssh
+    agenixPkg
     nh
   ];
 

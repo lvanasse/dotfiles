@@ -1,5 +1,5 @@
 # Development packages
-{ pkgs, inputs, ... }:
+{ pkgs, ... }:
 {
   home.packages = with pkgs; [
     # Development tools
@@ -9,7 +9,6 @@
     git
     rustup
     nodejs
-    inputs."nixpkgs-unstable".legacyPackages.${pkgs.system}.codex
     home-manager
     fish # Fish shell
     starship # Cross-shell prompt

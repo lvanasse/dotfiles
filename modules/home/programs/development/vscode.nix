@@ -5,7 +5,6 @@
     enable = true;
     package = pkgs.vscode;
     profiles.default.extensions = with pkgs.vscode-marketplace; [
-      codium.codium
       bbenoist.nix
       jdinhlife.gruvbox
       jnoortheen.nix-ide

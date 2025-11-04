@@ -1,57 +1,68 @@
 # Development packages
-{ pkgs, ... }:
 {
-  home.packages = with pkgs; [
-    # Development tools
-    sonarlint-ls
-    devenv
-    direnv
-    git
-    rustup
-    nodejs
-    home-manager
-    fish # Fish shell
-    starship # Cross-shell prompt
+  pkgs,
+  inputs,
+  ...
+}:
+let
+  unstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
+in
+{
+  home.packages =
+    (with pkgs; [
+      # Development tools
+      sonarlint-ls
+      devenv
+      direnv
+      git
+      rustup
+      nodejs
+      home-manager
+      fish # Fish shell
+      starship # Cross-shell prompt
 
-    # Build tools
-    gnumake
-    gcc
-    cmake
-    automake
-    autoconf
-    libtool
-    pkg-config
-    bison
-    flex
-    gettext
-    texinfo
-    gperf
+      # Build tools
+      gnumake
+      gcc
+      cmake
+      automake
+      autoconf
+      libtool
+      pkg-config
+      bison
+      flex
+      gettext
+      texinfo
+      gperf
 
-    # Embedded development
-    gcc-arm-embedded
-    genromfs
-    kconfig-frontends
-    python3Packages.kconfiglib # For a nicer menuconfig with NuttX
+      # Embedded development
+      gcc-arm-embedded
+      genromfs
+      kconfig-frontends
+      python3Packages.kconfiglib # For a nicer menuconfig with NuttX
 
-    # System tools
-    lshw
-    dmidecode
-    usbutils
+      # System tools
+      lshw
+      dmidecode
+      usbutils
 
-    # Nix tools
-    nixfmt-rfc-style
+      # Nix tools
+      nixfmt-rfc-style
 
-    # Libraries
-    ncurses
-    zlib
+      # Libraries
+      ncurses
+      zlib
 
-    # Version control
-    jq
+      # Version control
+      jq
 
-    # Hardware tools
-    saleae-logic-2
+      # Hardware tools
+      saleae-logic-2
 
-    # Python environment
-    pyenv
-  ];
+      # Python environment
+      pyenv
+    ])
+    ++ [
+      unstable.codex # Latest Codex CLI from nixpkgs-unstable
+    ];
 }

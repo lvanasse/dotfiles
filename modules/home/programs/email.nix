@@ -1,4 +1,9 @@
-{ lib, ... }:
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}:
 let
   # Toggle to activate account once server details are provided
   enableAccount = true;
@@ -18,14 +23,17 @@ in
     primary = true;
 
     imap = {
-      host = lib.mkDefault "imap.example.com"; # TODO: replace with provider
+      host = "imap.infomaniak.com";
       port = 993;
       tls.enable = true;
     };
     smtp = {
-      host = lib.mkDefault "smtp.example.com"; # TODO: replace with provider
-      port = 587;
-      tls.enable = true;
+      host = "smtp.infomaniak.com";
+      port = 465;
+      tls = {
+        enable = true;
+        useStartTls = false;
+      };
     };
 
     # Generate mbsync (isync) + msmtp configs; do not auto-run sync yet
@@ -38,9 +46,7 @@ in
     mu.enable = true;
 
     # Password retrieval: expects a command printing the password to stdout.
-    # For GNOME Keyring you can use secret-tool (see above SMTP/IMAP entries).
-    # Or switch to pass/agenix based secrets per your preference.
-    passwordCommand = lib.mkDefault "secret-tool lookup email mail@ludovicvanasse.com service imap";
+    passwordCommand = "cat /run/agenix/infomaniak-password";
   };
 
   # Optionally enable periodic mailbox sync via systemd user timer
@@ -49,4 +55,12 @@ in
     enable = false; # set to true once creds are configured
     frequency = "*:0/10"; # every 10 minutes
   };
+  home.activation.mu-init = lib.hm.dag.entryAfter [ "mbsync" ] ''
+    MU_STORE="${config.xdg.cacheHome}/mu"
+    if [ ! -d "$MU_STORE" ]; then
+      ${pkgs.mu}/bin/mu init --maildir ${config.home.homeDirectory}/mail \
+        --my-address=mail@ludovicvanasse.com
+      ${pkgs.mu}/bin/mu index
+    fi
+  '';
 }

@@ -36,6 +36,8 @@
       # Email: ensure mu4e and notifications are available to Emacs
       epkgs.mu4e
       epkgs.mu4e-alert
+      epkgs.codex-cli
+      epkgs.vterm
     ];
   };
 
@@ -49,6 +51,7 @@
        dotspacemacs-distribution 'spacemacs
        dotspacemacs-enable-lazy-installation 'unused
        dotspacemacs-ask-for-lazy-installation t
+       dotspacemacs-install-packages 'used-only
        dotspacemacs-configuration-layers '(
          ;; Core UX layers (adjust over time)
          better-defaults
@@ -57,16 +60,20 @@
          syntax-checking
          treemacs
          ;; Choose one completion framework (ivy/helm/vertico). Default to ivy.
-        ivy
-        ;; Nix language support (nix-mode)
-        nix
-        ;; Email (mu4e)
-        (mu4e :variables
-              mu4e-enable-notifications t
-              mu4e-enable-mode-line t
-              mu4e-use-maildirs-extension t)
+         ivy
+         ;; Language layers for day-to-day development
+         c-c++
+         cmake
+         python
+         rust
+         shell-scripts
+         ;; Email (mu4e)
+         (mu4e :variables
+               mu4e-enable-notifications t
+               mu4e-enable-mode-line t
+               mu4e-use-maildirs-extension t)
        )
-        dotspacemacs-additional-packages '(gruvbox-theme)
+        dotspacemacs-additional-packages '(gruvbox-theme codex-cli vterm)
         dotspacemacs-excluded-packages '(forge)))
 
     (defun dotspacemacs/init ()
@@ -109,7 +116,41 @@
         (setq mu4e-alert-interesting-mail-query
               "flag:unread and not flag:trashed and maildir:/ludovic/INBOX")
         (mu4e-alert-enable-mode-line-display)
-        (mu4e-alert-enable-notifications)))
+        (mu4e-alert-enable-notifications))
+
+      ;; Language-specific tweaks without full Spacemacs layers
+      (use-package nix-mode
+        :mode "\\.nix\\'"
+        :config
+        (setq nix-indent-function 'nix-indent-line))
+
+      (use-package codex-cli
+        :commands (codex-cli-toggle codex-cli-send-prompt codex-cli-send-region codex-cli-send-file)
+        :init
+        (setq codex-cli-executable "codex"
+              codex-cli-terminal-backend 'vterm
+              codex-cli-side 'right
+              codex-cli-width 90
+              codex-cli-focus-on-open t))
+
+      (require 'core-keybindings)
+      (spacemacs/declare-prefix "oc" "codex")
+      (spacemacs/set-leader-keys
+        "oct" #'codex-cli-toggle
+        "ocs" #'codex-cli-start
+        "ocq" #'codex-cli-stop
+        "ocQ" #'codex-cli-stop-all
+        "ocR" #'codex-cli-restart
+        "ocp" #'codex-cli-send-prompt
+        "ocr" #'codex-cli-send-region
+        "ocf" #'codex-cli-send-file
+        "oca" #'codex-cli-toggle-all
+        "ocn" #'codex-cli-toggle-all-next-page
+        "ocb" #'codex-cli-toggle-all-prev-page)
+
+      ;; Ensure GNU Make files detect correctly (Makefile, .mk, etc.)
+      (add-to-list 'auto-mode-alist '("\\.mk\\'" . makefile-gmake-mode))
+      (add-to-list 'auto-mode-alist '("Makefile\\." . makefile-gmake-mode)))
   '';
 
   # Provide Spacemacs from flake input (tracked in flake.lock)

@@ -3,6 +3,152 @@
   pkgs,
   ...
 }:
+let
+  jsonFormat = pkgs.formats.json { };
+  moonlightLocalTest = pkgs.writeShellApplication {
+    name = "moonlight-local-test";
+    runtimeInputs = [
+      pkgs.moonlight-embedded
+      pkgs.coreutils
+    ];
+    text = ''
+      set -euo pipefail
+
+      usage() {
+        cat <<'EOF'
+      Usage: moonlight-local-test [pair|list|stream|unpair] [APP] [moonlight options...]
+      Defaults: stream Desktop from Sunshine listening on 127.0.0.1
+
+      Environment:
+        MOONLIGHT_HOST    Override Sunshine host (defaults to 127.0.0.1)
+
+      stream-specific flags:
+        --host <host>     Override Sunshine host for this invocation
+        --host=<host>
+
+      Commands:
+        pair         Pair this client with the local Sunshine instance
+        list         List available Sunshine apps
+        stream       Stream the given app (defaults to Desktop)
+        unpair       Remove the saved pairing with Sunshine
+      EOF
+      }
+
+      host="''${MOONLIGHT_HOST:-127.0.0.1}"
+      command="stream"
+      if [ $# -gt 0 ]; then
+        command="$1"
+        shift
+      fi
+
+      case "$command" in
+        help|-h|--help)
+          usage
+          ;;
+        pair)
+          exec moonlight pair "$host" "$@"
+          ;;
+        list)
+          exec moonlight list "$host" "$@"
+          ;;
+        unpair)
+          exec moonlight unpair "$host" "$@"
+          ;;
+        stream)
+          app="Desktop"
+          while [ $# -gt 0 ]; do
+            case "$1" in
+              --host)
+                if [ $# -lt 2 ]; then
+                  echo "error: --host requires a value" >&2
+                  exit 1
+                fi
+                host="$2"
+                shift 2
+                continue
+                ;;
+              --host=*)
+                host="''${1#--host=}"
+                shift
+                continue
+                ;;
+              --)
+                shift
+                if [ $# -gt 0 ]; then
+                  app="$1"
+                  shift
+                fi
+                break
+                ;;
+              -*)
+                break
+                ;;
+              *)
+                app="$1"
+                shift
+                break
+                ;;
+            esac
+          done
+          exec moonlight stream "$host" "$app" "$@"
+          ;;
+        *)
+          usage >&2
+          exit 1
+          ;;
+      esac
+    '';
+  };
+  steamBigPictureLaunch = pkgs.writeShellApplication {
+    name = "steam-big-picture-launch";
+    runtimeInputs = [
+      pkgs.gamescope
+      pkgs.steam
+      pkgs.util-linux
+      pkgs.coreutils
+    ];
+    text = ''
+      set -euo pipefail
+
+      export XDG_RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+      export WAYLAND_DISPLAY="''${WAYLAND_DISPLAY:-wayland-0}"
+
+      exec ${pkgs.util-linux}/bin/setsid ${pkgs.gamescope}/bin/gamescope \
+        -f \
+        --backend wayland \
+        --prefer-output=HDMI-A-1,DP-2,HDMI-A-2 \
+        -- ${pkgs.steam}/bin/steam -gamepadui -pipewire-dmabuf
+    '';
+  };
+  sunshineApps = {
+    env = {
+      PATH = "$(PATH):$(HOME)/.local/bin";
+    };
+    apps = [
+      {
+        name = "Desktop";
+        "image-path" = "desktop.png";
+      }
+      {
+        name = "Low Res Desktop";
+        "image-path" = "desktop.png";
+        "prep-cmd" = [
+          {
+            do = "xrandr --output HDMI-1 --mode 1920x1080";
+            undo = "xrandr --output HDMI-1 --mode 1920x1200";
+          }
+        ];
+      }
+      {
+        name = "Steam Big Picture";
+        detached = [
+          "${steamBigPictureLaunch}/bin/steam-big-picture-launch"
+        ];
+        "image-path" = "steam.png";
+      }
+    ];
+  };
+in
 {
   # PC-specific Sway output layout (host-only)
   wayland.windowManager.sway.extraConfig = lib.mkAfter ''
@@ -87,4 +233,29 @@
         ExecStart = "${setYeti}/bin/set-yeti-mic-volume";
       };
     };
+
+  # Provide a local Moonlight client helper for Sunshine smoke tests
+  home.packages = lib.mkAfter [ moonlightLocalTest ];
+
+  xdg.desktopEntries."moonlight-local-test" = {
+    name = "Moonlight (Local Sunshine)";
+    genericName = "Moonlight Stream";
+    comment = "Stream from the local Sunshine server for quick testing";
+    exec = "moonlight-local-test stream Desktop";
+    icon = "moonlight";
+    terminal = false;
+    categories = [
+      "Game"
+      "Utility"
+    ];
+  };
+
+  # Sunshine configuration managed via Home Manager
+  xdg.configFile."sunshine/sunshine.conf".text = ''
+    hevc_mode = 1
+    av1_mode = 1
+    output_name = 2
+  '';
+
+  xdg.configFile."sunshine/apps.json".source = jsonFormat.generate "sunshine-apps.json" sunshineApps;
 }

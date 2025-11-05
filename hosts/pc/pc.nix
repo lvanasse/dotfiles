@@ -87,9 +87,9 @@
         47989
         47990
       ];
-      };
       trustedInterfaces = [ "tailscale0" ];
     };
+
   };
 
   # Services

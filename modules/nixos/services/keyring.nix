@@ -9,4 +9,9 @@ _: {
   security.pam.services.login.enableGnomeKeyring = true;
   # Unlock on screen unlock
   security.pam.services.swaylock.enableGnomeKeyring = true;
+  security.pam.services = {
+    login.enableGnomeKeyring = true;
+    sddm.enableGnomeKeyring = true;
+    "sddm-autologin".enableGnomeKeyring = true;
+  };
 }

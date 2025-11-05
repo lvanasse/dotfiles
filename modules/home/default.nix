@@ -19,6 +19,7 @@ in
     ./desktop/sway.nix
     ./desktop/xdg.nix
     ./programs
+    ./services
     ./packages
   ]
   ++ hostConfig;

@@ -39,7 +39,6 @@
     kdePackages.sddm-kcm
 
     # Terminal applications
-    gnome-terminal
     wezterm
     alacritty
     foot

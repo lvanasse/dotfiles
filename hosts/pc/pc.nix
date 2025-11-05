@@ -87,6 +87,8 @@
         47989
         47990
       ];
+      };
+      trustedInterfaces = [ "tailscale0" ];
     };
   };
 
@@ -106,7 +108,11 @@
       '';
     };
 
-    tailscale.enable = false;
+    tailscale = {
+      enable = true;
+      useRoutingFeatures = "client";
+      openFirewall = true;
+    };
 
     # VPN configuration
     openvpn.servers = {

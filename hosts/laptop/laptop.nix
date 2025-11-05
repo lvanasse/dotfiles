@@ -9,6 +9,7 @@
 
   # Set hostname
   networking.hostName = hostname;
+  networking.firewall.trustedInterfaces = [ "tailscale0" ];
 
   # Boot configuration
   boot.loader.grub = {
@@ -22,6 +23,11 @@
   # Laptop-specific features
   hardware.bluetooth.enable = true;
   services.blueman.enable = true;
+  services.tailscale = {
+    enable = true;
+    useRoutingFeatures = "client";
+    openFirewall = true;
+  };
 
   # SSH agent for laptop
   programs.ssh.startAgent = true;

@@ -191,6 +191,12 @@
     after = [
       "graphical-session.target"
       "sway-session.target"
+      "pipewire.service"
+      "pipewire-pulse.service"
+    ];
+    wants = [
+      "pipewire.service"
+      "pipewire-pulse.service"
     ];
     serviceConfig = {
       # Wait for a Wayland socket to exist to avoid KMS fallback

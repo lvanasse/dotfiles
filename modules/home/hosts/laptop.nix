@@ -1,9 +1,9 @@
 { lib, ... }:
 {
-  # Enforce WhiteSur window decorations on the laptop
+  # Keep laptop in sync with Breeze decorations for performance & consistency
   programs.plasma.workspace.windowDecorations = lib.mkForce {
-    library = "org.kde.kwin.aurorae";
-    theme = "__aurorae__svg__WhiteSur-dark";
+    library = "org.kde.kdecoration2";
+    theme = "Breeze";
   };
 
   # No secrets dependency here to keep HM standalone builds reliable

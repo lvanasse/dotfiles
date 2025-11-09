@@ -106,6 +106,7 @@ let
       pkgs.steam
       pkgs.util-linux
       pkgs.coreutils
+      pkgs.procps
     ];
     text = ''
       set -euo pipefail
@@ -113,11 +114,75 @@ let
       export XDG_RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
       export WAYLAND_DISPLAY="''${WAYLAND_DISPLAY:-wayland-0}"
 
-      exec ${pkgs.util-linux}/bin/setsid ${pkgs.gamescope}/bin/gamescope \
-        -f \
-        --backend wayland \
-        --prefer-output=HDMI-A-1,DP-2,HDMI-A-2 \
-        -- ${pkgs.steam}/bin/steam -gamepadui -pipewire-dmabuf
+      steam_still_running() {
+        ${pkgs.procps}/bin/pgrep -x steam >/dev/null 2>&1 && return 0
+        ${pkgs.procps}/bin/pgrep -f "''${HOME}/.local/share/Steam" >/dev/null 2>&1 && return 0
+        return 1
+      }
+
+      wait_for_steam_exit() {
+        local attempts="$1"
+        for _ in $(seq 1 "''${attempts}"); do
+          if ! steam_still_running; then
+            return 0
+          fi
+          sleep 1
+        done
+        return 1
+      }
+
+      ${pkgs.steam}/bin/steam -shutdown >/dev/null 2>&1 || true
+      wait_for_steam_exit 20 || true
+
+      if steam_still_running; then
+        ${pkgs.procps}/bin/pkill -TERM -x steam >/dev/null 2>&1 || true
+        ${pkgs.procps}/bin/pkill -TERM -f "''${HOME}/.local/share/Steam" >/dev/null 2>&1 || true
+        wait_for_steam_exit 10 || true
+      fi
+
+      if steam_still_running; then
+        ${pkgs.procps}/bin/pkill -KILL -x steam >/dev/null 2>&1 || true
+        ${pkgs.procps}/bin/pkill -KILL -f "''${HOME}/.local/share/Steam" >/dev/null 2>&1 || true
+        wait_for_steam_exit 5 || true
+      fi
+
+      exec ${pkgs.util-linux}/bin/setpriv \
+        --no-new-privs \
+        --keep-groups \
+        --inh-caps=-all \
+        --ambient-caps=-all \
+        ${pkgs.util-linux}/bin/setsid ${pkgs.gamescope}/bin/gamescope \
+          -f \
+          --backend wayland \
+          --prefer-output=HDMI-A-1,DP-2,HDMI-A-2 \
+          -w 1920 -h 1080 \
+          -W 1920 -H 1080 \
+          -- ${pkgs.steam}/bin/steam -gamepadui -pipewire-dmabuf
+    '';
+  };
+  steamBigPictureWrapped = pkgs.writeShellApplication {
+    name = "steam-big-picture-wrapped";
+    runtimeInputs = [
+      pkgs.coreutils
+      steamBigPictureLaunch
+    ];
+    text = ''
+      set -euo pipefail
+
+      log_dir="''${HOME}/.cache/sunshine"
+      mkdir -p "''${log_dir}"
+      log_file="''${log_dir}/steam-big-picture.log"
+
+      {
+        printf '\n[%s] >>> Sunshine Steam Big Picture request\n' "$(date --iso-8601=seconds)"
+        printf 'WAYLAND_DISPLAY=%s\n' "''${WAYLAND_DISPLAY:-<unset>}"
+        printf 'XDG_RUNTIME_DIR=%s\n' "''${XDG_RUNTIME_DIR:-<unset>}"
+        printf 'DBUS_SESSION_BUS_ADDRESS=%s\n' "''${DBUS_SESSION_BUS_ADDRESS:-<unset>}"
+      } >>"''${log_file}"
+
+      exec >>"''${log_file}" 2>&1
+      printf '[%s] Launching steam-big-picture...\n' "$(date --iso-8601=seconds)"
+      exec ${steamBigPictureLaunch}/bin/steam-big-picture-launch
     '';
   };
   sunshineApps = {
@@ -141,8 +206,8 @@ let
       }
       {
         name = "Steam Big Picture";
-        detached = [
-          "${steamBigPictureLaunch}/bin/steam-big-picture-launch"
+        cmd = [
+          "${steamBigPictureWrapped}/bin/steam-big-picture-wrapped"
         ];
         "image-path" = "steam.png";
       }
@@ -255,6 +320,9 @@ in
     hevc_mode = 1
     av1_mode = 1
     output_name = 2
+    resolutions = [
+      1920x1080
+    ]
   '';
 
   xdg.configFile."sunshine/apps.json".source = jsonFormat.generate "sunshine-apps.json" sunshineApps;

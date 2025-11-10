@@ -16,34 +16,53 @@ let
       pkgs.jira-cli-go
     else
       pkgs.go-jira;
+
+  # Runtime wrapper that injects JIRA_API_TOKEN from the decrypted secret for
+  # every shell invocation (not just fish).
+  jiraWrapper = pkgs.writeShellScriptBin "jira" ''
+    set -eo pipefail
+
+    read_token() {
+      local file="$1"
+      if [ -f "$file" ]; then
+        local data
+        data="$([ -r "$file" ] && cat "$file")"
+        printf '%s' "$data"
+        return 0
+      fi
+      return 1
+    }
+
+    primary="$HOME/.config/.jira/JIRA_API_TOKEN"
+    fallback="$HOME/.config/jira/JIRA_API_TOKEN"
+
+    if [ -z "$JIRA_API_TOKEN" ]; then
+      token=""
+      if token="$(read_token "$primary")"; then
+        export JIRA_API_TOKEN="$token"
+      elif token="$(read_token "$fallback")"; then
+        export JIRA_API_TOKEN="$token"
+      fi
+    fi
+
+    if [ -z "$JIRA_API_TOKEN" ]; then
+      printf 'jira: could not find JIRA_API_TOKEN at %s (or %s).\n' "$primary" "$fallback" 1>&2
+      printf 'Hint: sync ~/Code/personal/secrets and re-run agenix to refresh secrets.\n' 1>&2
+      exit 1
+    fi
+
+    exec ${jiraPkg}/bin/jira "$@"
+  '';
+
+  # Expose the unwrapped CLI as `jira-cli` for manual use/debugging.
+  jiraTools = pkgs.runCommand "jira-cli-tools" { } ''
+    mkdir -p $out/bin
+    ln -s ${jiraPkg}/bin/jira $out/bin/jira-cli
+  '';
 in
 {
-  # Install Jira CLI for the user
-  home.packages = [ jiraPkg ];
-
-  # Provide an example config (do not store tokens in the repo)
-  xdg.configFile.".jira/config.example.yml".text = ''
-    # Jira CLI configuration (ankitpokhrel/jira-cli)
-    #
-    # 1) Initialize interactively:
-    #    jira init
-    #
-    # 2) Or copy this to config.yml and edit values:
-    #    cp ~/.config/.jira/config.example.yml ~/.config/.jira/.config.yml
-    #
-    # 3) Prefer setting secrets via environment variables (not in this file):
-    #    export JIRA_API_TOKEN=...  JIRA_EMAIL=...  JIRA_BASE_URL=...
-
-    # Required
-    server: https://your-domain.atlassian.net
-    login: mail@ludovicvanasse.com
-    # apiToken: "$JIRA_API_TOKEN"  # use env; do not hardcode
-
-    # Optional defaults
-    # project: ABC
-    # board: 123
-    # browseUrl: https://your-domain.atlassian.net/browse
-  '';
+  # Install the wrapped Jira CLI plus the raw binary under `jira-cli`.
+  home.packages = [ jiraWrapper jiraTools ];
 
   # Fish helpers and abbreviations (only if fish is enabled)
   programs.fish = lib.mkIf config.programs.fish.enable {
@@ -59,6 +78,10 @@ in
               source "$HOME/.config/fish/functions/_jira_load_env.fish" 2>/dev/null
             end
           end
+          if set -q JIRA_API_TOKEN
+            command jira $argv
+            return
+          end
           _jira_load_env 2>/dev/null
           command jira $argv
         '';
@@ -67,6 +90,9 @@ in
       "_jira_load_env" = {
         description = "Export JIRA_API_TOKEN from ~/.config/.jira/JIRA_API_TOKEN (fallback: ~/.config/jira)";
         body = ''
+          if set -q JIRA_API_TOKEN
+            return
+          end
           set -l tok1 "$HOME/.config/.jira/JIRA_API_TOKEN"
           set -l tok2 "$HOME/.config/jira/JIRA_API_TOKEN"
           set -l t ""
@@ -77,6 +103,8 @@ in
           end
           if test -n "$t"
             set -gx JIRA_API_TOKEN "$t"
+          else
+            echo "jira: JIRA_API_TOKEN not found. Run agenix or update secrets." 1>&2
           end
         '';
       };

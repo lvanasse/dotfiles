@@ -4,7 +4,9 @@
   programs.vscode = {
     enable = true;
     package = pkgs.vscode;
-    profiles.default.extensions = with pkgs.vscode-marketplace; [
+    # Ensure Home Manager manages extensions deterministically
+    mutableExtensionsDir = false;
+    extensions = with pkgs.vscode-marketplace; [
       bbenoist.nix
       jdinhlife.gruvbox
       jnoortheen.nix-ide

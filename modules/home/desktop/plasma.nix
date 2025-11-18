@@ -6,7 +6,7 @@
       # Shared wallpaper and theme across hosts
       wallpaper = "${config.home.homeDirectory}/.local/share/wallpapers/1458678242783.jpg";
       # Breeze Dark across Plasma for a lean, native setup
-      colorScheme = "Breeze Dark";
+      colorScheme = "BreezeDark";
       theme = "breeze-dark"; # Plasma style
 
       # Icon theme
@@ -35,7 +35,7 @@
         TerminalApplication = "wezterm";
         TerminalService = "org.wezfurlong.wezterm.desktop";
         # Ensure apps pick the Breeze Dark color scheme
-        ColorScheme = "Breeze Dark";
+        ColorScheme = "BreezeDark";
       };
       # Global Look & Feel + faster animations
       "kdeglobals"."KDE" = {

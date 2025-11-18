@@ -16,6 +16,7 @@ in
     ./core.nix
     ./theme/gruvbox-dark-hard.nix
     ./desktop/plasma.nix
+    ./desktop/gtk.nix
     ./desktop/sway.nix
     ./desktop/xdg.nix
     ./programs

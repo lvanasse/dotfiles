@@ -6,6 +6,18 @@
 }:
 let
   unstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
+  # Minimal but capable TeX Live for LaTeX Workshop (PDF build + bib + fonts)
+  tex = pkgs.texlive.combine {
+    inherit (pkgs.texlive)
+      scheme-small
+      latexmk
+      xetex
+      biber
+      collection-bibtexextra
+      collection-fontsrecommended
+      collection-latexextra
+      ;
+  };
 in
 {
   home.packages =
@@ -64,5 +76,6 @@ in
     ])
     ++ [
       unstable.codex # Latest Codex CLI from nixpkgs-unstable
+      tex # TeX toolchain for LaTeX preview/build
     ];
 }

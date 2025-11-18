@@ -59,10 +59,130 @@ let
     mkdir -p $out/bin
     ln -s ${jiraPkg}/bin/jira $out/bin/jira-cli
   '';
+
+  helperRuntimeInputs = with pkgs; [
+    coreutils
+    gnused
+  ];
+
+  commonFunctions = ''
+    set -euo pipefail
+
+    require_jira() {
+      if ! command -v jira >/dev/null 2>&1; then
+        echo "jira CLI not found in PATH" >&2
+        exit 127
+      fi
+    }
+
+    load_jira_token() {
+      local token_file=""
+      if [ -f "$HOME/.config/.jira/JIRA_API_TOKEN" ]; then
+        token_file="$HOME/.config/.jira/JIRA_API_TOKEN"
+      elif [ -f "$HOME/.config/jira/JIRA_API_TOKEN" ]; then
+        token_file="$HOME/.config/jira/JIRA_API_TOKEN"
+      fi
+
+      if [ -n "$token_file" ]; then
+        local token
+        token="$(tr -d '\r' < "$token_file")"
+        token="$(printf '%s' "$token" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+        if [ -n "$token" ]; then
+          export JIRA_API_TOKEN="$token"
+        fi
+      fi
+    }
+  '';
+
+  mkJiraHelper =
+    { name, body }:
+    pkgs.writeShellApplication {
+      inherit name;
+      runtimeInputs = helperRuntimeInputs;
+      text = ''
+        ${commonFunctions}
+
+        ${body}
+      '';
+    };
+
+  jiraHelperPackages = [
+    (mkJiraHelper {
+      name = "jira-me";
+      body = ''
+        require_jira
+        load_jira_token
+
+        me_user="$(jira me)"
+        jira issue list \
+          -a "$me_user" \
+          -s "To Do" -s "In Progress" -s "In Review" \
+          --paginate 0:30 \
+          --plain \
+          --columns KEY,STATUS,PRIORITY,SUMMARY
+      '';
+    })
+    (mkJiraHelper {
+      name = "jira-plan";
+      body = ''
+        require_jira
+        load_jira_token
+
+        jql='sprint in openSprints() ORDER BY priority DESC'
+        jira issue list \
+          --jql "$jql" \
+          --paginate 0:50 \
+          --plain \
+          --columns KEY,ASSIGNEE,STATUS,PRIORITY,SUMMARY
+      '';
+    })
+    (mkJiraHelper {
+      name = "jira-open";
+      body = ''
+        if [ "$#" -lt 1 ]; then
+          printf 'Usage: jira-open ISSUE-KEY\n' >&2
+          exit 2
+        fi
+
+        require_jira
+        load_jira_token
+
+        jira browse "$1"
+      '';
+    })
+  ];
 in
 {
-  # Install the wrapped Jira CLI plus the raw binary under `jira-cli`.
-  home.packages = [ jiraWrapper jiraTools ];
+  # Install the wrapped Jira CLI plus helpers and expose raw binary as jira-cli.
+  home.packages = [
+    jiraWrapper
+    jiraTools
+  ]
+  ++ jiraHelperPackages;
+
+  # Provide an example config (do not store tokens in the repo)
+  xdg.configFile.".jira/config.example.yml".text = ''
+    # Jira CLI configuration (ankitpokhrel/jira-cli)
+    #
+    # 1) Initialize interactively:
+    #    jira init
+    #
+    # 2) Or copy this to config.yml and edit values:
+    #    cp ~/.config/.jira/config.example.yml ~/.config/.jira/.config.yml
+    #
+    # 3) Prefer setting secrets via environment variables (not in this file):
+    #    export JIRA_API_TOKEN=...  JIRA_EMAIL=...  JIRA_BASE_URL=...
+
+    # Required
+    server: https://your-domain.atlassian.net
+    login: mail@ludovicvanasse.com
+    # apiToken: "$JIRA_API_TOKEN"  # use env; do not hardcode
+
+    # Optional defaults
+    # project: ABC
+    # board: 123
+    # browseUrl: https://your-domain.atlassian.net/browse
+  '';
 
   # Fish helpers and abbreviations (only if fish is enabled)
   programs.fish = lib.mkIf config.programs.fish.enable {

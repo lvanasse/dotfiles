@@ -27,6 +27,7 @@
       mkhl.direnv
       jebbs.plantuml
       openai.chatgpt
+      james-yu.latex-workshop
     ];
     profiles.default.userSettings = {
       "git.autofetch" = true;
@@ -51,6 +52,10 @@
       "sonarlint.disableTelemetry" = true;
       "sonarlint.rules" = { };
       "sonarlint.output.showVerboseLogs" = true; # Enable verbose logging for debugging
+
+      # LaTeX Workshop: in-editor PDF preview and tidy build dir
+      "latex-workshop.view.pdf.viewer" = "tab";
+      "latex-workshop.latex.outDir" = "out";
     };
   };
 }

@@ -5,9 +5,9 @@ My personal NixOS configuration using flakes, supporting both my desktop PC and 
 ## Quick Start
 
 ```bash
-# Switch system configuration
-nh os switch -H pc        # Desktop
-nh os switch -H laptop    # Laptop
+# Switch system configuration (runs HM first, available globally after rebuild)
+nh-os-with-home pc
+nh-os-with-home laptop
 
 # Apply user environment
 home-manager switch --flake .#ludovic@pc

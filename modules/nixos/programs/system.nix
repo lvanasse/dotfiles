@@ -14,15 +14,19 @@ let
     host="$1"
     shift
 
-    installable=".#ludovic@''${host}"
+    # Resolve flake path regardless of current directory
+    flake_dir="$HOME/Code/personal/dotfiles"
+    if [ -n "''${NH_FLAKE-}" ]; then
+      flake_dir="''${NH_FLAKE}"
+    fi
 
     nh_bin="${pkgs.nh}/bin/nh"
 
-    echo "[1/2] Home Manager: nh home switch ''${installable}" >&2
-    "$nh_bin" home switch "''${installable}"
+    echo "[1/2] Home Manager: nh home switch --configuration ludovic@''${host} ''${flake_dir}" >&2
+    NH_FLAKE="''${flake_dir}" "$nh_bin" home switch --configuration "ludovic@''${host}" "''${flake_dir}"
 
     echo "[2/2] NixOS: nh os switch -H ''${host}" >&2
-    "$nh_bin" os switch -H "''${host}" "$@"
+    NH_FLAKE="''${flake_dir}" "$nh_bin" os switch -H "''${host}" "$@"
   '';
 in
 {

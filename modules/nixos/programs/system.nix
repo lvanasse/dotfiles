@@ -3,6 +3,27 @@
 let
   # Prefer agenix from flake input; fall back if available in nixpkgs
   agenixPkg = if pkgs ? agenix then pkgs.agenix else inputs.agenix.packages.${pkgs.system}.default;
+  nhOsWithHome = pkgs.writeShellScriptBin "nh-os-with-home" ''
+    set -euo pipefail
+
+    if [ $# -lt 1 ]; then
+      echo "Usage: nh-os-with-home <pc|laptop> [-- <extra nh os args>]" >&2
+      exit 1
+    fi
+
+    host="$1"
+    shift
+
+    installable=".#ludovic@''${host}"
+
+    nh_bin="${pkgs.nh}/bin/nh"
+
+    echo "[1/2] Home Manager: nh home switch ''${installable}" >&2
+    "$nh_bin" home switch "''${installable}"
+
+    echo "[2/2] NixOS: nh os switch -H ''${host}" >&2
+    "$nh_bin" os switch -H "''${host}" "$@"
+  '';
 in
 {
   # System packages
@@ -20,6 +41,9 @@ in
     openssh
     agenixPkg
     nh
+    nhOsWithHome
+    nixfmt-rfc-style
+    treefmt
   ];
 
   # System programs

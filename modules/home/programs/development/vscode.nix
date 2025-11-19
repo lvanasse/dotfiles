@@ -6,7 +6,7 @@
     package = pkgs.vscode;
     # Ensure Home Manager manages extensions deterministically
     mutableExtensionsDir = false;
-    extensions = with pkgs.vscode-marketplace; [
+    profiles.default.extensions = with pkgs.vscode-marketplace; [
       bbenoist.nix
       jdinhlife.gruvbox
       jnoortheen.nix-ide
@@ -21,6 +21,7 @@
       sonarsource.sonarlint-vscode
       jeff-hykin.better-c-syntax
       marus25.cortex-debug
+      mcu-debug.debug-tracker-vscode
       mcu-debug.memory-view
       mcu-debug.rtos-views
       mcu-debug.peripheral-viewer

@@ -1,5 +1,6 @@
 # Fish shell configuration
-_: {
+{ pkgs, ... }:
+{
   programs.fish = {
     enable = true;
 
@@ -7,6 +8,11 @@ _: {
     interactiveShellInit = ''
       # Set fish greeting
       set fish_greeting
+
+      # Load bass plugin to run Bash commands in Fish
+      if test -f ${pkgs.fishPlugins.bass}/share/fish/vendor_functions.d/bass.fish
+        source ${pkgs.fishPlugins.bass}/share/fish/vendor_functions.d/bass.fish
+      end
 
       # Add npm global to PATH
       set -gx PATH $HOME/.npm-global/bin $PATH
@@ -36,6 +42,10 @@ _: {
     # Fish plugins for enhanced functionality
     # Note: Removed Tide plugin due to hash mismatch - fish has great built-in git support anyway
     plugins = [
+      {
+        name = "bass";
+        src = pkgs.fishPlugins.bass;
+      }
       # Auto-suggestions and syntax highlighting are built into fish
     ];
 

@@ -37,6 +37,7 @@
       alias gc "git commit"
       alias gp "git push"
       alias gl "git log --oneline"
+
     '';
 
     # Fish plugins for enhanced functionality

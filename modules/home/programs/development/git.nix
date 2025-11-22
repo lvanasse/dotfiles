@@ -5,11 +5,13 @@
     enable = true;
 
     # Default configuration (personal) - use mkDefault to allow overrides
-    userName = lib.mkDefault "Ludovic Vanasse";
-    userEmail = lib.mkDefault "mail@ludovicvanasse.com";
+    settings.user = {
+      name = lib.mkDefault "Ludovic Vanasse";
+      email = lib.mkDefault "mail@ludovicvanasse.com";
+    };
 
     # Global git settings
-    extraConfig = {
+    settings = {
       init.defaultBranch = "main";
       pull.rebase = true;
       push.autoSetupRemote = true;

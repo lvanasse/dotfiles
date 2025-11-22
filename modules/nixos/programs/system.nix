@@ -22,8 +22,10 @@ let
 
     nh_bin="${pkgs.nh}/bin/nh"
 
-    echo "[1/2] Home Manager: nh home switch --configuration ludovic@''${host} ''${flake_dir}" >&2
-    NH_FLAKE="''${flake_dir}" "$nh_bin" home switch --configuration "ludovic@''${host}" "''${flake_dir}"
+    # Use a unique backup extension to avoid clobbering existing *.backup files
+    bext="''${HM_BACKUP_EXT:-hm-$(date -I 2>/dev/null || date +%F)}"
+    echo "[1/2] Home Manager: nh home switch -b ''${bext} --configuration ludovic@''${host} ''${flake_dir}" >&2
+    NH_FLAKE="''${flake_dir}" "$nh_bin" home switch -b "''${bext}" --configuration "ludovic@''${host}" "''${flake_dir}"
 
     echo "[2/2] NixOS: nh os switch -H ''${host}" >&2
     NH_FLAKE="''${flake_dir}" "$nh_bin" os switch -H "''${host}" "$@"

@@ -70,6 +70,8 @@
         user = "git";
         identityFile = "~/.ssh/id_ed25519_work";
         identitiesOnly = true;
+        controlMaster = "no";
+        controlPath = "none";
       };
 
       # Work Bitbucket account via canonical host (for initial clones)
@@ -78,6 +80,8 @@
         user = "git";
         identityFile = "~/.ssh/id_ed25519_work";
         identitiesOnly = true;
+        controlMaster = "no";
+        controlPath = "none";
       };
 
       # Default GitHub (personal)

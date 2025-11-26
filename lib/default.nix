@@ -33,7 +33,7 @@
         (_: {
           home-manager = {
             useUserPackages = true;
-            backupFileExtension = "backup";
+            backupFileExtension = "hm-bak";
             users.${username} = {
               nixpkgs.overlays = overlays ++ [ inputs.nix-vscode-extensions.overlays.default ];
               nixpkgs.config.allowUnfree = true;

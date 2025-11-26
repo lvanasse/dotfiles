@@ -106,6 +106,17 @@
             });
           };
 
+          # Pull codex from nixpkgs-unstable so it tracks its latest available build
+          codexFromUnstable =
+            final: prev:
+            let
+              system = prev.stdenv.hostPlatform.system;
+              unstable = inputs.nixpkgs-unstable.legacyPackages.${system};
+            in
+            {
+              codex = unstable.codex;
+            };
+
           # Helper function to create a host configuration
           mkHost =
             {
@@ -137,7 +148,7 @@
                 (_: {
                   home-manager = {
                     useUserPackages = true;
-                    backupFileExtension = "backup";
+                    backupFileExtension = "hm-bak";
                     users.${username} = {
                       nixpkgs.overlays = overlays ++ [ inputs.nix-vscode-extensions.overlays.default ];
                       nixpkgs.config.allowUnfree = true;
@@ -165,6 +176,7 @@
               hostname = "pc";
               overlays = [
                 qbittorrent510
+                codexFromUnstable
                 inputs.nix-vscode-extensions.overlays.default
                 inputs.emacs-overlay.overlays.default
               ];
@@ -173,6 +185,7 @@
             laptop = mkHost {
               hostname = "laptop";
               overlays = [
+                codexFromUnstable
                 inputs.nix-vscode-extensions.overlays.default
                 inputs.emacs-overlay.overlays.default
               ];
@@ -189,6 +202,7 @@
                   modules = [
                     {
                       nixpkgs.overlays = [
+                        codexFromUnstable
                         inputs.nix-vscode-extensions.overlays.default
                         inputs.emacs-overlay.overlays.default
                       ];

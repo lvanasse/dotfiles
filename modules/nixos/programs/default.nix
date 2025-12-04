@@ -3,5 +3,6 @@ _: {
   imports = [
     ./system.nix
     ./gaming.nix
+    ./virtualization.nix
   ];
 }

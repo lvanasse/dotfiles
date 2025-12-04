@@ -13,32 +13,72 @@
     # Use emacs-overlay's Emacs for consistent, up-to-date packages
     package = pkgs.emacs-unstable;
     # Pre-install core packages Spacemacs expects to avoid ELPA bootstrap issues
-    extraPackages = epkgs: [
-      epkgs.use-package
-      epkgs.evil
-      epkgs.general
-      epkgs.which-key
-      epkgs.ivy
-      epkgs.counsel
-      epkgs.swiper
-      epkgs.company
-      epkgs.yasnippet
-      epkgs.flycheck
-      epkgs.projectile
-      epkgs.magit
-      epkgs.forge
-      epkgs.treemacs
-      epkgs.treemacs-evil
-      epkgs.treemacs-projectile
-      epkgs.gruvbox-theme
-      # Nix syntax highlighting
-      epkgs.nix-mode
-      # Email: ensure mu4e and notifications are available to Emacs
-      epkgs.mu4e
-      epkgs.mu4e-alert
-      epkgs.codex-cli
-      epkgs.vterm
-    ];
+    extraPackages =
+      epkgs:
+      let
+        claudeCode = epkgs.trivialBuild {
+          pname = "claude-code";
+          version = "unstable-2025-10-10";
+          src = pkgs.fetchFromGitHub {
+            owner = "stevemolitor";
+            repo = "claude-code.el";
+            rev = "becece683bcf60f7b150a87a30ef14885dcf8ce3";
+            hash = "sha256-AW3Q5XScvT3UAmzvoMS53iZtijrii6pwvQjw+VW353w=";
+          };
+          packageRequires = with epkgs; [
+            vterm
+            inheritenv
+            transient
+          ];
+        };
+        aiCodeInterface = epkgs.trivialBuild {
+          pname = "ai-code-interface";
+          version = "0.60.0";
+          src = pkgs.fetchFromGitHub {
+            owner = "tninja";
+            repo = "ai-code-interface.el";
+            rev = "ec8c8ca8b839bcaa3bb93a1b79cf27ba86372094";
+            hash = "sha256-zgKmy3QARY1J8B1Y72vs4seO2SsH3dsxabDp6AaSQyk=";
+          };
+          packageRequires =
+            (with epkgs; [
+              org
+              magit
+              transient
+              seq
+            ])
+            ++ [ claudeCode ];
+        };
+      in
+      (with epkgs; [
+        use-package
+        evil
+        general
+        which-key
+        ivy
+        counsel
+        swiper
+        company
+        yasnippet
+        flycheck
+        projectile
+        magit
+        forge
+        treemacs
+        treemacs-evil
+        treemacs-projectile
+        gruvbox-theme
+        # Nix syntax highlighting
+        nix-mode
+        # Email: ensure mu4e and notifications are available to Emacs
+        mu4e
+        mu4e-alert
+        vterm
+      ])
+      ++ [
+        claudeCode
+        aiCodeInterface
+      ];
   };
 
   # Spacemacs user configuration: set Gruvbox Dark Hard theme
@@ -73,7 +113,7 @@
                mu4e-enable-mode-line t
                mu4e-use-maildirs-extension t)
        )
-        dotspacemacs-additional-packages '(gruvbox-theme codex-cli vterm gptel mcp gptel-autocomplete)
+        dotspacemacs-additional-packages '(gruvbox-theme ai-code-interface vterm gptel mcp gptel-autocomplete)
         dotspacemacs-excluded-packages '(forge)))
 
     (defun dotspacemacs/init ()
@@ -93,13 +133,13 @@
       (when (boundp 'native-comp-async-report-warnings-errors)
         (setq native-comp-async-report-warnings-errors 'silent)))
 
-    (defun dotspacemacs/user-config ()
-      ;; Ensure Nix-provided Forge is loaded (without ELPA install)
-      (with-eval-after-load 'magit
-        (require 'forge))
+      (defun dotspacemacs/user-config ()
+        ;; Ensure Nix-provided Forge is loaded (without ELPA install)
+        (with-eval-after-load 'magit
+          (require 'forge))
 
-      ;; mu4e basic wiring for Home Manager accounts
-      (with-eval-after-load 'mu4e
+        ;; mu4e basic wiring for Home Manager accounts
+        (with-eval-after-load 'mu4e
         ;; maildir base from Home Manager accounts
         (setq mu4e-maildir (expand-file-name "mail" (getenv "HOME")))
         ;; Use mbsync for getting mail
@@ -124,36 +164,52 @@
         :config
         (setq nix-indent-function 'nix-indent-line))
 
-      (use-package codex-cli
-        :commands (codex-cli-toggle codex-cli-send-prompt codex-cli-send-region codex-cli-send-file)
+      (use-package claude-code
         :init
-        (setq codex-cli-executable "codex"
-              codex-cli-terminal-backend 'vterm
-              codex-cli-side 'right
-              codex-cli-width 90
-              codex-cli-focus-on-open t))
+        (setq claude-code-terminal-backend 'vterm
+              claude-code-program "codex"
+              claude-code-program-switches nil))
+
+      (use-package ai-code-interface
+        :commands (ai-code-menu ai-code-cli-start ai-code-cli-resume ai-code-cli-switch-to-buffer ai-code-send-command)
+        :init
+        (setq ai-code-cli "codex")
+        :config
+        (ai-code-set-backend 'codex)
+        (global-set-key (kbd "C-c a") #'ai-code-menu)
+        (with-eval-after-load 'magit
+          (ai-code-magit-setup-transients)))
 
       (require 'core-keybindings)
-      (spacemacs/declare-prefix "oc" "codex")
+      (spacemacs/declare-prefix "oc" "AI Code")
       (spacemacs/set-leader-keys
-        "oct" #'codex-cli-toggle
-        "ocs" #'codex-cli-start
-        "ocq" #'codex-cli-stop
-        "ocQ" #'codex-cli-stop-all
-        "ocR" #'codex-cli-restart
-        "ocp" #'codex-cli-send-prompt
-        "ocr" #'codex-cli-send-region
-        "ocf" #'codex-cli-send-file
-        "oca" #'codex-cli-toggle-all
-        "ocn" #'codex-cli-toggle-all-next-page
-        "ocb" #'codex-cli-toggle-all-prev-page)
+        "oca" #'ai-code-menu
+        "ocs" #'ai-code-cli-start
+        "ocr" #'ai-code-cli-resume
+        "ocb" #'ai-code-cli-switch-to-buffer
+        "occ" #'ai-code-code-change
+        "ocp" #'ai-code-send-command
+        "oc|" #'ai-code-apply-prompt-on-current-file)
 
       ;; Ensure GNU Make files detect correctly (Makefile, .mk, etc.)
-      (add-to-list 'auto-mode-alist '("\\.mk\\'" . makefile-gmake-mode))
-      (add-to-list 'auto-mode-alist '("Makefile\\." . makefile-gmake-mode))
+        (add-to-list 'auto-mode-alist '("\\.mk\\'" . makefile-gmake-mode))
+        (add-to-list 'auto-mode-alist '("Makefile\\." . makefile-gmake-mode))
 
-      ;; --- Codex via gptel + MCP (keyless, CLI-driven) --------------------
-      ;; We do NOT configure any OpenAI API backend; we drive local CLIs.
+        ;; Per-mode line numbers
+        (defun my/prog-mode-line-numbers ()
+          "Enable absolute line numbers in programming buffers."
+          (setq display-line-numbers-type 'absolute)
+          (display-line-numbers-mode 1))
+
+        (add-hook 'prog-mode-hook #'my/prog-mode-line-numbers)
+
+        ;; Keep Treemacs visible when opening project files.
+        (with-eval-after-load 'treemacs
+          (treemacs-define-RET-action 'file-node-closed #'treemacs-visit-node-ace)
+          (treemacs-define-RET-action 'file-node-open #'treemacs-visit-node-ace))
+
+      ;; --- AI CLI helpers via gptel + MCP (keyless, CLI-driven) -----------
+      ;; We do NOT configure any remote API backends; we drive local CLIs.
       ;; Packages are in dotspacemacs-additional-packages for MELPA install.
 
       (use-package gptel
@@ -167,183 +223,20 @@
         :config
         ;; Start Codex MCP on demand; Claude Code optional via npx.
         (setq mcp-hub-servers
-              '(("codex" . (:command "codex" :args ("mcp-server")))
-                ("claude-code" . (:command "npx" :args ("-y" "@steipete/claude-code-mcp@latest"))))))
+              '(("codex" . (:command "codex" :args ("mcp-server"))))))
 
       (use-package gptel-autocomplete
         :after gptel
         :commands (gptel-complete gptel-accept-completion)
         :init
-        (define-minor-mode codex-ac-accept-tab-mode
+        (define-minor-mode ai-code-ac-accept-tab-mode
           "Accept gptel-autocomplete with TAB when visible."
           :init-value t :lighter " AC-TAB"
-          (if codex-ac-accept-tab-mode
+          (if ai-code-ac-accept-tab-mode
               (local-set-key (kbd "TAB") #'gptel-accept-completion)
             (local-unset-key (kbd "TAB"))))
         (dolist (hook '(prog-mode-hook text-mode-hook))
-          (add-hook hook (lambda () (codex-ac-accept-tab-mode 1)))))
-
-      ;; Persistent right-side panel for Codex output
-      (defvar codex-panel-buffer-name "*Codex*")
-      (defvar codex-last-patch-buffer "*Codex Patch*")
-
-      (defun codex--ensure-panel ()
-        (let ((buf (get-buffer-create codex-panel-buffer-name)))
-          (with-current-buffer buf
-            (special-mode)
-            (setq-local truncate-lines t))
-          (display-buffer buf '((display-buffer-in-side-window)
-                                (side . right) (slot . 1)
-                                (window-width . 0.33)
-                                (window-parameters . ((no-delete-other-windows . t)
-                                                      (no-other-window . t)))))
-          buf))
-
-      (defun codex-panel-open ()
-        "Open or focus the Codex side panel."
-        (interactive)
-        (codex--ensure-panel))
-
-      (add-hook 'emacs-startup-hook #'codex--ensure-panel)
-      (add-to-list 'display-buffer-alist
-                   `(,codex-panel-buffer-name
-                     (display-buffer-in-side-window)
-                     (side . right) (slot . 1) (window-width . 0.33)
-                     (window-parameters . ((no-delete-other-windows . t)
-                                           (no-other-window . t)))))
-
-      (defun codex--project-root ()
-        (if-let ((proj (project-current)))
-            (expand-file-name (project-root proj))
-          default-directory))
-
-      (defun codex--region-or-defun ()
-        (cond
-         ((use-region-p)
-          (cons (buffer-substring-no-properties (region-beginning) (region-end)) "region"))
-         ((ignore-errors (mark-defun) t)
-          (prog1 (cons (buffer-substring-no-properties (region-beginning) (region-end)) "defun")
-            (deactivate-mark)))
-         (t (cons (buffer-substring-no-properties (point-min) (point-max)) "buffer"))))
-
-      (defun codex--insert-into-panel (fmt &rest args)
-        (with-current-buffer (codex--ensure-panel)
-          (let ((inhibit-read-only t))
-            (goto-char (point-max))
-            (insert (apply #'format fmt args) "\n")
-            (goto-char (point-max)))))
-
-      (defun codex--call-codex-exec (prompt &optional root)
-        (let* ((default-directory (or root (codex--project-root)))
-               (buf (codex--ensure-panel))
-               (proc (make-process
-                      :name "codex-exec"
-                      :buffer buf
-                      :command (list "codex" "exec" "--cd" default-directory "-")
-                      :noquery t
-                      :connection-type 'pipe
-                      :stderr buf)))
-          (process-send-string proc (concat prompt "\n"))
-          (process-send-eof proc)
-          proc))
-
-      (defun codex--prompt-wrap (task text file relroot)
-        (format (concat
-                 "You are Codex working on %s.\n\n"
-                 "Repository root: %s\n"
-                 "File: %s\n\n"
-                 "=== INPUT SNIPPET START ===\n%s\n=== INPUT SNIPPET END ===\n\n"
-                 "TASK: %s\n\n"
-                 "RESPONSE FORMAT:\n"
-                 "Return a unified diff patch that applies cleanly from repository root.\n"
-                 "Use headers like `--- a/relative/path` and `+++ b/relative/path`.\n"
-                 "Avoid prose; output only the patch.\n")
-                (or (bound-and-true-p user-login-name) "developer")
-                relroot
-                (file-relative-name file relroot)
-                text task))
-
-      (defun codex-send-region-or-defun ()
-        (interactive)
-        (pcase-let* ((`(,text . ,kind) (codex--region-or-defun))
-                     (file (buffer-file-name (current-buffer)))
-                     (root (codex--project-root))
-                     (task (format "Refactor/improve the %s while preserving behavior." kind))
-                     (prompt (codex--prompt-wrap task text file root)))
-          (codex--insert-into-panel "\n--- Codex: %s in %s ---" task (file-relative-name file root))
-          (codex--call-codex-exec prompt root)))
-
-      (defun codex-ask (query)
-        "Ask Codex a freeform QUESTION and stream the answer into the panel."
-        (interactive "sCodex question: ")
-        (codex--insert-into-panel "\n--- Codex: question ---\n%s" query)
-        (codex--call-codex-exec query (codex--project-root)))
-
-      (defun codex-ask-with-context (query)
-        "Ask Codex a QUESTION with the current region/defun (or buffer) as context."
-        (interactive "sCodex question (with context): ")
-        (pcase-let* ((`(,text . ,kind) (codex--region-or-defun))
-                     (file (buffer-file-name (current-buffer)))
-                     (root (codex--project-root))
-                     (prompt (codex--prompt-wrap query text file root)))
-          (codex--insert-into-panel "\n--- Codex: %s (with %s) ---" query kind)
-          (codex--call-codex-exec prompt root)))
-
-      (defun codex-refactor-region ()
-        (interactive)
-        (unless (use-region-p) (user-error "Select the region to refactor first"))
-        (pcase-let* ((`(,text . ,_) (codex--region-or-defun))
-                     (file (buffer-file-name (current-buffer)))
-                     (root (codex--project-root))
-                     (prompt (codex--prompt-wrap "Refactor for clarity and performance; add small tests if needed." text file root)))
-          (codex--insert-into-panel "\n--- Codex: refactor region in %s ---" (file-relative-name file root))
-          (codex--call-codex-exec prompt root)))
-
-      (defun codex-review-buffer-as-diff ()
-        (interactive)
-        (let* ((file (buffer-file-name (current-buffer)))
-               (root (codex--project-root))
-               (text (buffer-substring-no-properties (point-min) (point-max)))
-               (task "Review this file, fix obvious bugs, improve readability, and return a unified diff of suggested changes.")
-               (prompt (codex--prompt-wrap task text file root)))
-          (codex--insert-into-panel "\n--- Codex: review %s ---" (file-relative-name file root))
-          (codex--call-codex-exec prompt root)))
-
-      (defun codex-apply-patch (&optional source-buf)
-        (interactive)
-        (let* ((src (or source-buf (get-buffer codex-panel-buffer-name)))
-               (root (codex--project-root)))
-          (unless (buffer-live-p src)
-            (user-error "No patch source buffer found"))
-          (with-current-buffer (get-buffer-create codex-last-patch-buffer)
-            (let ((inhibit-read-only t))
-              (erase-buffer)
-              (insert (with-current-buffer src
-                        (save-excursion
-                          (goto-char (point-max))
-                          (if (re-search-backward "```diff\(.*\)\n\(\(.\|\n\)*?\)\n```" nil t)
-                              (match-string-no-properties 2)
-                            (buffer-substring-no-properties (point-min) (point-max))))))
-              (diff-mode))
-            (let ((ediff-patch-default-directory root))
-              (call-interactively #'ediff-patch-buffer)))))
-
-      (defun codex-mcp-connect (server)
-        (interactive (list (completing-read "MCP server: " (mapcar #'car mcp-hub-servers) nil t)))
-        (mcp-hub-start-server server)
-        (message "Started MCP server: %s" server))
-
-      (with-eval-after-load 'which-key
-        (spacemacs/declare-prefix "ax" "Codex")
-        (spacemacs/set-leader-keys
-          "axc" #'codex-panel-open
-          "axq" #'codex-ask
-          "axQ" #'codex-ask-with-context
-          "axs" #'codex-send-region-or-defun
-          "axr" #'codex-refactor-region
-          "axd" #'codex-review-buffer-as-diff
-          "axa" #'codex-apply-patch
-          "axm" #'codex-mcp-connect))
+          (add-hook hook (lambda () (ai-code-ac-accept-tab-mode 1)))))
 
       ;; --------------------------------------------------------------------
       )

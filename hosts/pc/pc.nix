@@ -49,9 +49,6 @@
     ];
   };
 
-  # Required for Sunshine (virtual input device)
-  hardware.uinput.enable = true;
-
   # PC-specific networking
   networking = {
     useNetworkd = true;
@@ -71,21 +68,6 @@
         47989
         47990
         48010
-      ];
-      # Sunshine/Moonlight streaming + discovery
-      allowedUDPPorts = [
-        47998
-        47999
-        48000
-        48010
-        # Keep existing allowances (harmless, though not required by Sunshine)
-        47984
-        47985
-        47986
-        47987
-        47988
-        47989
-        47990
       ];
       trustedInterfaces = [ "tailscale0" ];
     };
@@ -166,57 +148,6 @@
     };
   };
 
-  # Provide CAP_SYS_ADMIN to Sunshine via a persistent wrapper so KMS capture
-  # works even when wlroots export-dmabuf is unavailable (e.g., Plasma Wayland).
-  # This avoids manual `setcap` on the immutable Nix store path.
-  security.wrappers.sunshine = {
-    owner = "root";
-    group = "root";
-    capabilities = "cap_sys_admin+ep";
-    source = "${pkgs.sunshine}/bin/sunshine";
-  };
-
-  # Sunshine user service (GameStream host)
-  # Notes:
-  # - Run only when a Wayland socket exists to avoid KMS fallback which
-  #   requires CAP_SYS_ADMIN (not available in user services).
-  # - First run: open https://localhost:47990 to finish setup.
-  systemd.user.services.sunshine = {
-    description = "Sunshine GameStream host";
-    partOf = [ "graphical-session.target" ];
-    wantedBy = [
-      "graphical-session.target"
-      "sway-session.target"
-    ];
-    after = [
-      "graphical-session.target"
-      "sway-session.target"
-      "pipewire.service"
-      "pipewire-pulse.service"
-    ];
-    wants = [
-      "pipewire.service"
-      "pipewire-pulse.service"
-    ];
-    serviceConfig = {
-      # Wait for a Wayland socket to exist to avoid KMS fallback
-      ExecStartPre = ''${pkgs.bash}/bin/bash -lc "for i in $(seq 1 30); do if [ -S \"$XDG_RUNTIME_DIR/wayland-1\" ] || [ -S \"$XDG_RUNTIME_DIR/wayland-0\" ]; then exit 0; fi; sleep 1; done; echo \"No Wayland socket found in $XDG_RUNTIME_DIR (wayland-1/0)\" >&2; exit 1" '';
-      # Use the wrapper with CAP_SYS_ADMIN so Sunshine can use KMS capture
-      # when Wayland export-dmabuf is unavailable.
-      ExecStart = "/run/wrappers/bin/sunshine";
-      Restart = "on-failure";
-      RestartSec = "5s";
-      # Provide correct runtime dir for Wayland socket lookup
-      # Also provide a robust PATH so Sunshine can spawn helpers (setsid, steam)
-      # referenced by default app entries.
-      Environment = [
-        "XDG_RUNTIME_DIR=%t"
-        "PATH=/run/wrappers/bin:/run/current-system/sw/bin"
-        "LIBVA_DRIVER_NAME=radeonsi"
-      ];
-    };
-  };
-
   # PC-specific packages
   environment.systemPackages = with pkgs; [
     openvpn3
@@ -231,17 +162,7 @@
     libmpc
     mpfr
     isl
-    sunshine
   ];
-
-  # Relax hidraw permissions for controller passthrough (e.g., DualSense)
-  # Sunshine reads/writes hidraw for rumble/LEDs; grant group access.
-  services.udev.extraRules = ''
-    # Allow rumble/LED control and direct HID access for controllers
-    SUBSYSTEM=="hidraw", KERNEL=="hidraw*", MODE="0660", GROUP="input"
-    # Allow reading input event devices for gamepad passthrough
-    KERNEL=="event*", SUBSYSTEM=="input", MODE="0660", GROUP="input"
-  '';
 
   # Deploy SSH keys via agenix (system-level) using encrypted files from the
   # private secrets repository. Decrypts using host SSH keys by default.

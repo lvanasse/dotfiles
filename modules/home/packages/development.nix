@@ -1,11 +1,6 @@
 # Development packages
-{
-  pkgs,
-  inputs,
-  ...
-}:
+{ pkgs, ... }:
 let
-  unstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
   # Minimal but capable TeX Live for LaTeX Workshop (PDF build + bib + fonts)
   tex = pkgs.texlive.combine {
     inherit (pkgs.texlive)
@@ -75,7 +70,6 @@ in
       pyenv
     ])
     ++ [
-      unstable.codex # Latest Codex CLI from nixpkgs-unstable
       tex # TeX toolchain for LaTeX preview/build
     ];
 }

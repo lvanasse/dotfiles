@@ -6,7 +6,6 @@
     qbittorrent
     gamescope
     gamemode
-    moonlight-qt
 
     # Emulation
     xemu

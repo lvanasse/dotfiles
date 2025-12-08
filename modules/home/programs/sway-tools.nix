@@ -5,7 +5,7 @@
     (pkgs.writeShellScriptBin "rofi-combi" ''
       #!/usr/bin/env bash
       set -euo pipefail
-      exec ${pkgs.rofi-wayland}/bin/rofi \
+      exec ${pkgs.rofi}/bin/rofi \
         -config "$HOME/.config/rofi/config.rasi" \
         -show combi \
         -modi "combi,drun,run" \
@@ -15,7 +15,7 @@
     (pkgs.writeShellScriptBin "rofi-run-only" ''
       #!/usr/bin/env bash
       set -euo pipefail
-      exec ${pkgs.rofi-wayland}/bin/rofi \
+      exec ${pkgs.rofi}/bin/rofi \
         -config "$HOME/.config/rofi/config.rasi" \
         -show run \
         -modi "run,drun" \
@@ -96,9 +96,9 @@
 
             have() { command -v "$1" >/dev/null 2>&1; }
 
-            # Menu runner: use rofi-wayland dmenu with our config
+            # Menu runner: use rofi dmenu with our config
             dmenu() {
-              "${pkgs.rofi-wayland}/bin/rofi" \
+              "${pkgs.rofi}/bin/rofi" \
                 -config "$HOME/.config/rofi/config.rasi" \
                 -dmenu -p "Power" -matching prefix
             }

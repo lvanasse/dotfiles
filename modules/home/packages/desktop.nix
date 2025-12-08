@@ -1,7 +1,8 @@
 # Desktop applications and utilities
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
 {
-  home.packages = with pkgs; [
+  home.packages =
+    (with pkgs; [
     # Web browsers
     ungoogled-chromium
 
@@ -34,7 +35,6 @@
     kdePackages.filelight
     kdePackages.spectacle
     kdePackages.polkit-kde-agent-1
-    kdePackages.xwaylandvideobridge
     kdePackages.xdg-desktop-portal-kde
     kdePackages.sddm-kcm
 
@@ -91,7 +91,7 @@
     swayidle
     swaylock
     nwg-displays
-    rofi-wayland
+    rofi
     wofi
     mako
     blueman
@@ -108,5 +108,6 @@
     # Themes for Plasma theming
     tela-icon-theme
     whitesur-cursors
-  ];
+    ])
+    ++ lib.optional (pkgs.kdePackages ? xwaylandvideobridge) pkgs.kdePackages.xwaylandvideobridge;
 }

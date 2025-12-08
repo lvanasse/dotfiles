@@ -158,6 +158,16 @@
         (mu4e-alert-enable-mode-line-display)
         (mu4e-alert-enable-notifications))
 
+      ;; Ensure all interactive shells (SPC ') use fish with our system config
+      (let ((fish "/run/current-system/sw/bin/fish"))
+        (setq shell-file-name fish
+              explicit-shell-file-name fish
+              vterm-shell fish)
+        (setenv "SHELL" fish)
+        (with-eval-after-load 'shell-pop
+          (setq shell-pop-shell-type `("ansi-term" "*shell*" (lambda () (ansi-term ,fish)))))
+        (setq multi-term-program fish))
+
       ;; Language-specific tweaks without full Spacemacs layers
       (use-package nix-mode
         :mode "\\.nix\\'"

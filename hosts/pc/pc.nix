@@ -154,7 +154,6 @@
     fanctl
     nvtopPackages.full
     coolercontrol.coolercontrold
-    coolercontrol.coolercontrol-liqctld
     coolercontrol.coolercontrol-gui
     coolercontrol.coolercontrol-ui-data
     mesa
@@ -183,8 +182,8 @@
     };
   };
 
-  # Ensure ssh-agent for convenience
-  programs.ssh.startAgent = true;
+  # gnome-keyring already starts gcr-ssh-agent; disable the legacy ssh-agent to avoid conflicts.
+  programs.ssh.startAgent = lib.mkForce false;
 
   # Passwordless auth using the single public key
   users.users.ludovic.openssh.authorizedKeys.keys = [

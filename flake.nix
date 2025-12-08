@@ -3,7 +3,7 @@
 
   inputs = {
     # Core inputs
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
 
     # Flake organization
     flake-parts.url = "github:hercules-ci/flake-parts";
@@ -41,6 +41,7 @@
 
     # Additional package sources
     "nixpkgs-unstable".url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    "nixpkgs-2505".url = "github:NixOS/nixpkgs/nixos-25.05";
 
     # Tooling
     treefmt-nix = {
@@ -95,17 +96,6 @@
       # Flake-level outputs
       flake =
         let
-          # Custom qBittorrent overlay
-          qbittorrent510 = _final: prev: {
-            qbittorrent = prev.qbittorrent.overrideAttrs (_: {
-              version = "5.1.0";
-              src = prev.fetchurl {
-                url = "https://github.com/qbittorrent/qBittorrent/archive/refs/tags/release-5.1.0.tar.gz";
-                sha256 = "sha256-rFTNizxgNc/NaEvlr9DszIxfu8MAiptvm6QvbvkRBa8=";
-              };
-            });
-          };
-
           # Pull codex from nixpkgs-unstable so it tracks its latest available build
           codexFromUnstable =
             final: prev:
@@ -115,6 +105,25 @@
             in
             {
               codex = unstable.codex;
+            };
+
+          qbittorrent510_2505 =
+            _final: prev:
+            {
+              qbittorrent = prev.qbittorrent.overrideAttrs (_: {
+                version = "5.1.0";
+                src = prev.fetchurl {
+                  url = "https://github.com/qbittorrent/qBittorrent/archive/refs/tags/release-5.1.0.tar.gz";
+                  sha256 = "sha256-rFTNizxgNc/NaEvlr9DszIxfu8MAiptvm6QvbvkRBa8=";
+                };
+              });
+            };
+
+          # Fix broken upstream hash for sonarlint-ls fetched Maven deps
+          sonarlintHashFix =
+            final: prev:
+            {
+              sonarlint-ls = prev.callPackage ./overrides/sonarlint-ls/package.nix { };
             };
 
           # Helper function to create a host configuration
@@ -150,7 +159,13 @@
                     useUserPackages = true;
                     backupFileExtension = "hm-bak";
                     users.${username} = {
-                      nixpkgs.overlays = overlays ++ [ inputs.nix-vscode-extensions.overlays.default ];
+                      nixpkgs.overlays =
+                        overlays
+                        ++ [
+                          inputs.nix-vscode-extensions.overlays.default
+                          inputs.emacs-overlay.overlays.default
+                        ]
+                        ++ [ sonarlintHashFix ];
                       nixpkgs.config.allowUnfree = true;
                       imports = [
                         ./modules/home
@@ -175,19 +190,22 @@
             pc = mkHost {
               hostname = "pc";
               overlays = [
-                qbittorrent510
+                qbittorrent510_2505
                 codexFromUnstable
                 inputs.nix-vscode-extensions.overlays.default
                 inputs.emacs-overlay.overlays.default
+                sonarlintHashFix
               ];
             };
 
             laptop = mkHost {
               hostname = "laptop";
               overlays = [
+                qbittorrent510_2505
                 codexFromUnstable
                 inputs.nix-vscode-extensions.overlays.default
                 inputs.emacs-overlay.overlays.default
+                sonarlintHashFix
               ];
             };
           };
@@ -198,16 +216,18 @@
               mkHome =
                 hostname:
                 inputs.home-manager.lib.homeManagerConfiguration {
-                  pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
+                  pkgs = import inputs.nixpkgs {
+                    system = "x86_64-linux";
+                    overlays = [
+                      qbittorrent510_2505
+                      codexFromUnstable
+                      inputs.nix-vscode-extensions.overlays.default
+                      inputs.emacs-overlay.overlays.default
+                      sonarlintHashFix
+                    ];
+                    config.allowUnfree = true;
+                  };
                   modules = [
-                    {
-                      nixpkgs.overlays = [
-                        codexFromUnstable
-                        inputs.nix-vscode-extensions.overlays.default
-                        inputs.emacs-overlay.overlays.default
-                      ];
-                      nixpkgs.config.allowUnfree = true;
-                    }
                     ./modules/home
                     inputs.plasma-manager.homeModules.plasma-manager
                     inputs.stylix.homeModules.stylix

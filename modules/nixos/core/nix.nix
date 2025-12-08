@@ -29,11 +29,6 @@ _: {
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
-  # Permitted insecure packages
-  nixpkgs.config.permittedInsecurePackages = [
-    "electron-33.4.11"
-  ];
-
   # System state version
   system.stateVersion = "25.05";
 }

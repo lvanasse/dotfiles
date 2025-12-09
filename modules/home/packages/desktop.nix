@@ -10,9 +10,9 @@
     vesktop
     slack
     discord
+    jami
 
     # Media
-    jellyfin-media-player
     vlc
     spotify
     kooha

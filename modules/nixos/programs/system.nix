@@ -2,7 +2,8 @@
 { pkgs, inputs, ... }:
 let
   # Prefer agenix from flake input; fall back if available in nixpkgs
-  agenixPkg = if pkgs ? agenix then pkgs.agenix else inputs.agenix.packages.${pkgs.system}.default;
+  agenixPkg =
+    if pkgs ? agenix then pkgs.agenix else inputs.agenix.packages.${pkgs.stdenv.hostPlatform.system}.default;
   nhOsWithHome = pkgs.writeShellScriptBin "nh-os-with-home" ''
     set -euo pipefail
 
@@ -42,7 +43,7 @@ in
     genromfs
     picocom
     ubootTools
-    utillinux
+    util-linux
     ripgrep
     pavucontrol
     openssh

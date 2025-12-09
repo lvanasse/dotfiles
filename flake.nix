@@ -108,15 +108,16 @@
             };
 
           qbittorrent510_2505 =
-            _final: prev:
-            {
-              qbittorrent = prev.qbittorrent.overrideAttrs (_: {
-                version = "5.1.0";
-                src = prev.fetchurl {
-                  url = "https://github.com/qbittorrent/qBittorrent/archive/refs/tags/release-5.1.0.tar.gz";
-                  sha256 = "sha256-rFTNizxgNc/NaEvlr9DszIxfu8MAiptvm6QvbvkRBa8=";
+            final: prev:
+            let
+              pkgs2505 =
+                import inputs."nixpkgs-2505" {
+                  system = prev.stdenv.hostPlatform.system;
+                  config.allowUnfree = true;
                 };
-              });
+            in
+            {
+              qbittorrent = pkgs2505.qbittorrent;
             };
 
           # Fix broken upstream hash for sonarlint-ls fetched Maven deps

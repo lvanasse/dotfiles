@@ -14,15 +14,17 @@ in
   # Keep Home Manager's built-in mako disabled; we provide our own unit
   services.mako.enable = lib.mkForce false;
 
-  systemd.user.services.mako = {
+  systemd.user.services.mako = let
+    grep = "${pkgs.gnugrep}/bin/grep";
+  in {
     Unit = {
       Description = "Mako notification daemon (Wayland)";
       PartOf = [ "graphical-session.target" ];
       After = [ "graphical-session.target" ];
     };
     Service = {
-      # Start only in Wayland sessions and if no other notifier owns the DBus name
-      ExecCondition = "${pkgs.bash}/bin/bash -lc 'test -n \"$WAYLAND_DISPLAY\" && ! ${pkgs.systemd}/bin/busctl --user list | grep -q org.freedesktop.Notifications'";
+      # Start only in non-KDE Wayland sessions and if no other notifier owns the DBus name
+      ExecCondition = "${pkgs.bash}/bin/bash -lc 'test -n \"$WAYLAND_DISPLAY\" || exit 1; if printf \"%s\" \"$XDG_CURRENT_DESKTOP\" | ${grep} -qi \"kde\\|plasma\"; then exit 1; fi; ! ${pkgs.systemd}/bin/busctl --user list | ${grep} -q org.freedesktop.Notifications'";
       ExecStart = "${pkgs.mako}/bin/mako";
       Restart = "on-failure";
     };

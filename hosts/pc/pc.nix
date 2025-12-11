@@ -107,24 +107,36 @@
     };
 
     # PC-specific Flatpak configuration
-    flatpak = {
-      remotes = lib.mkOptionDefault [
-        {
-          name = "flathub";
-          location = "https://dl.flathub.org/repo/flathub.flatpakrepo";
-        }
-        {
-          name = "woblight";
-          location = "https://woblight.gitlab.io/flatpak-repo";
-        }
-      ];
-      packages = [
-        {
-          appId = "io.gitlab.woblight.GitAddonsManager//master";
-          origin = "woblight";
-        }
-      ];
-    };
+    flatpak =
+      let
+        runtimeCa = "/etc/ssl/certs/ca-bundle.crt";
+      in
+      {
+        remotes = lib.mkOptionDefault [
+          {
+            name = "flathub";
+            location = "https://dl.flathub.org/repo/flathub.flatpakrepo";
+          }
+          {
+            name = "woblight";
+            location = "https://woblight.gitlab.io/flatpak-repo";
+          }
+        ];
+        packages = [
+          {
+            appId = "io.gitlab.woblight.GitAddonsManager//master";
+            origin = "woblight";
+          }
+        ];
+        overrides = {
+          "io.gitlab.woblight.GitAddonsManager".Environment = {
+            CURL_CA_BUNDLE = runtimeCa;
+            GIT_SSL_CAINFO = runtimeCa;
+            NIX_SSL_CERT_FILE = runtimeCa;
+            SSL_CERT_FILE = runtimeCa;
+          };
+        };
+      };
   };
 
   # Programs

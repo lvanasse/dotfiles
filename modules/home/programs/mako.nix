@@ -7,29 +7,39 @@
 }:
 let
   palette = config.theme.palette;
+  # Tie the service lifecycle to Sway only so KDE/Plasma sessions keep their notifier
+  swayTarget = "sway-session.target";
   # Ensure fully opaque colors (some consumers expect explicit alpha)
   opa = c: "${c}ff";
+  grep = "${pkgs.gnugrep}/bin/grep";
+  conditionScript = pkgs.writeShellScript "mako-wayland-guard" ''
+    set -euo pipefail
+    test -n "''${WAYLAND_DISPLAY:-}" || exit 1
+    session_env="''${XDG_SESSION_DESKTOP:-}''${XDG_CURRENT_DESKTOP:-}''${DESKTOP_SESSION:-}"
+    echo "$session_env" | ${grep} -qi sway || exit 1
+    if ${pkgs.systemd}/bin/busctl --user list | ${grep} -q org.freedesktop.Notifications; then
+      exit 1
+    fi
+  '';
 in
 {
   # Keep Home Manager's built-in mako disabled; we provide our own unit
   services.mako.enable = lib.mkForce false;
 
-  systemd.user.services.mako = let
-    grep = "${pkgs.gnugrep}/bin/grep";
-  in {
+  systemd.user.services.mako = {
     Unit = {
       Description = "Mako notification daemon (Wayland)";
-      PartOf = [ "graphical-session.target" ];
-      After = [ "graphical-session.target" ];
+      PartOf = [ swayTarget ];
+      After = [ swayTarget ];
     };
     Service = {
-      # Start only in non-KDE Wayland sessions and if no other notifier owns the DBus name
-      ExecCondition = "${pkgs.bash}/bin/bash -lc 'test -n \"$WAYLAND_DISPLAY\" || exit 1; if printf \"%s\" \"$XDG_CURRENT_DESKTOP\" | ${grep} -qi \"kde\\|plasma\"; then exit 1; fi; ! ${pkgs.systemd}/bin/busctl --user list | ${grep} -q org.freedesktop.Notifications'";
+      # Only activate on Sway sessions (not KDE) and avoid clashing with other DBus notifiers
+      ExecCondition = conditionScript;
       ExecStart = "${pkgs.mako}/bin/mako";
       Restart = "on-failure";
     };
     Install = {
-      WantedBy = [ "graphical-session.target" ];
+      WantedBy = [ swayTarget ];
     };
   };
   home.file.".config/mako/config".text = ''

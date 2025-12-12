@@ -1,5 +1,9 @@
 # Visual Studio Code configuration
 { pkgs, ... }:
+let
+  # Use a recent Node.js for SonarLint's Node dependency
+  sonarNode = pkgs.nodejs_22;
+in
 {
   programs.vscode = {
     enable = true;
@@ -18,7 +22,7 @@
       streetsidesoftware.code-spell-checker
       foxundermoon.shell-format
       vscode-icons-team.vscode-icons
-      sonarsource.sonarlint-vscode
+      sonarsource.sonarlint-vscode # SonarLint 4.37.0 via refreshed nix-vscode-extensions
       jeff-hykin.better-c-syntax
       marus25.cortex-debug
       mcu-debug.debug-tracker-vscode
@@ -50,7 +54,7 @@
       "workbench.colorTheme" = "Gruvbox Dark Hard";
       "vsicons.dontShowNewVersionMessage" = true;
       # Ensure SonarLint uses a recent Node.js binary
-      "sonarlint.pathToNodeExecutable" = "${pkgs.nodejs}/bin/node";
+      "sonarlint.pathToNodeExecutable" = "${sonarNode}/bin/node";
       "sonarlint.ls.javaHome" = "${pkgs.openjdk21}";
       "sonarlint.disableTelemetry" = true;
       "sonarlint.rules" = { };

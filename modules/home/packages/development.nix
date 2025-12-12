@@ -18,7 +18,7 @@ in
   home.packages =
     (with pkgs; [
       # Development tools
-      sonarlint-ls
+      sonarlint-ls # CLI language server companion for SonarLint 4.37.0
       devenv
       direnv
       git

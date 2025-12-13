@@ -1,4 +1,9 @@
-{ hostname, inputs, ... }:
+{
+  hostname,
+  lib,
+  inputs,
+  ...
+}:
 {
   imports = [
     ./hardware-configuration.nix
@@ -29,8 +34,8 @@
     openFirewall = true;
   };
 
-  # SSH agent for laptop
-  programs.ssh.startAgent = true;
+  # gnome-keyring already starts gcr-ssh-agent; disable the legacy ssh-agent to avoid conflicts.
+  programs.ssh.startAgent = lib.mkForce false;
   users.users.ludovic.linger = true;
 
   # Deploy the same personal SSH key via agenix (add laptop host key to

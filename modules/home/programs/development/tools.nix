@@ -40,6 +40,7 @@
             rev = "ec8c8ca8b839bcaa3bb93a1b79cf27ba86372094";
             hash = "sha256-zgKmy3QARY1J8B1Y72vs4seO2SsH3dsxabDp6AaSQyk=";
           };
+          nativeBuildInputs = [ pkgs.gitMinimal ];
           packageRequires =
             (with epkgs; [
               org

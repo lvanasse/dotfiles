@@ -3,11 +3,10 @@
   perSystem =
     { system, ... }:
     let
-      pkgs2505 =
-        import inputs."nixpkgs-2505" {
-          inherit system;
-          config.allowUnfree = true;
-        };
+      pkgs2505 = import inputs."nixpkgs-2505" {
+        inherit system;
+        config.allowUnfree = true;
+      };
     in
     {
       packages = {

@@ -98,7 +98,7 @@
         let
           # Pull codex from nixpkgs-unstable so it tracks its latest available build
           codexFromUnstable =
-            final: prev:
+            _final: prev:
             let
               system = prev.stdenv.hostPlatform.system;
               unstable = inputs.nixpkgs-unstable.legacyPackages.${system};
@@ -108,24 +108,21 @@
             };
 
           qbittorrent510_2505 =
-            final: prev:
+            _final: prev:
             let
-              pkgs2505 =
-                import inputs."nixpkgs-2505" {
-                  system = prev.stdenv.hostPlatform.system;
-                  config.allowUnfree = true;
-                };
+              pkgs2505 = import inputs."nixpkgs-2505" {
+                system = prev.stdenv.hostPlatform.system;
+                config.allowUnfree = true;
+              };
             in
             {
               qbittorrent = pkgs2505.qbittorrent;
             };
 
           # Fix broken upstream hash for sonarlint-ls fetched Maven deps
-          sonarlintHashFix =
-            final: prev:
-            {
-              sonarlint-ls = prev.callPackage ./overrides/sonarlint-ls/package.nix { };
-            };
+          sonarlintHashFix = _final: prev: {
+            sonarlint-ls = prev.callPackage ./overrides/sonarlint-ls/package.nix { };
+          };
 
           # Helper function to create a host configuration
           mkHost =

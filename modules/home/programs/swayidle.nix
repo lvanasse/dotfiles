@@ -25,20 +25,12 @@
       }
     ];
 
-    events = [
+    events = {
       # Ensure we lock right before system sleep, and wake displays after resume
-      {
-        event = "before-sleep";
-        command = "${pkgs.swaylock}/bin/swaylock -f -i ${config.home.homeDirectory}/.local/share/wallpapers/1458678242783.jpg -s fill";
-      }
-      {
-        event = "after-resume";
-        command = "swaymsg 'output * power on'";
-      }
-      {
-        event = "lock";
-        command = "${pkgs.swaylock}/bin/swaylock -f -i ${config.home.homeDirectory}/.local/share/wallpapers/1458678242783.jpg -s fill";
-      }
-    ];
+      "before-sleep" =
+        "${pkgs.swaylock}/bin/swaylock -f -i ${config.home.homeDirectory}/.local/share/wallpapers/1458678242783.jpg -s fill";
+      "after-resume" = "swaymsg 'output * power on'";
+      lock = "${pkgs.swaylock}/bin/swaylock -f -i ${config.home.homeDirectory}/.local/share/wallpapers/1458678242783.jpg -s fill";
+    };
   };
 }

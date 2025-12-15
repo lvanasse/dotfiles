@@ -27,6 +27,10 @@
         end
 
         return {
+          -- Font configuration
+          font = wezterm.font('FiraCode Nerd Font'),
+          font_size = 11.0,
+
           -- Minimal chrome
           enable_tab_bar = false, -- never show the tab/header bar
           use_fancy_tab_bar = false,

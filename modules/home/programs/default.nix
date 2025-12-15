@@ -4,6 +4,7 @@ _: {
     ./terminal
     ./development
     ./codex.nix
+    ./claude.nix
     ./jira.nix
     ./firefox.nix
     ./email.nix

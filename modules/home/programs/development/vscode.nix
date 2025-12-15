@@ -35,6 +35,7 @@ in
       jebbs.plantuml
       openai.chatgpt
       james-yu.latex-workshop
+      anthropic.claude-code
     ];
     profiles.default.userSettings = {
       "git.autofetch" = true;

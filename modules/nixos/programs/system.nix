@@ -35,6 +35,7 @@ let
     echo "[2/2] NixOS: nh os switch -H ''${host}" >&2
     NH_FLAKE="''${flake_dir}" "$nh_bin" os switch -H "''${host}" "$@"
   '';
+
 in
 {
   # System packages
@@ -58,6 +59,8 @@ in
     nixfmt-rfc-style
     treefmt
     codex
+    claude-code
+    gh
   ];
 
   # System programs
@@ -68,6 +71,25 @@ in
 
   # Disable legacy command-not-found (uses channels DB and is noisy)
   programs.command-not-found.enable = false;
+
+  # Enable nix-ld for running dynamically linked binaries (e.g., Claude Code VSCode extension)
+  programs.nix-ld = {
+    enable = true;
+    libraries = with pkgs; [
+      # Common libraries needed by dynamically linked binaries
+      stdenv.cc.cc.lib
+      zlib
+      openssl
+      curl
+      glib
+      glibc
+      xorg.libX11
+      xorg.libXcursor
+      xorg.libXrandr
+      xorg.libXi
+      libGL
+    ];
+  };
 
   programs.java = {
     enable = true;

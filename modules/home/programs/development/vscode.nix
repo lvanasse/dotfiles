@@ -15,6 +15,7 @@ in
       jdinhlife.gruvbox
       jnoortheen.nix-ide
       rust-lang.rust-analyzer
+      github.vscode-github-actions
       ms-vscode.cpptools-extension-pack
       ms-vscode.cpptools
       ms-vscode.cmake-tools
@@ -36,6 +37,7 @@ in
       openai.chatgpt
       james-yu.latex-workshop
       anthropic.claude-code
+      mermaidchart.vscode-mermaid-chart
     ];
     profiles.default.userSettings = {
       "git.autofetch" = true;

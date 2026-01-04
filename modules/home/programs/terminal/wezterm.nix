@@ -82,6 +82,9 @@
           adjust_window_size_when_changing_font_size = false,
           enable_wayland = true,
           audible_bell = 'Disabled',
+
+          -- Disable notifications for completed commands
+          notification_handling = 'NeverShow',
         }
       '';
   };

@@ -53,6 +53,7 @@ in
     openssh
     agenixPkg
     nh
+    nix-du
     home-manager
     nhOsWithHome
     nixpkgs-review
@@ -61,6 +62,7 @@ in
     codex
     claude-code
     gh
+    act
   ];
 
   # System programs

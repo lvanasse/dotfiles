@@ -1,8 +1,11 @@
-# Desktop environment modules
-_: {
-  imports = [
-    ./fonts.nix
-    ./audio.nix
-    ./plasma.nix
-  ];
+{ config, ... }:
+{
+  flake.modules.nixos."desktop.common" =
+    { ... }:
+    {
+      imports = [
+        config.flake.modules.nixos.desktopAudio
+        config.flake.modules.nixos.desktopFonts
+      ];
+    };
 }

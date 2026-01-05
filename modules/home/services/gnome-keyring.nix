@@ -1,7 +1,12 @@
-# GNOME Keyring integration for user sessions
-_: {
-  services.gnome-keyring = {
-    enable = true;
-    components = [ "secrets" ];
-  };
+{ ... }:
+{
+  flake.modules.homeManager.servicesGnomeKeyring =
+    { ... }:
+    {
+      # GNOME Keyring integration for user sessions
+      services.gnome-keyring = {
+        enable = true;
+        components = [ "secrets" ];
+      };
+    };
 }

@@ -1,8 +1,14 @@
-# Development programs
-_: {
-  imports = [
-    ./vscode.nix
-    ./tools.nix
-    ./git.nix
-  ];
+{ config, ... }:
+{
+  flake.modules.homeManager.development =
+    { ... }:
+    {
+      imports = [
+        config.flake.modules.homeManager.devGit
+        config.flake.modules.homeManager.devEmacs
+        config.flake.modules.homeManager.devDirenv
+        config.flake.modules.homeManager.devJava
+        config.flake.modules.homeManager.devVscode
+      ];
+    };
 }

@@ -1,36 +1,49 @@
-{ config, pkgs, ... }:
+{ ... }:
 {
-  # Manage idle behavior within Sway: lock, blank screen, then suspend
-  services.swayidle = {
-    enable = true;
-    systemdTarget = "sway-session.target";
+  flake.modules.homeManager.swayidle =
+    { config, pkgs, ... }:
+    {
+      # Manage idle behavior within Sway: lock, blank screen, then suspend
+      services.swayidle = {
+        enable = true;
+        systemdTarget = "sway-session.target";
 
-    # Timeouts in seconds
-    timeouts = [
-      # Lock after 5 minutes
-      {
-        timeout = 300;
-        command = "${pkgs.swaylock}/bin/swaylock -f -i ${config.home.homeDirectory}/.local/share/wallpapers/1458678242783.jpg -s fill";
-      }
-      # Turn displays off after 10 minutes (resume turns them back on)
-      {
-        timeout = 600;
-        command = "swaymsg 'output * power off'";
-        resumeCommand = "swaymsg 'output * power on'";
-      }
-      # Suspend the machine after 20 minutes
-      {
-        timeout = 1200;
-        command = "systemctl suspend";
-      }
-    ];
+        # Timeouts in seconds
+        timeouts = [
+          # Lock after 5 minutes
+          {
+            timeout = 300;
+            command = "${pkgs.swaylock}/bin/swaylock -f -i ${config.home.homeDirectory}/.local/share/wallpapers/1458678242783.jpg -s fill";
+          }
+          # Turn displays off after 10 minutes (resume turns them back on)
+          {
+            timeout = 600;
+            command = "swaymsg 'output * power off'";
+            resumeCommand = "swaymsg 'output * power on'";
+          }
+          # Suspend the machine after 20 minutes
+          {
+            timeout = 1200;
+            command = "systemctl suspend";
+          }
+        ];
 
-    events = {
-      # Ensure we lock right before system sleep, and wake displays after resume
-      "before-sleep" =
-        "${pkgs.swaylock}/bin/swaylock -f -i ${config.home.homeDirectory}/.local/share/wallpapers/1458678242783.jpg -s fill";
-      "after-resume" = "swaymsg 'output * power on'";
-      lock = "${pkgs.swaylock}/bin/swaylock -f -i ${config.home.homeDirectory}/.local/share/wallpapers/1458678242783.jpg -s fill";
+        events = [
+          # Ensure we lock right before system sleep
+          {
+            event = "before-sleep";
+            command = "${pkgs.swaylock}/bin/swaylock -f -i ${config.home.homeDirectory}/.local/share/wallpapers/1458678242783.jpg -s fill";
+          }
+          # Wake displays after resume
+          {
+            event = "after-resume";
+            command = "swaymsg 'output * power on'";
+          }
+          {
+            event = "lock";
+            command = "${pkgs.swaylock}/bin/swaylock -f -i ${config.home.homeDirectory}/.local/share/wallpapers/1458678242783.jpg -s fill";
+          }
+        ];
+      };
     };
-  };
 }

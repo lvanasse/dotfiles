@@ -1,17 +1,23 @@
-# Locale, timezone, and keyboard configuration
-_: {
-  # Timezone
-  time.timeZone = "America/Toronto";
-  time.hardwareClockInLocalTime = true;
+{ ... }:
+{
+  flake.modules.nixos.locale =
+    { ... }:
+    {
+      # Locale, timezone, and keyboard configuration
 
-  # Locale
-  i18n.defaultLocale = "en_CA.UTF-8";
+      # Timezone
+      time.timeZone = "America/Toronto";
+      time.hardwareClockInLocalTime = true;
 
-  # Console keyboard layout
-  console.keyMap = "us-acentos";
+      # Locale
+      i18n.defaultLocale = "en_CA.UTF-8";
 
-  # Environment variables
-  environment.sessionVariables = {
-    POWERDEVIL_NO_DDCUTIL = "1";
-  };
+      # Console keyboard layout
+      console.keyMap = "us-acentos";
+
+      # Environment variables
+      environment.sessionVariables = {
+        POWERDEVIL_NO_DDCUTIL = "1";
+      };
+    };
 }

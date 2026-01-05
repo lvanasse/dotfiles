@@ -1,27 +1,28 @@
-# Core Home Manager configuration
+{ config, ... }:
+let
+  username = config.flake.lib.username;
+in
 {
-  config,
-  pkgs,
-  username ? "ludovic",
-  ...
-}:
-{
-  nixpkgs.config = {
-    allowUnfree = true;
-  };
+  flake.modules.homeManager.core =
+    { config, pkgs, ... }:
+    {
+      # Core Home Manager configuration
+      nixpkgs.config = {
+        allowUnfree = true;
+      };
 
-  home = {
-    enableNixpkgsReleaseCheck = false;
-    inherit username;
-    homeDirectory = "/home/${username}";
-    stateVersion = "25.05";
+      home = {
+        enableNixpkgsReleaseCheck = false;
+        inherit username;
+        homeDirectory = "/home/${username}";
+        stateVersion = "25.11";
 
-    sessionVariables = {
-      NPM_CONFIG_PREFIX = "${config.home.homeDirectory}/.npm-global";
-      NH_FLAKE = "${config.home.homeDirectory}/Code/personal/dotfiles";
-      # Ensure TLS inside Emacs and other tools works for HTTPS package archives
-      SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
-      SSL_CERT_DIR = "${pkgs.cacert}/etc/ssl/certs";
+        sessionVariables = {
+          NPM_CONFIG_PREFIX = "${config.home.homeDirectory}/.npm-global";
+          # Ensure TLS inside Emacs and other tools works for HTTPS package archives
+          SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
+          SSL_CERT_DIR = "${pkgs.cacert}/etc/ssl/certs";
+        };
+      };
     };
-  };
 }

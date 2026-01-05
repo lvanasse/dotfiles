@@ -1,10 +1,15 @@
-# Flatpak application management
-_: {
-  services.flatpak = {
-    enable = true;
-    update.auto = {
-      enable = true;
-      onCalendar = "weekly";
+{ ... }:
+{
+  flake.modules.nixos.servicesFlatpak =
+    { ... }:
+    {
+      # Flatpak application management
+      services.flatpak = {
+        enable = true;
+        update.auto = {
+          enable = true;
+          onCalendar = "weekly";
+        };
+      };
     };
-  };
 }

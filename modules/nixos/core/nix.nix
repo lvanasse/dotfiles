@@ -1,34 +1,40 @@
-# Nix package manager configuration
-_: {
-  # Nix settings and experimental features
-  nix.settings = {
-    # DetSys Nix settings
-    lazy-trees = true;
-    eval-cores = 0; # parallel eval
-    auto-optimise-store = true;
+{ ... }:
+{
+  flake.modules.nixos.nix =
+    { ... }:
+    {
+      # Nix package manager configuration
 
-    experimental-features = [
-      "nix-command"
-      "flakes"
-      "parallel-eval"
-    ];
+      # Nix settings and experimental features
+      nix.settings = {
+        # DetSys Nix settings
+        lazy-trees = true;
+        eval-cores = 0; # parallel eval
+        auto-optimise-store = true;
 
-    trusted-users = [
-      "root"
-      "ludovic"
-    ];
-  };
+        experimental-features = [
+          "nix-command"
+          "flakes"
+          "parallel-eval"
+        ];
 
-  # Automatic garbage collection
-  nix.gc = {
-    automatic = true;
-    dates = "weekly";
-    delete_generations = "+5";
-  };
+        trusted-users = [
+          "root"
+          "ludovic"
+        ];
+      };
 
-  # Allow unfree packages
-  nixpkgs.config.allowUnfree = true;
+      # Automatic garbage collection
+      nix.gc = {
+        automatic = true;
+        dates = "weekly";
+        delete_generations = "+5";
+      };
 
-  # System state version
-  system.stateVersion = "25.05";
+      # Allow unfree packages
+      nixpkgs.config.allowUnfree = true;
+
+      # System state version
+      system.stateVersion = "25.05";
+    };
 }

@@ -1,8 +1,12 @@
-# Terminal programs
-_: {
-  imports = [
-    ./fish.nix
-    ./starship.nix
-    ./wezterm.nix
-  ];
+{ config, ... }:
+{
+  flake.modules.homeManager.terminal =
+    { ... }:
+    {
+      imports = [
+        config.flake.modules.homeManager.terminalFish
+        config.flake.modules.homeManager.terminalStarship
+        config.flake.modules.homeManager.terminalWezterm
+      ];
+    };
 }

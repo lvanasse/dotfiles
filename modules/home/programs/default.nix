@@ -1,20 +1,18 @@
-# Home Manager programs
-_: {
-  imports = [
-    ./terminal
-    ./development
-    ./codex.nix
-    ./claude.nix
-    ./jira.nix
-    ./firefox.nix
-    ./email.nix
-    ./calendar.nix
-    ./waybar.nix
-    ./waybar-sway.nix
-    ./wofi.nix
-    ./mako.nix
-    ./sway-tools.nix
-    ./rofi.nix
-    ./swayidle.nix
-  ];
+{ config, ... }:
+{
+  flake.modules.homeManager.programs =
+    { ... }:
+    {
+      imports = [
+        config.flake.modules.homeManager.terminal
+        config.flake.modules.homeManager.programsNix
+        config.flake.modules.homeManager.programsSsh
+        config.flake.modules.homeManager.development
+        config.flake.modules.homeManager.codex
+        config.flake.modules.homeManager.jira
+        config.flake.modules.homeManager.firefox
+        config.flake.modules.homeManager.email
+        config.flake.modules.homeManager.calendar
+      ];
+    };
 }

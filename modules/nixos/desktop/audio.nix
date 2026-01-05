@@ -1,16 +1,22 @@
-# Audio configuration with PipeWire
-_: {
-  # Disable PulseAudio
-  services.pulseaudio.enable = false;
+{ ... }:
+{
+  flake.modules.nixos.desktopAudio =
+    { ... }:
+    {
+      # Audio configuration with PipeWire
 
-  # Enable real-time kit
-  security.rtkit.enable = true;
+      # Disable PulseAudio
+      services.pulseaudio.enable = false;
 
-  # Enable PipeWire
-  services.pipewire = {
-    enable = true;
-    alsa.enable = true;
-    alsa.support32Bit = true;
-    pulse.enable = true;
-  };
+      # Enable real-time kit
+      security.rtkit.enable = true;
+
+      # Enable PipeWire
+      services.pipewire = {
+        enable = true;
+        alsa.enable = true;
+        alsa.support32Bit = true;
+        pulse.enable = true;
+      };
+    };
 }

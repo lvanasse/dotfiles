@@ -1,6 +1,10 @@
-# Home Manager service modules
-_: {
-  imports = [
-    ./gnome-keyring.nix
-  ];
+{ config, ... }:
+{
+  flake.modules.homeManager.services =
+    { ... }:
+    {
+      imports = [
+        config.flake.modules.homeManager.servicesGnomeKeyring
+      ];
+    };
 }

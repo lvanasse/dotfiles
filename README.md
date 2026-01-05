@@ -1,37 +1,35 @@
 # Personal NixOS Dotfiles
 
-My personal NixOS configuration using flakes, supporting both my desktop PC and laptop.
+Flake-based NixOS + Home Manager configuration for desktop (pc) and laptop.
 
 ## Quick Start
 
 ```bash
-# Switch system configuration (runs HM first, available globally after rebuild)
-nh-os-with-home pc
-nh-os-with-home laptop
+# Switch system configuration
+nh os switch -H pc
+nh os switch -H laptop
 
 # Apply user environment
 home-manager switch --flake .#ludovic@pc
 home-manager switch --flake .#ludovic@laptop
 
-# Development
-nix develop               # Enter dev environment
-nix fmt                   # Format code
-nix flake check          # Validate everything
+# Validate
+nix flake check
+nixos-rebuild dry-run --flake .#pc
+nixos-rebuild dry-run --flake .#laptop
+
+# Format
+nix fmt
 ```
 
 ## Documentation
 
-All documentation is in the [`docs/`](docs/) directory:
+- `docs/README.md` – structure + commands
+- `docs/setup-ssh-keys.md` – SSH + secrets workflow
 
-- **[Quick Reference](docs/README.md)** - Start here for daily commands and overview
-- **[Repository Overview](docs/architecture/repository-overview.md)** - Complete structure guide
-- **[Tooling Guide](docs/development/tooling.md)** - Development tools and workflow
-- **[SSH Setup](docs/guides/setup-ssh-keys.md)** - Git SSH configuration for work/personal
+## Layout
 
-## Key Features
-
-- **Modular Configuration**: Clean, organized modules instead of monolithic files
-- **Multi-Host Support**: Separate configs for PC and laptop
-- **Work/Personal Git**: Automatic account switching based on directory
-- **Development Tooling**: Rich dev environment with formatting, linting, validation
-- **Home Manager**: Declarative user environment management
+- `flake.nix` – flake entrypoint
+- `modules/` – dendritic module tree (flake outputs, NixOS, Home Manager, hosts)
+- `hosts/` – host-only NixOS modules
+- `wallpapers/` – desktop assets

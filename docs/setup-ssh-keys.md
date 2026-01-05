@@ -1,128 +1,119 @@
-# SSH Key Setup for Your Git Accounts
+# SSH Keys + Secrets Setup
 
-This guide will help you set up SSH keys for your personal and work Git accounts on a new machine. Your NixOS config automatically handles the Git configuration based on directory, but you need to generate the SSH keys first.
+This repo expects two SSH keys (personal + work) and stores them in the private
+`secrets` repo. NixOS deploys them via agenix and Home Manager configures SSH
+host aliases (GitHub/Bitbucket/Codeberg).
 
-## 1. Generate SSH Keys
+## Expected Files (in the secrets repo)
 
-Run these commands to generate separate SSH keys:
+```
+keys/id_ed25519_personal.pub
+keys/id_ed25519_work.pub
+ssh/id_ed25519_personal.age
+ssh/id_ed25519_work.age
+```
+
+If these are missing, the config will skip deployment (it checks `pathExists`).
+
+## 1) Bootstrap Access (new machine)
+
+You must be able to fetch the private secrets repo:
+
+- If you already have keys: copy them temporarily into `~/.ssh/` and set perms.
+- If you don’t: generate new keys (next section), add them to Codeberg/GitHub/Bitbucket,
+  then continue.
 
 ```bash
-# Generate personal key for GitHub
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
+```
+
+## 2) Generate or Restore Keys
+
+Generate new keys (or restore from backup):
+
+```bash
+# Personal key
 ssh-keygen -t ed25519 -C "mail@ludovicvanasse.com" -f ~/.ssh/id_ed25519_personal
 
-# Generate work key for Bitbucket
+# Work key
 ssh-keygen -t ed25519 -C "lvanasse@luxaerobot.com" -f ~/.ssh/id_ed25519_work
 ```
 
-## 2. Add Keys to SSH Agent
+Ensure permissions:
 
 ```bash
-# Start SSH agent
-eval "$(ssh-agent -s)"
-
-# Add both keys
-ssh-add ~/.ssh/id_ed25519_personal
-ssh-add ~/.ssh/id_ed25519_work
+chmod 600 ~/.ssh/id_ed25519_personal ~/.ssh/id_ed25519_work
+chmod 644 ~/.ssh/id_ed25519_personal.pub ~/.ssh/id_ed25519_work.pub
 ```
 
-## 3. Add Public Keys to Git Hosting Services
+## 3) Add Public Keys to Git Hosts
 
-### Personal GitHub Account
+- GitHub (personal): add `id_ed25519_personal.pub`
+- Bitbucket (work): add `id_ed25519_work.pub`
+- Codeberg (personal): add `id_ed25519_personal.pub` (needed to fetch secrets repo)
 
-1. Copy your personal public key:
-   ```bash
-   cat ~/.ssh/id_ed25519_personal.pub
-   ```
-1. Go to GitHub.com → Settings → SSH and GPG keys → New SSH key
-1. Paste the public key and save
+## 4) Add Keys to the Secrets Repo (agenix)
 
-### Work Bitbucket Account
+If you generated new keys, update the secrets repo:
 
-1. Copy your work public key:
-   ```bash
-   cat ~/.ssh/id_ed25519_work.pub
-   ```
-1. Go to Bitbucket.org → Personal settings → SSH keys → Add key
-1. Paste the public key and save
+1. Put public keys in `keys/`.
+1. Encrypt private keys into `ssh/` as `.age` files.
+1. Re-key for the target host so it can decrypt.
 
-## 4. Test the Configuration
+Example flow (inside the secrets repo):
 
 ```bash
-# Test personal GitHub connection
+# Add public keys
+cp ~/.ssh/id_ed25519_personal.pub keys/
+cp ~/.ssh/id_ed25519_work.pub keys/
+
+# Encrypt private keys (example using agenix)
+agenix -e ssh/id_ed25519_personal.age -i ~/.ssh/id_ed25519_personal
+agenix -e ssh/id_ed25519_work.age -i ~/.ssh/id_ed25519_work
+
+# Re-encrypt all secrets for this host (requires its SSH host key in secrets.nix)
+agenix -r
+```
+
+## 5) Apply the Configuration
+
+```bash
+nh os switch -H pc   # or laptop
+home-manager switch --flake .#ludovic@pc   # or laptop
+```
+
+The system will deploy keys to:
+
+- `~/.ssh/id_ed25519_personal`
+- `~/.ssh/id_ed25519_work`
+
+## 6) Test Connections
+
+```bash
+# Personal GitHub
 ssh -T github-personal
 
-# Test work Bitbucket connection  
+# Work Bitbucket
 ssh -T bitbucket-work
 
-# Test default GitHub (should use personal)
-ssh -T git@github.com
+# Codeberg (personal)
+ssh -T git@codeberg.org
 ```
 
-## 5. Directory Structure
+## Notes on SSH Agent
 
-Make sure your directories exist:
+This setup disables the legacy `ssh-agent` and relies on gnome-keyring/gcr for
+agent support. If keys are not being offered:
 
 ```bash
-mkdir -p ~/Code/personal
-mkdir -p ~/Code/work
+systemctl --user status gnome-keyring-daemon
+ssh-add -L
 ```
-
-## 6. Usage Examples
-
-### Personal repositories (in ~/Code/personal/)
-
-```bash
-cd ~/Code/personal
-git clone git@github.com:lvanasse/some-repo.git
-# This will automatically use your personal account and SSH key
-```
-
-### Work repositories (in ~/Code/work/)
-
-```bash
-cd ~/Code/work  
-git clone git@bitbucket-work:company/some-repo.git
-# This will automatically use your work account and SSH key
-```
-
-## 7. Verify Configuration
-
-You can check which account is being used:
-
-```bash
-# In personal directory
-cd ~/Code/personal/some-repo
-git config user.email  # Should show: mail@ludovicvanasse.com
-
-# In work directory  
-cd ~/Code/work/some-repo
-git config user.email  # Should show: lvanasse@luxaerobot.com
-```
-
-## 8. Apply the Configuration
-
-After setting up the SSH keys, apply your NixOS configuration:
-
-```bash
-# Apply the new configuration
-nh os switch -H pc  # or laptop
-
-# Or just apply Home Manager changes
-home-manager switch --flake .#ludovic@pc  # or laptop
-```
-
-## Security Notes
-
-- Never commit private keys to any repository
-- Keep your SSH keys secure and backed up safely
-- Consider using a password manager to store key passphrases
-- The private keys stay on your local machine only
 
 ## Troubleshooting
 
-If you have issues:
-
-1. Check SSH agent is running: `ssh-add -l`
-1. Verify key permissions: `ls -la ~/.ssh/`
-1. Test SSH connections with verbose output: `ssh -vT github-personal`
-1. Check git configuration: `git config --list --show-origin`
+- `Permission denied (publickey)` → key not loaded or not added to the host.
+- `Could not resolve hostname github-personal` → SSH config not applied; re-run HM.
+- `No matching host key` during decryption → add the host SSH key to secrets and rekey.
+- `Bad permissions` → ensure `~/.ssh` is 700 and private keys are 600.

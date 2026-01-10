@@ -4,17 +4,22 @@ let
 in
 {
   flake.modules.homeManager.core =
-    { config, pkgs, ... }:
+    { config, pkgs, lib, ... }:
     {
       # Core Home Manager configuration
       nixpkgs.config = {
         allowUnfree = true;
       };
 
+      # Ensure ad-hoc nix commands (nix shell/build/run) allow unfree packages
+      xdg.configFile."nixpkgs/config.nix".text = ''
+        { allowUnfree = true; }
+      '';
+
       home = {
         enableNixpkgsReleaseCheck = false;
-        inherit username;
-        homeDirectory = "/home/${username}";
+        username = lib.mkDefault username;
+        homeDirectory = lib.mkDefault "/home/${username}";
         stateVersion = "25.11";
 
         sessionVariables = {

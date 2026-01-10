@@ -17,6 +17,7 @@
           bbenoist.nix
           jdinhlife.gruvbox
           jnoortheen.nix-ide
+          llvm-vs-code-extensions.vscode-clangd
           rust-lang.rust-analyzer
           github.vscode-github-actions
           ms-vscode.cpptools-extension-pack
@@ -24,6 +25,7 @@
           ms-vscode.cmake-tools
           ms-vscode.makefile-tools
           streetsidesoftware.code-spell-checker
+          xaver.clang-format
           foxundermoon.shell-format
           vscode-icons-team.vscode-icons
           sonarsource.sonarlint-vscode # SonarLint 4.37.0 via refreshed nix-vscode-extensions
@@ -34,6 +36,7 @@
           mcu-debug.rtos-views
           mcu-debug.peripheral-viewer
           redhat.vscode-yaml
+          davidanson.vscode-markdownlint
           jeff-hykin.better-cpp-syntax
           mkhl.direnv
           jebbs.plantuml

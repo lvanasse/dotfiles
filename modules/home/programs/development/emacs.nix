@@ -70,6 +70,7 @@
             treemacs-evil
             treemacs-projectile
             gruvbox-theme
+            ement
             # Nix syntax highlighting
             nix-mode
             # Email: ensure mu4e and notifications are available to Emacs
@@ -115,7 +116,7 @@
                    mu4e-enable-mode-line t
                    mu4e-use-maildirs-extension t)
            )
-            dotspacemacs-additional-packages '(gruvbox-theme ai-code-interface vterm gptel mcp gptel-autocomplete)
+            dotspacemacs-additional-packages '(gruvbox-theme ai-code-interface vterm gptel mcp gptel-autocomplete ement)
             dotspacemacs-excluded-packages '(forge)))
 
         (defun dotspacemacs/init ()
@@ -191,6 +192,12 @@
             (global-set-key (kbd "C-c a") #'ai-code-menu)
             (with-eval-after-load 'magit
               (ai-code-magit-setup-transients)))
+
+          (use-package ement
+            :commands (ement-connect)
+            :init
+            ;; Save sessions so you can reconnect quickly after restart.
+            (setq ement-save-session t))
 
           (require 'core-keybindings)
           (spacemacs/declare-prefix "oc" "AI Code")

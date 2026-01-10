@@ -1,4 +1,4 @@
-{ ... }:
+{ inputs, lib, ... }:
 {
   flake.modules.nixos.nix =
     { ... }:
@@ -33,6 +33,11 @@
 
       # Allow unfree packages
       nixpkgs.config.allowUnfree = true;
+
+      # Use this flake as the nixpkgs registry source (wrapper enables unfree)
+      nix.registry.nixpkgs = lib.mkForce {
+        flake = inputs.self;
+      };
 
       # System state version
       system.stateVersion = "25.05";

@@ -1,9 +1,10 @@
 { config, lib, ... }:
 let
-  username = config.flake.lib.username;
+  defaultUsername = config.flake.lib.username;
   system = "x86_64-linux";
   hosts = {
     pc = {
+      nixos = true;
       modules = [
         "profile.workstation"
         "desktop.sway"
@@ -13,6 +14,7 @@ let
       ];
     };
     laptop = {
+      nixos = true;
       modules = [
         "profile.workstation"
         "desktop.sway"
@@ -20,12 +22,32 @@ let
         "host.laptop"
       ];
     };
+    laptop-ubuntu = {
+      nixos = false;
+      modules = [
+        "profile.workstation"
+        "desktop.sway"
+        "desktop.kde"
+        "host.laptop-ubuntu"
+      ];
+    };
+    steamdeck = {
+      nixos = false;
+      username = "deck";
+      modules = [
+        "core"
+        "terminalFish"
+        "terminalStarship"
+        "host.steamdeck"
+      ];
+    };
   };
 
   mkNixos =
     hostname: host:
     config.flake.lib.mkNixosConfiguration {
-      inherit hostname system username;
+      username = defaultUsername;
+      inherit hostname system;
       modules = host.modules;
     };
 
@@ -41,9 +63,13 @@ in
   flake.modules.nixos."host.pc" = ../../hosts/pc/pc.nix;
   flake.modules.nixos."host.laptop" = ../../hosts/laptop/laptop.nix;
 
-  flake.nixosConfigurations = lib.mapAttrs mkNixos hosts;
+  flake.nixosConfigurations = lib.mapAttrs mkNixos (lib.filterAttrs (_: host: host.nixos or false) hosts);
 
   flake.homeConfigurations = lib.mapAttrs' (
-    hostname: host: lib.nameValuePair "${username}@${hostname}" (mkHome hostname host)
+    hostname: host:
+    let
+      hostUsername = host.username or defaultUsername;
+    in
+    lib.nameValuePair "${hostUsername}@${hostname}" (mkHome hostname host)
   ) hosts;
 }

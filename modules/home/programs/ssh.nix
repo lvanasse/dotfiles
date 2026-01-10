@@ -9,6 +9,14 @@
         enableDefaultConfig = false; # Disable default config to avoid future warnings
 
         matchBlocks = {
+          # Steam Deck (SteamOS)
+          "steamdeck" = {
+            hostname = "192.168.0.105";
+            user = "deck";
+            identityFile = "~/.ssh/id_ed25519_personal";
+            identitiesOnly = true;
+          };
+
           # Personal GitHub account
           "github-personal" = {
             hostname = "github.com";

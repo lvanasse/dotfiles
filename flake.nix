@@ -4,6 +4,7 @@
   inputs = {
     # Core inputs
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+    nixpkgs-weekly.url = "https://flakehub.com/f/DeterminateSystems/nixpkgs-weekly/0.1";
 
     # Flake organization
     flake-parts.url = "github:hercules-ci/flake-parts";

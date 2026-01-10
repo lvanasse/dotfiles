@@ -622,6 +622,20 @@
         "type": "github"
       }
     },
+    "nixpkgs-weekly": {
+      "locked": {
+        "lastModified": 1767364772,
+        "narHash": "sha256-fFUnEYMla8b7UKjijLnMe+oVFOz6HjijGGNS1l7dYaQ=",
+        "rev": "16c7794d0a28b5a37904d55bcca36003b9109aaa",
+        "revCount": 921317,
+        "type": "tarball",
+        "url": "https://api.flakehub.com/f/pinned/DeterminateSystems/nixpkgs-weekly/0.1.921317%2Brev-16c7794d0a28b5a37904d55bcca36003b9109aaa/019b91d2-89bb-7bdd-97dd-977e034cb620/source.tar.gz"
+      },
+      "original": {
+        "type": "tarball",
+        "url": "https://flakehub.com/f/DeterminateSystems/nixpkgs-weekly/0.1"
+      }
+    },
     "nixpkgs_2": {
       "locked": {
         "lastModified": 1766314097,
@@ -734,6 +748,7 @@
         "nixpkgs": "nixpkgs_3",
         "nixpkgs-2505": "nixpkgs-2505",
         "nixpkgs-unstable": "nixpkgs-unstable",
+        "nixpkgs-weekly": "nixpkgs-weekly",
         "plasma-manager": "plasma-manager",
         "pre-commit-hooks": "pre-commit-hooks",
         "secrets": "secrets",

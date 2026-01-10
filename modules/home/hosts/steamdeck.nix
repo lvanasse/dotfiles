@@ -8,7 +8,7 @@
 
       home.packages = with pkgs; [
         xrdp
-        xorgxrdp
+        pulseaudio-module-xrdp
       ];
     };
 }

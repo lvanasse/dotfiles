@@ -12,6 +12,11 @@
           # Set fish greeting
           set fish_greeting
 
+          # Enable Starship prompt when available
+          if type -q starship
+            starship init fish | source
+          end
+
           # Load bass plugin to run Bash commands in Fish
           if test -f ${pkgs.fishPlugins.bass}/share/fish/vendor_functions.d/bass.fish
             source ${pkgs.fishPlugins.bass}/share/fish/vendor_functions.d/bass.fish

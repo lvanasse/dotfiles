@@ -14,7 +14,7 @@
           add_newline = false;
           # Global format - defines the overall prompt structure
           # Show directory, then branch (with its own brackets), dirty marker, and prompt char
-          format = "$hostname$directory$git_branch$git_status$character";
+          format = "$username@$hostname$directory$git_branch$git_status$character";
 
           # Right format (empty for minimal theme)
           right_format = "";
@@ -32,6 +32,11 @@
             ssh_only = false;
             format = "[$hostname]($style) ";
             style = "white";
+          };
+          username = {
+            show_always = true;
+            format = "[$user]($style)";
+            style_user = "white";
           };
 
           # Git branch module - render only the branch name, brackets handled in format
@@ -88,7 +93,6 @@
           gcloud.disabled = true;
           golang.disabled = true;
           helm.disabled = true;
-          hostname.disabled = false;
           java.disabled = true;
           jobs.disabled = true;
           julia.disabled = true;
@@ -118,7 +122,6 @@
           swift.disabled = true;
           terraform.disabled = true;
           time.disabled = true;
-          username.disabled = true;
           vagrant.disabled = true;
           vcsh.disabled = true;
           zig.disabled = true;

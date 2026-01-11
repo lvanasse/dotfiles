@@ -3,9 +3,10 @@
 ## Project Structure & Module Organization
 
 - `flake.nix` – Flake entrypoint defining inputs/outputs and host configs.
-- `hosts/` – Machine configs: `hosts/pc/pc.nix`, `hosts/laptop/laptop.nix` (do not edit `hardware-configuration.nix`).
-- `home/` – Home Manager: `home/default.nix`, plus `home/pc.nix` and `home/laptop.nix`.
-- `modules/common/` – Shared modules: `system.nix`, `users.nix`, `de.nix`, `gaming.nix`.
+- `nixos/` – Per-host NixOS entrypoints (e.g., `nixos/pc/pc.nix`, `nixos/laptop/laptop.nix`); do not edit `hardware-configuration.nix`.
+- `modules/hosts/` – Host matrix (maps module sets to each host for NixOS + Home Manager).
+- `modules/nixos/` – Shared NixOS modules.
+- `modules/home/` – Shared Home Manager modules.
 - `wallpapers/` – Desktop assets.
 
 ## Build, Test, and Development Commands
@@ -44,4 +45,4 @@
 ## Agent Notes
 
 - Keep patches focused; avoid unrelated edits. Respect existing structure and naming.
-- When adding modules, wire imports in `hosts/<host>/<host>.nix` and test both hosts.
+- When adding modules, wire imports in `nixos/<host>/<host>.nix` and test both hosts.

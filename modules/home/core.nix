@@ -4,7 +4,12 @@ let
 in
 {
   flake.modules.homeManager.core =
-    { config, pkgs, lib, ... }:
+    {
+      config,
+      pkgs,
+      lib,
+      ...
+    }:
     {
       # Core Home Manager configuration
       nixpkgs.config = {

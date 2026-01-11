@@ -8,8 +8,8 @@ This directory documents how this flake is structured and how to maintain it.
 - `modules/flake/` defines flake outputs (checks, overlays, lib, packages, formatter).
 - `modules/nixos/` contains NixOS modules (core, desktop, services, programs).
 - `modules/home/` contains Home Manager modules (core, desktop, programs, services, packages).
-- `modules/hosts/` defines the host matrix (which module sets each host uses).
-- `hosts/` contains host-only modules (split by category per machine).
+- `modules/hosts/` defines the host matrix (which module sets each host uses for both NixOS + HM).
+- `nixos/` contains per-host NixOS entrypoints and hardware bits (e.g., `nixos/pc/pc.nix`).
 
 ## Host Matrix Naming
 
@@ -22,6 +22,8 @@ Hosts are defined as module lists in `modules/hosts/default.nix`.
 - `host.pc` / `host.laptop` → host-only modules (hardware quirks, per-machine tweaks).
 
 Laptop uses `host.laptop` (not `host.pc`).
+
+Per-host system entrypoints live under `nixos/<host>/<host>.nix`; they import the host’s hardware and service files and are wired into the matrix via `flake.modules.nixos."host.<name>"`.
 
 ## SSH Setup
 

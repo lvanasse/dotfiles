@@ -60,10 +60,12 @@ let
 
 in
 {
-  flake.modules.nixos."host.pc" = ../../hosts/pc/pc.nix;
-  flake.modules.nixos."host.laptop" = ../../hosts/laptop/laptop.nix;
+  flake.modules.nixos."host.pc" = ../../nixos/pc/pc.nix;
+  flake.modules.nixos."host.laptop" = ../../nixos/laptop/laptop.nix;
 
-  flake.nixosConfigurations = lib.mapAttrs mkNixos (lib.filterAttrs (_: host: host.nixos or false) hosts);
+  flake.nixosConfigurations = lib.mapAttrs mkNixos (
+    lib.filterAttrs (_: host: host.nixos or false) hosts
+  );
 
   flake.homeConfigurations = lib.mapAttrs' (
     hostname: host:

@@ -1,6 +1,6 @@
 # Personal NixOS Dotfiles
 
-Flake-based NixOS + Home Manager configuration for desktop (pc) and laptop.
+Flake-based NixOS + Home Manager configuration for desktop (`pc`) and laptop.
 
 ## Quick Start
 
@@ -30,6 +30,12 @@ nix fmt
 ## Layout
 
 - `flake.nix` – flake entrypoint
-- `modules/` – dendritic module tree (flake outputs, NixOS, Home Manager, hosts)
-- `hosts/` – host-only NixOS modules
+- `modules/` – shared module tree (flake outputs, NixOS, Home Manager, host matrix)
+- `modules/hosts/` – host matrix declaring which module sets each machine uses
+- `nixos/` – per-host NixOS entrypoints and hardware bits (e.g., `nixos/pc/pc.nix`)
 - `wallpapers/` – desktop assets
+
+Why both `modules/hosts` and `nixos/`?
+
+- `modules/hosts/default.nix` is the matrix that maps host names to module sets for both NixOS and Home Manager.
+- `nixos/<host>/<host>.nix` is the system entrypoint that pulls in hardware and per-machine files.

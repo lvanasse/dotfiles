@@ -71,7 +71,6 @@
             treemacs-projectile
             gruvbox-theme
             ement
-            shell
             # Nix syntax highlighting
             nix-mode
             # Email: ensure mu4e and notifications are available to Emacs
@@ -110,7 +109,8 @@
              cmake
              python
              rust
-             shell
+             (shell :variables
+                    shell-default-shell 'vterm)
              shell-scripts
              ;; Email (mu4e)
              (mu4e :variables
@@ -164,14 +164,14 @@
             (mu4e-alert-enable-notifications))
 
           ;; Ensure all interactive shells (SPC ') use fish with our system config
-          (let ((fish "/run/current-system/sw/bin/fish"))
-            (setq shell-file-name fish
-                  explicit-shell-file-name fish
-                  vterm-shell fish)
-            (setenv "SHELL" fish)
-            (with-eval-after-load 'shell-pop
-              (setq shell-pop-shell-type `("ansi-term" "*shell*" (lambda () (ansi-term ,fish)))))
-            (setq multi-term-program fish))
+          (setq shell-file-name "/run/current-system/sw/bin/fish"
+                explicit-shell-file-name "/run/current-system/sw/bin/fish"
+                vterm-shell "/run/current-system/sw/bin/fish"
+                multi-term-program "/run/current-system/sw/bin/fish")
+          (setenv "SHELL" "/run/current-system/sw/bin/fish")
+          (with-eval-after-load 'shell-pop
+            (setq shell-pop-shell-type
+                  '("vterm" "*vterm*" (lambda () (vterm)))))
 
           ;; Language-specific tweaks without full Spacemacs layers
           (use-package nix-mode

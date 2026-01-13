@@ -30,6 +30,7 @@
           home-manager
           fish # Fish shell
           starship # Cross-shell prompt
+          nil
 
           # Build tools
           gnumake

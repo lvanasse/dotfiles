@@ -96,12 +96,12 @@
            dotspacemacs-ask-for-lazy-installation t
            dotspacemacs-install-packages 'used-only
            dotspacemacs-configuration-layers '(
+             (treemacs :variables treemacs-use-follow-mode t)
              ;; Core UX layers (adjust over time)
              better-defaults
              git
              (auto-completion :variables auto-completion-enable-snippets-in-popup t)
              syntax-checking
-             treemacs
              ;; Choose one completion framework (ivy/helm/vertico). Default to ivy.
              ivy
              ;; Language layers for day-to-day development

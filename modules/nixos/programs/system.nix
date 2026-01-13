@@ -53,6 +53,7 @@ in
         ubootTools
         util-linux
         ripgrep
+        rsync
         pavucontrol
         openssh
         agenixPkg

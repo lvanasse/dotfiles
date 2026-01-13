@@ -71,6 +71,7 @@
             treemacs-projectile
             gruvbox-theme
             ement
+            shell
             # Nix syntax highlighting
             nix-mode
             # Email: ensure mu4e and notifications are available to Emacs
@@ -109,6 +110,7 @@
              cmake
              python
              rust
+             shell
              shell-scripts
              ;; Email (mu4e)
              (mu4e :variables

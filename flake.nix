@@ -25,6 +25,9 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Disk provisioning
+    disko.url = "github:nix-community/disko";
+
     # Applications
     nix-flatpak.url = "github:gmodena/nix-flatpak/?ref=latest";
 

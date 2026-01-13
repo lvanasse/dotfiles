@@ -1,7 +1,4 @@
-{ config, inputs, ... }:
-let
-  username = config.flake.lib.username;
-in
+{ inputs, username, ... }:
 {
   imports = [
     inputs.disko.nixosModules.disko

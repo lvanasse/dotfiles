@@ -224,8 +224,11 @@
 
             (add-hook 'prog-mode-hook #'my/prog-mode-line-numbers)
 
-            ;; Keep Treemacs visible when opening project files.
+            ;; Keep Treemacs in sync with the current project/buffer.
             (with-eval-after-load 'treemacs
+              (treemacs-follow-mode t)
+              (treemacs-filewatch-mode t)
+              (treemacs-project-follow-mode t)
               (treemacs-define-RET-action 'file-node-closed #'treemacs-visit-node-ace)
               (treemacs-define-RET-action 'file-node-open #'treemacs-visit-node-ace))
 

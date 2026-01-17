@@ -23,7 +23,7 @@
         when = "command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1 && test -n \"$(git status --porcelain)\""
         command = "printf '*'"
         style = "red"
-        format = " $output"
+        format = " [$output]($style)"
 
         [custom.git_close]
         when = "command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1"

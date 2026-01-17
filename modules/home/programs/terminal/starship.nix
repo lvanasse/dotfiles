@@ -5,7 +5,7 @@
     {
       home.file.".config/starship-emacs.toml".text = ''
         add_newline = false
-        format = "$directory$git_branch${custom.git_dirty}$character"
+        format = "$directory$git_branch''${custom.git_dirty}$character"
 
         [directory]
         style = "white"

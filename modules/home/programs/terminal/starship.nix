@@ -5,7 +5,7 @@
     {
       home.file.".config/starship-emacs.toml".text = ''
         add_newline = false
-        format = "$directory$git_branch$git_status$character"
+        format = "$directory$git_branch$custom.git_dirty$character"
 
         [directory]
         style = "white"
@@ -18,8 +18,13 @@
         style = "white"
 
         [git_status]
-        format = " [*]($style)"
+        disabled = true
+
+        [custom.git_dirty]
+        when = "command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1 && test -n \"$(git status --porcelain)\""
+        command = "printf '*'"
         style = "red"
+        format = " [$output]($style)"
 
         [character]
         success_symbol = " > "

@@ -12,6 +12,11 @@
           # Set fish greeting
           set fish_greeting
 
+          # Use a minimal Starship config inside Emacs/vterm to avoid artifacts
+          if set -q INSIDE_EMACS
+            set -gx STARSHIP_CONFIG "$HOME/.config/starship-emacs.toml"
+          end
+
           # Enable Starship prompt when available
           if type -q starship
             starship init fish | source

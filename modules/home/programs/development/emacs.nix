@@ -173,6 +173,19 @@
             (setq shell-pop-shell-type
                   '("vterm" "*vterm*" (lambda () (vterm)))))
 
+          ;; vterm rendering: avoid cursor artifacts by disabling overlays and
+          ;; forcing redraw after commands.
+          (add-hook 'vterm-mode-hook
+            (lambda ()
+              (when (fboundp 'display-line-numbers-mode)
+                (display-line-numbers-mode -1))
+              (when (fboundp 'hl-line-mode)
+                (hl-line-mode -1))
+              (when (fboundp 'pixel-scroll-precision-mode)
+                (pixel-scroll-precision-mode -1))
+              (when (fboundp 'vterm--invalidate)
+                (add-hook 'post-command-hook #'vterm--invalidate nil t))))
+
           ;; Language-specific tweaks without full Spacemacs layers
           (use-package nix-mode
             :mode "\\.nix\\'"

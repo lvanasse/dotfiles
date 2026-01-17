@@ -3,6 +3,35 @@
   flake.modules.homeManager.terminalStarship =
     { ... }:
     {
+      home.file.".config/starship-emacs.toml".text = ''
+        add_newline = false
+        format = "$directory$git_branch$git_status$character"
+
+        [directory]
+        style = "white"
+        truncation_length = 0
+        format = "[$path]($style)"
+
+        [git_branch]
+        symbol = "git "
+        format = " [$symbol$branch]($style)"
+        style = "white"
+
+        [git_status]
+        format = " [*]($style)"
+        style = "red"
+
+        [character]
+        success_symbol = " > "
+        error_symbol = " > "
+        vimcmd_symbol = " > "
+
+        [hostname]
+        disabled = true
+        [username]
+        disabled = true
+      '';
+
       # Starship prompt configuration
       programs.starship = {
         enable = true;

@@ -120,8 +120,8 @@
                 choice=$(printf "%s\n" "$entries" | dmenu)
                 case "''${choice:-}" in
                   Lock)
-                    if have swaylock; then
-                      exec swaylock -f -i "$HOME/.local/share/wallpapers/1458678242783.jpg" -s fill
+                    if have swaylock-pixelate; then
+                      exec swaylock-pixelate
                     else
                       exec loginctl lock-session
                     fi
@@ -189,6 +189,27 @@
             echo "screenshot-annotate: requires grim, slurp, swappy" >&2
             exit 1
           fi
+        '')
+        (pkgs.writeShellScriptBin "swaylock-pixelate" ''
+          #!/usr/bin/env bash
+          set -euo pipefail
+
+          grim="${pkgs.grim}/bin/grim"
+          convert="${pkgs.imagemagick}/bin/convert"
+          swaylock="${pkgs.swaylock}/bin/swaylock"
+
+          runtime_dir="''${XDG_RUNTIME_DIR:-/tmp}"
+          raw="$runtime_dir/swaylock-raw.png"
+          out="$runtime_dir/swaylock-pixel.png"
+
+          if ! "$grim" -t png "$raw"; then
+            exec "$swaylock" -f -c 000000
+          fi
+          if ! "$convert" "$raw" -scale 10% -scale 1000% "$out"; then
+            exec "$swaylock" -f -c 000000
+          fi
+
+          exec "$swaylock" -f -i "$out" -s fill
         '')
         (pkgs.writeShellScriptBin "start-chat-apps" ''
           #!/usr/bin/env bash

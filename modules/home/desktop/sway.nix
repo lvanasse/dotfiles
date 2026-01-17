@@ -59,7 +59,8 @@ in
               always = true;
             }
             {
-              command = "waybar -c ${config.home.homeDirectory}/.config/waybar/config-sway.jsonc -s ${config.home.homeDirectory}/.config/waybar/style-sway.css";
+              command =
+                "${pkgs.bash}/bin/bash -lc '${pkgs.procps}/bin/pkill -x waybar >/dev/null 2>&1 || true; exec ${pkgs.waybar}/bin/waybar -c ${config.home.homeDirectory}/.config/waybar/config-sway.jsonc -s ${config.home.homeDirectory}/.config/waybar/style-sway.css'";
               always = true;
             }
             # Autostart chat apps (Slack + Discord/Vesktop) at login
@@ -90,9 +91,9 @@ in
           # (keep this empty placeholder removed to avoid duplicate definitions)
           bars = [ ]; # use waybar
           window = {
-            # Keep compositor-drawn titlebars, but no surrounding border
+            # Keep compositor-drawn titlebars with a thin surrounding border
             titlebar = true;
-            border = 0;
+            border = 1;
           };
 
           # Colors sourced from shared theme (Gruvbox Dark Hard)
@@ -109,15 +110,14 @@ in
               "${mod}+Shift+d" = "exec rofi-run-only";
               "${mod}+Shift+q" = "kill";
               "${mod}+Shift+c" = "reload";
-              # Reload Sway config and restart Waybar to pick up changes
-              "${mod}+Shift+r" =
-                "exec ${pkgs.bash}/bin/bash -lc '${pkgs.procps}/bin/pkill -x waybar >/dev/null 2>&1 || true; swaymsg reload; ${pkgs.util-linux}/bin/setsid -f ${pkgs.waybar}/bin/waybar -c ${config.home.homeDirectory}/.config/waybar/config-sway.jsonc -s ${config.home.homeDirectory}/.config/waybar/style-sway.css >/dev/null 2>&1'";
+              # Reload Sway config (Waybar restarts via exec_always)
+              "${mod}+Shift+r" = "exec swaymsg reload";
               "Ctrl+${mod}+r" = "restart";
               "${mod}+Shift+e" = "exec swaynag -t warning -m 'Exit Sway?' -b 'Yes, exit' 'swaymsg exit'";
 
               # Session
               "${mod}+Shift+x" =
-                "exec ${pkgs.swaylock}/bin/swaylock -f -i ${config.home.homeDirectory}/.local/share/wallpapers/1458678242783.jpg -s fill";
+                "exec swaylock-pixelate";
 
               # Window state
               "${mod}+f" = "fullscreen toggle";
@@ -201,8 +201,15 @@ in
 
           assigns = {
             # Workspace assignments
-            # 10: Chat (Slack, Discord/Vesktop) + audio (Pavucontrol)
+            # 10: Audio (Pavucontrol)
             "10" = [
+              # Pavucontrol for quick audio adjustments
+              { class = "Pavucontrol"; }
+              { class = "pavucontrol"; }
+            ];
+
+            # 11: Chat (Slack, Discord/Vesktop)
+            "11" = [
               # Vesktop/Discord (Wayland/Xwayland)
               { app_id = "vesktop"; }
               { class = "Vesktop"; }
@@ -211,9 +218,6 @@ in
               # Slack (Wayland/Xwayland)
               { app_id = "Slack"; }
               { class = "Slack"; }
-              # Pavucontrol for quick audio adjustments
-              { class = "Pavucontrol"; }
-              { class = "pavucontrol"; }
             ];
 
             # 9: qBittorrent (and mail if running)
@@ -232,6 +236,9 @@ in
           # Make Sway titlebars thinner (reduce vertical/horizontal padding)
           # Keep font size; just tighten the chrome a bit
           titlebar_padding 1 4
+
+          # Focus windows when the mouse enters them
+          focus_follows_mouse yes
 
           # Chat workspace: auto-tab layout when windows appear on workspace 10
           # This avoids focus flashes by not forcing a workspace switch at startup
@@ -265,9 +272,9 @@ in
             bindsym semicolon resize grow width 10 px or 10 ppt
           }
 
-          # Firefox: ensure no compositor borders; rely on server-side decoration
-          for_window [app_id="firefox"] border pixel 0
-          for_window [class="Firefox"] border pixel 0
+          # Firefox: keep a thin compositor border for consistency
+          for_window [app_id="firefox"] border pixel 1
+          for_window [class="Firefox"] border pixel 1
         '';
       };
     };

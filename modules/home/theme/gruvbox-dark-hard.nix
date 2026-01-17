@@ -39,27 +39,27 @@
         # Sway colors block (client decorations)
         sway = {
           background = palette.dark0_hard;
-          # Match border color to background so borders are invisible, keep titlebar
+          # Subtle borders for window separation while keeping the titlebar
           focused = {
-            border = palette.dark0_hard;
+            border = palette.light4;
             background = palette.dark0_hard;
             text = palette.light1;
             indicator = palette.dark1;
-            childBorder = palette.dark0_hard;
+            childBorder = palette.light4;
           };
           focusedInactive = {
-            border = palette.dark0_hard;
+            border = palette.dark2;
             background = palette.dark0_hard;
             text = palette.light1;
             indicator = palette.dark1;
-            childBorder = palette.dark0_hard;
+            childBorder = palette.dark2;
           };
           unfocused = {
-            border = palette.dark0_hard;
+            border = palette.dark2;
             background = palette.dark0_hard;
             text = palette.light1;
             indicator = palette.dark1;
-            childBorder = palette.dark0_hard;
+            childBorder = palette.dark2;
           };
           urgent = {
             border = palette.bright_red;
@@ -69,11 +69,11 @@
             childBorder = palette.bright_red;
           };
           placeholder = {
-            border = palette.dark0_hard;
+            border = palette.dark2;
             background = palette.dark0_hard;
             text = palette.light1;
             indicator = palette.dark1;
-            childBorder = palette.dark0_hard;
+            childBorder = palette.dark2;
           };
         };
 

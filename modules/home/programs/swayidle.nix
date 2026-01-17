@@ -13,7 +13,7 @@
           # Lock after 5 minutes
           {
             timeout = 300;
-            command = "${pkgs.swaylock}/bin/swaylock -f -i ${config.home.homeDirectory}/.local/share/wallpapers/1458678242783.jpg -s fill";
+            command = "swaylock-pixelate";
           }
           # Turn displays off after 10 minutes (resume turns them back on)
           {
@@ -32,7 +32,7 @@
           # Ensure we lock right before system sleep
           {
             event = "before-sleep";
-            command = "${pkgs.swaylock}/bin/swaylock -f -i ${config.home.homeDirectory}/.local/share/wallpapers/1458678242783.jpg -s fill";
+            command = "swaylock-pixelate; swaymsg 'output * power off'";
           }
           # Wake displays after resume
           {
@@ -41,7 +41,7 @@
           }
           {
             event = "lock";
-            command = "${pkgs.swaylock}/bin/swaylock -f -i ${config.home.homeDirectory}/.local/share/wallpapers/1458678242783.jpg -s fill";
+            command = "swaylock-pixelate";
           }
         ];
       };

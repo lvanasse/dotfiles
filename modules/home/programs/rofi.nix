@@ -4,6 +4,8 @@
     { config, ... }:
     let
       palette = config.theme.palette;
+      # Slightly darker than dark0_hard for the launcher surface
+      bgDarker = "#161819";
       # Helper: append 0xFF alpha for full opacity
       opa = c: "${c}ff";
     in
@@ -25,8 +27,8 @@
 
         /* Gruvbox Dark Hard via shared theme */
         * {
-          bg: ${opa palette.dark0_hard};
-          bg-alt: ${opa palette.dark1};
+          bg: ${opa bgDarker};
+          bg-alt: ${opa palette.dark0_hard};
           fg: ${opa palette.light1};
           border-color: ${opa palette.dark1};
           accent: ${opa palette.bright_orange};

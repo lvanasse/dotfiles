@@ -56,6 +56,7 @@ let
             home-manager = {
               useUserPackages = true;
               backupFileExtension = "hm-bak";
+              overwriteBackup = true;
               users.${username} = {
                 imports = hmModules;
                 nixpkgs = {

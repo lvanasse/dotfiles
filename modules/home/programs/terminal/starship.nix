@@ -15,7 +15,7 @@
 
         [git_branch]
         symbol = ""
-        format = " ($branch"
+        format = " [($branch]($style)"
         style = "white"
 
         [custom.git_dirty]

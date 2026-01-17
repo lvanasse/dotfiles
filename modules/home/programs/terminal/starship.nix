@@ -5,17 +5,13 @@
     {
       home.file.".config/starship-emacs.toml".text = ''
         add_newline = false
-        format = "$directory$git_branch''${custom.git_dirty}$character"
+        format = "$directory''${custom.git_dirty}$character"
 
         [directory]
         style = "white"
         truncation_length = 0
         format = "[$path]($style)"
-
-        [git_branch]
-        symbol = "git "
-        format = " [$symbol$branch]($style)"
-        style = "white"
+        truncate_to_repo = false
 
         [git_status]
         disabled = true

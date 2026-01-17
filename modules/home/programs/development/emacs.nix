@@ -189,8 +189,16 @@
           ;; Language-specific tweaks without full Spacemacs layers
           (use-package nix-mode
             :mode "\\.nix\\'"
+            :hook
+            (nix-mode . (lambda ()
+                          (when (fboundp 'eglot-ensure)
+                            (eglot-ensure))
+                          (add-hook 'before-save-hook #'nix-format-before-save nil t)))
             :config
-            (setq nix-indent-function 'nix-indent-line))
+            (setq nix-indent-function 'nix-indent-line
+                  nix-nixfmt-bin "nixfmt-rfc-style")
+            (with-eval-after-load 'eglot
+              (add-to-list 'eglot-server-programs '(nix-mode . ("nixd")))))
 
           (use-package claude-code
             :init

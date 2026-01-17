@@ -31,6 +31,7 @@
           fish # Fish shell
           starship # Cross-shell prompt
           nil
+          nixd
 
           # Build tools
           gnumake

@@ -5,7 +5,7 @@
     {
       home.file.".config/starship-emacs.toml".text = ''
         add_newline = false
-        format = "$directory$git_branch''${custom.git_dirty}''${custom.git_close}$character"
+        format = "$directory''${custom.git_branch}''${custom.git_dirty}''${custom.git_close}$character"
 
         [directory]
         style = "white"
@@ -13,10 +13,11 @@
         format = "[$path]($style)"
         truncate_to_repo = false
 
-        [git_branch]
-        symbol = ""
-        format = " [($branch]($style)"
+        [custom.git_branch]
+        when = "command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1"
+        command = "sh -c 'b=$(git symbolic-ref --short HEAD 2>/dev/null || git rev-parse --short HEAD 2>/dev/null) && printf \"(%s\" \"$b\"'"
         style = "white"
+        format = " [$output]($style)"
 
         [custom.git_dirty]
         when = "command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1 && test -n \"$(git status --porcelain)\""

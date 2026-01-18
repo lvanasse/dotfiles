@@ -191,7 +191,7 @@
             :mode "\\.nix\\'"
             :hook
             (nix-mode . (lambda ()
-                          (when (fboundp 'eglot-ensure)
+                          (when (require 'eglot nil t)
                             (eglot-ensure))
                           (when (fboundp 'company-mode)
                             (company-mode 1))
@@ -203,7 +203,8 @@
             (setq nix-indent-function 'nix-indent-line
                   nix-nixfmt-bin "nixfmt-rfc-style")
             (with-eval-after-load 'eglot
-              (add-to-list 'eglot-server-programs '(nix-mode . ("nixd")))))
+              (add-to-list 'eglot-server-programs
+                           '(nix-mode . ("nixd" "--nixpkgs-expr" "import <nixpkgs> {}")))))
 
           (use-package claude-code
             :init

@@ -193,6 +193,11 @@
             (nix-mode . (lambda ()
                           (when (fboundp 'eglot-ensure)
                             (eglot-ensure))
+                          (when (fboundp 'company-mode)
+                            (company-mode 1))
+                          (when (boundp 'company-backends)
+                            (setq-local company-backends (copy-sequence company-backends))
+                            (add-to-list 'company-backends 'company-capf))
                           (add-hook 'before-save-hook #'nix-format-before-save nil t)))
             :config
             (setq nix-indent-function 'nix-indent-line

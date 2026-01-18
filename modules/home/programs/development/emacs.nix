@@ -77,6 +77,7 @@
             mu4e
             mu4e-alert
             vterm
+            clipetty
           ])
           ++ [
             claudeCode
@@ -118,7 +119,7 @@
                    mu4e-enable-mode-line t
                    mu4e-use-maildirs-extension t)
            )
-            dotspacemacs-additional-packages '(gruvbox-theme ai-code-interface vterm gptel mcp gptel-autocomplete ement)
+            dotspacemacs-additional-packages '(gruvbox-theme ai-code-interface vterm gptel mcp gptel-autocomplete ement clipetty)
             dotspacemacs-excluded-packages '(forge)))
 
         (defun dotspacemacs/init ()
@@ -139,6 +140,13 @@
             (setq native-comp-async-report-warnings-errors 'silent)))
 
           (defun dotspacemacs/user-config ()
+          ;; Clipboard integration: use system clipboard in GUI and OSC52 in TTY.
+          (setq select-enable-clipboard t
+                save-interprogram-paste-before-kill t)
+          (when (and (not (display-graphic-p))
+                     (require 'clipetty nil t))
+            (global-clipetty-mode 1))
+
             ;; Ensure Nix-provided Forge is loaded (without ELPA install)
             (with-eval-after-load 'magit
               (require 'forge))

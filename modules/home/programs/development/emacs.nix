@@ -186,6 +186,20 @@
               (when (fboundp 'vterm--invalidate)
                 (add-hook 'post-command-hook #'vterm--invalidate nil t))))
 
+          (defun my/nixd-contact (_interactive _project)
+            "Pick nixd args based on NIX_PATH availability."
+            (let* ((nixpkgs-path "/nix/var/nix/profiles/per-user/root/channels/nixpkgs")
+                   (nix-path (or (getenv "NIX_PATH") "")))
+              (when (and (file-directory-p nixpkgs-path)
+                         (not (string-match-p "nixpkgs=" nix-path)))
+                (setenv "NIX_PATH"
+                        (if (string= nix-path "")
+                            (format "nixpkgs=%s" nixpkgs-path)
+                          (format "nixpkgs=%s:%s" nixpkgs-path nix-path))))
+              (if (string-match-p "nixpkgs=" (or (getenv "NIX_PATH") ""))
+                  '("nixd" "--nixpkgs-expr" "import <nixpkgs> {}")
+                '("nixd"))))
+
           ;; Language-specific tweaks without full Spacemacs layers
           (use-package nix-mode
             :mode "\\.nix\\'"
@@ -204,7 +218,7 @@
                   nix-nixfmt-bin "nixfmt-rfc-style")
             (with-eval-after-load 'eglot
               (add-to-list 'eglot-server-programs
-                           '(nix-mode . ("nixd" "--nixpkgs-expr" "import <nixpkgs> {}")))))
+                           `(nix-mode . ,#'my/nixd-contact))))
 
           (use-package claude-code
             :init

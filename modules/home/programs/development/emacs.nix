@@ -194,6 +194,42 @@
               (when (fboundp 'vterm--invalidate)
                 (add-hook 'post-command-hook #'vterm--invalidate nil t))))
 
+          (defun my/nixd--nix-system ()
+            "Return a Nix system string like x86_64-linux."
+            (let* ((arch (cond
+                          ((string-match-p "aarch64\\|arm64" system-configuration) "aarch64")
+                          ((string-match-p "i686" system-configuration) "i686")
+                          (t "x86_64")))
+                   (os (if (eq system-type 'darwin) "darwin" "linux")))
+              (format "%s-%s" arch os)))
+
+          (defun my/nixd--flake-nixpkgs-expr (root)
+            "Return a pure nixpkgs import expr from ROOT/flake.lock, or nil."
+            (let ((lockfile (expand-file-name "flake.lock" root)))
+              (when (file-exists-p lockfile)
+                (require 'json)
+                (with-temp-buffer
+                  (insert-file-contents lockfile)
+                  (let* ((data (json-parse-buffer :object-type 'hash-table
+                                                  :array-type 'list
+                                                  :null-object nil
+                                                  :false-object nil))
+                         (nodes (gethash "nodes" data))
+                         (nixpkgs (and nodes (gethash "nixpkgs" nodes)))
+                         (locked (and nixpkgs (gethash "locked" nixpkgs)))
+                         (lock-type (and locked (gethash "type" locked)))
+                         (nar-hash (and locked (gethash "narHash" locked)))
+                         (url (or (and locked (gethash "url" locked))
+                                  (and (string= lock-type "github")
+                                       (format "https://github.com/%s/%s/archive/%s.tar.gz"
+                                               (gethash "owner" locked)
+                                               (gethash "repo" locked)
+                                               (gethash "rev" locked))))))
+                    (when (and url nar-hash)
+                      (format
+                       "import (builtins.fetchTarball { url = \\\"%s\\\"; sha256 = \\\"%s\\\"; }) { system = \\\"%s\\\"; }"
+                       url nar-hash (my/nixd--nix-system))))))))
+
           (defun my/nixd-contact (_interactive project)
             "Pick nixd args based on project layout and nixpkgs availability."
             (let* ((root (if (and project (fboundp 'project-root))
@@ -202,11 +238,10 @@
                    (root (file-name-as-directory root))
                    (flake (expand-file-name "flake.nix" root))
                    (nixpkgs-expr
-                    (cond
-                     ((file-exists-p flake)
-                      (format "import (builtins.getFlake \"path:%s\").inputs.nixpkgs { }"
-                              (directory-file-name root)))
-                     (t "import <nixpkgs> { }"))))
+                    (or (and (file-exists-p flake)
+                             (my/nixd--flake-nixpkgs-expr root))
+                        (format "import <nixpkgs> { system = \\\"%s\\\"; }"
+                                (my/nixd--nix-system)))))
               (list "nixd"
                     "--nixpkgs-expr" nixpkgs-expr
                     "--nixos-options-expr" "{}")))

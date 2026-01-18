@@ -255,8 +255,8 @@
             (setq-local company-idle-delay 0.2
                         company-minimum-prefix-length 1)
             (when (boundp 'company-backends)
-              (setq-local company-backends (copy-sequence company-backends))
-              (add-to-list 'company-backends 'company-capf))
+              ;; Prefer LSP-only completions in nix-mode to avoid dabbrev noise.
+              (setq-local company-backends '(company-capf)))
             (add-hook 'before-save-hook #'nix-format-before-save nil t))
 
           ;; Language-specific tweaks without full Spacemacs layers

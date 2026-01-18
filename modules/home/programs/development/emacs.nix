@@ -246,22 +246,26 @@
                     "--nixpkgs-expr" nixpkgs-expr
                     "--nixos-options-expr" "{}")))
 
+          (defun my/nix-mode-setup ()
+            "Enable LSP + completion + format-on-save for Nix buffers."
+            (when (require 'eglot nil t)
+              (eglot-ensure))
+            (when (fboundp 'company-mode)
+              (company-mode 1))
+            (setq-local company-idle-delay 0.2
+                        company-minimum-prefix-length 1)
+            (when (boundp 'company-backends)
+              (setq-local company-backends (copy-sequence company-backends))
+              (add-to-list 'company-backends 'company-capf))
+            (add-hook 'before-save-hook #'nix-format-before-save nil t))
+
           ;; Language-specific tweaks without full Spacemacs layers
           (use-package nix-mode
             :mode "\\.nix\\'"
-            :hook
-            (nix-mode . (lambda ()
-                          (when (require 'eglot nil t)
-                            (eglot-ensure))
-                          (when (fboundp 'company-mode)
-                            (company-mode 1))
-                          (when (boundp 'company-backends)
-                            (setq-local company-backends (copy-sequence company-backends))
-                            (add-to-list 'company-backends 'company-capf))
-                          (add-hook 'before-save-hook #'nix-format-before-save nil t)))
             :config
             (setq nix-indent-function 'nix-indent-line
                   nix-nixfmt-bin "nixfmt-rfc-style")
+            (add-hook 'nix-mode-hook #'my/nix-mode-setup)
             (with-eval-after-load 'eglot
               (add-to-list 'eglot-server-programs
                            `(nix-mode . ,#'my/nixd-contact))))

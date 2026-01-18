@@ -203,48 +203,13 @@
                    (os (if (eq system-type 'darwin) "darwin" "linux")))
               (format "%s-%s" arch os)))
 
-          (defun my/nixd--flake-nixpkgs-expr (root)
-            "Return a pure nixpkgs import expr from ROOT/flake.lock, or nil."
-            (let ((lockfile (expand-file-name "flake.lock" root)))
-              (when (file-exists-p lockfile)
-                (require 'json)
-                (with-temp-buffer
-                  (insert-file-contents lockfile)
-                  (let* ((data (json-parse-buffer :object-type 'hash-table
-                                                  :array-type 'list
-                                                  :null-object nil
-                                                  :false-object nil))
-                         (nodes (gethash "nodes" data))
-                         (nixpkgs (and nodes (gethash "nixpkgs" nodes)))
-                         (locked (and nixpkgs (gethash "locked" nixpkgs)))
-                         (lock-type (and locked (gethash "type" locked)))
-                         (nar-hash (and locked (gethash "narHash" locked)))
-                         (url (or (and locked (gethash "url" locked))
-                                  (and (string= lock-type "github")
-                                       (format "https://github.com/%s/%s/archive/%s.tar.gz"
-                                               (gethash "owner" locked)
-                                               (gethash "repo" locked)
-                                               (gethash "rev" locked))))))
-                    (when (and url nar-hash)
-                      (format
-                       "import (builtins.fetchTarball { url = \\\"%s\\\"; sha256 = \\\"%s\\\"; }) { system = \\\"%s\\\"; }"
-                       url nar-hash (my/nixd--nix-system))))))))
-
-          (defun my/nixd-contact (_interactive project)
-            "Pick nixd args based on project layout and nixpkgs availability."
-            (let* ((root (if (and project (fboundp 'project-root))
-                             (project-root project)
-                           default-directory))
-                   (root (file-name-as-directory root))
-                   (flake (expand-file-name "flake.nix" root))
-                   (nixpkgs-expr
-                    (or (and (file-exists-p flake)
-                             (my/nixd--flake-nixpkgs-expr root))
-                        (format "import <nixpkgs> { system = \\\"%s\\\"; }"
-                                (my/nixd--nix-system)))))
-              (list "nixd"
-                    "--nixpkgs-expr" nixpkgs-expr
-                    "--nixos-options-expr" "{}")))
+          (defun my/nixd-contact (_interactive _project)
+            "Start nixd using <nixpkgs> from NIX_PATH."
+            (list "nixd"
+                  "--nixpkgs-expr"
+                  (format "import <nixpkgs> { system = \\\"%s\\\"; }"
+                          (my/nixd--nix-system))
+                  "--nixos-options-expr" "{}"))
 
           (defun my/nix-mode-setup ()
             "Enable LSP + completion + format-on-save for Nix buffers."

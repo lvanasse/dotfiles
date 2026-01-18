@@ -32,6 +32,8 @@ in
           # Ensure TLS inside Emacs and other tools works for HTTPS package archives
           SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
           SSL_CERT_DIR = "${pkgs.cacert}/etc/ssl/certs";
+          # Provide a reliable <nixpkgs> path for tools like nixd.
+          NIX_PATH = "nixpkgs=${pkgs.path}";
         };
       };
     };

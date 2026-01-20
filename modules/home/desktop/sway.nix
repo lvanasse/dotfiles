@@ -39,6 +39,18 @@ in
         xdg-desktop-portal-wlr
       ];
 
+      # User session entry for display managers on non-NixOS (e.g., Ubuntu)
+      home.file.".local/share/wayland-sessions/sway.desktop".text = ''
+        [Desktop Entry]
+        Name=Sway
+        Comment=An i3-compatible Wayland compositor
+        Exec=${config.wayland.windowManager.sway.package}/bin/sway
+        TryExec=${config.wayland.windowManager.sway.package}/bin/sway
+        Type=Application
+        DesktopNames=sway
+        X-GDM-SessionRegister=true
+      '';
+
       wayland.windowManager.sway = {
         enable = true;
         systemd.enable = true;

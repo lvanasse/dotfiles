@@ -80,6 +80,10 @@ in
               command = "start-chat-apps";
               always = false;
             }
+            {
+              command = "swaymsg workspace 1";
+              always = true;
+            }
           ];
 
           # Keyboard: US International with dead keys
@@ -87,6 +91,9 @@ in
             "type:keyboard" = {
               xkb_layout = "us";
               xkb_variant = "intl";
+            };
+            "type:touchpad" = {
+              tap = "enabled";
             };
           };
           fonts = {
@@ -105,7 +112,7 @@ in
           window = {
             # Keep compositor-drawn titlebars with a thin surrounding border
             titlebar = true;
-            border = 1;
+            border = 0;
           };
 
           # Colors sourced from shared theme (Gruvbox Dark Hard)
@@ -248,6 +255,9 @@ in
           # Make Sway titlebars thinner (reduce vertical/horizontal padding)
           # Keep font size; just tighten the chrome a bit
           titlebar_padding 1 4
+          titlebar_border_thickness 0
+          default_border pixel 0
+          default_floating_border pixel 0
 
           # Focus windows when the mouse enters them
           focus_follows_mouse yes
@@ -284,9 +294,9 @@ in
             bindsym semicolon resize grow width 10 px or 10 ppt
           }
 
-          # Firefox: keep a thin compositor border for consistency
-          for_window [app_id="firefox"] border pixel 1
-          for_window [class="Firefox"] border pixel 1
+          # Firefox: no compositor border
+          for_window [app_id="firefox"] border pixel 0
+          for_window [class="Firefox"] border pixel 0
         '';
       };
     };

@@ -83,6 +83,12 @@
       url = "git+ssh://git@codeberg.org/lvanasse/secrets.git?ref=main";
       flake = false;
     };
+
+    # nixGL for OpenGL/Vulkan on non-NixOS
+    nixgl = {
+      url = "github:nix-community/nixGL";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =

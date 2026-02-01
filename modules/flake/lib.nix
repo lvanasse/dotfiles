@@ -11,6 +11,7 @@ let
     inputs.nix-vscode-extensions.overlays.default
     inputs.emacs-overlay.overlays.default
     config.flake.overlays.sonarlintHashFix
+    inputs.nixgl.overlay
   ];
 
   getModules =

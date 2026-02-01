@@ -87,8 +87,8 @@
       waybarStyle = ''
         * { border: none; border-radius: 0; min-height: 0; font-family: Inter, Cantarell, Noto Sans, sans-serif; font-size: 12px; }
         window#waybar { background: ${config.theme.waybar.backgroundRgba}; color: ${config.theme.waybar.foreground}; border: none; outline: none; box-shadow: none; }
-        #workspaces button { padding: 0 6px; color: ${config.theme.waybar.workspaceInactive}; background: transparent; }
-        #workspaces button.active { color: ${config.theme.waybar.workspaceActiveFg}; background: ${config.theme.waybar.workspaceActiveBgRgba}; }
+        #workspaces button { padding: 0 4px; color: ${config.theme.waybar.workspaceInactive}; background: transparent; }
+        #workspaces button.active, #workspaces button.focused { color: ${config.theme.waybar.workspaceActiveFg}; background: ${config.theme.palette.dark1}; box-shadow: inset 0 -2px ${config.theme.palette.bright_orange}; font-weight: 600; }
         #battery, #tray, #custom-weather, #custom-datetime, #custom-power { padding: 0 10px; }
         /* Add spacing between individual tray icons */
         #tray > .passive, #tray > .active, #tray > .needs-attention { padding: 0 5px; }

@@ -79,6 +79,7 @@
             vterm
             clipetty
           ])
+          ++ lib.optional (epkgs ? copilot) epkgs.copilot
           ++ [
             claudeCode
             aiCodeInterface
@@ -119,7 +120,7 @@
                    mu4e-enable-mode-line t
                    mu4e-use-maildirs-extension t)
            )
-            dotspacemacs-additional-packages '(gruvbox-theme ai-code-interface vterm gptel mcp gptel-autocomplete ement clipetty)
+            dotspacemacs-additional-packages '(gruvbox-theme ai-code-interface vterm gptel mcp gptel-autocomplete ement clipetty copilot)
             dotspacemacs-excluded-packages '(forge)))
 
         (defun dotspacemacs/init ()
@@ -250,6 +251,18 @@
             (global-set-key (kbd "C-c a") #'ai-code-menu)
             (with-eval-after-load 'magit
               (ai-code-magit-setup-transients)))
+
+          (use-package copilot
+            :commands (copilot-mode copilot-complete)
+            :hook (prog-mode . copilot-mode)
+            :init
+            (setq copilot-idle-delay 0.2
+                  copilot-max-char -1)
+            :config
+            (define-key copilot-mode-map (kbd "M-]") #'copilot-next-completion)
+            (define-key copilot-mode-map (kbd "M-[") #'copilot-previous-completion)
+            (define-key copilot-mode-map (kbd "M-RET") #'copilot-accept-completion)
+            (define-key copilot-mode-map (kbd "C-c C-g") #'copilot-clear-overlay))
 
           (use-package ement
             :commands (ement-connect)

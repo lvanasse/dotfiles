@@ -2,6 +2,10 @@
 {
   flake.modules.homeManager.swayidle =
     { config, pkgs, ... }:
+    let
+      # Use absolute path so systemd user services don't depend on PATH ordering.
+      swaylockPixelate = "${config.home.homeDirectory}/.nix-profile/bin/swaylock-pixelate";
+    in
     {
       # Manage idle behavior within Sway: lock, blank screen, then suspend
       services.swayidle = {
@@ -13,7 +17,7 @@
           # Lock after 5 minutes
           {
             timeout = 300;
-            command = "swaylock-pixelate";
+            command = swaylockPixelate;
           }
           # Turn displays off after 10 minutes (resume turns them back on)
           {
@@ -32,7 +36,7 @@
           # Ensure we lock right before system sleep
           {
             event = "before-sleep";
-            command = "swaylock-pixelate; swaymsg 'output * power off'";
+            command = "${swaylockPixelate}; swaymsg 'output * power off'";
           }
           # Wake displays after resume
           {
@@ -41,7 +45,7 @@
           }
           {
             event = "lock";
-            command = "swaylock-pixelate";
+            command = swaylockPixelate;
           }
         ];
       };

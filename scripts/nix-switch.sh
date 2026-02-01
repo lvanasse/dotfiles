@@ -61,6 +61,29 @@ else
     WAYLAND_SESSIONS_SRC="$HOME/.local/share/wayland-sessions"
     WAYLAND_SESSIONS_DST="/usr/share/wayland-sessions"
 
+    PAM_SWAYLOCK_FILE="/etc/pam.d/swaylock"
+    PAM_SWAYLOCK_SRC="$HOME/.local/share/pam/swaylock"
+    if [ -f "$PAM_SWAYLOCK_SRC" ]; then
+        if [ ! -f "$PAM_SWAYLOCK_FILE" ] || ! cmp -s "$PAM_SWAYLOCK_SRC" "$PAM_SWAYLOCK_FILE"; then
+            echo "==> [2/2] Installing PAM config for swaylock..."
+            sudo install -m 0644 "$PAM_SWAYLOCK_SRC" "$PAM_SWAYLOCK_FILE"
+        fi
+    else
+        echo "==> [2/2] Warning: no swaylock PAM template found at $PAM_SWAYLOCK_SRC"
+    fi
+
+    # Nix pam_unix expects unix_chkpwd under /run/wrappers/bin
+    if [ -x /sbin/unix_chkpwd ]; then
+        sudo install -d -m 0755 /run/wrappers/bin
+        if [ ! -e /run/wrappers/bin/unix_chkpwd ] || \
+           [ "$(readlink -f /run/wrappers/bin/unix_chkpwd)" != "/sbin/unix_chkpwd" ]; then
+            echo "==> [2/2] Linking unix_chkpwd for Nix PAM..."
+            sudo ln -sf /sbin/unix_chkpwd /run/wrappers/bin/unix_chkpwd
+        fi
+    else
+        echo "==> [2/2] Warning: /sbin/unix_chkpwd not found; swaylock auth may fail"
+    fi
+
     if [ -d "$WAYLAND_SESSIONS_SRC" ]; then
         echo "==> [2/2] Symlinking Wayland session files for GDM..."
         for session in "$WAYLAND_SESSIONS_SRC"/*.desktop; do

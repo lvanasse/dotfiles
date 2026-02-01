@@ -44,6 +44,7 @@
           james-yu.latex-workshop
           anthropic.claude-code
           mermaidchart.vscode-mermaid-chart
+          ms-vscode-remote.remote-containers
         ];
         profiles.default.userSettings = {
           "git.autofetch" = true;
@@ -73,6 +74,16 @@
           "latex-workshop.view.pdf.viewer" = "tab";
           "latex-workshop.latex.outDir" = "out";
         };
+      };
+
+      # Ensure the CLI works even when the SUID sandbox can't be set in the Nix store.
+      home.file.".local/bin/code" = {
+        executable = true;
+        text = ''
+          #!/bin/sh
+          export ELECTRON_NO_SANDBOX=1
+          exec ${pkgs.vscode}/bin/code --no-sandbox "$@"
+        '';
       };
     };
 }

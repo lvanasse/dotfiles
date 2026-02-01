@@ -12,6 +12,13 @@
           # Set fish greeting
           set fish_greeting
 
+          # Load Nix environment (Fish) when available
+          if test -f /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.fish
+            source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.fish
+          else if test -f /nix/var/nix/profiles/default/etc/profile.d/nix.fish
+            source /nix/var/nix/profiles/default/etc/profile.d/nix.fish
+          end
+
           # Use a minimal Starship config inside Emacs/vterm to avoid artifacts
           if set -q INSIDE_EMACS
             set -gx STARSHIP_CONFIG "$HOME/.config/starship-emacs.toml"
@@ -27,8 +34,23 @@
             source ${pkgs.fishPlugins.bass}/share/fish/vendor_functions.d/bass.fish
           end
 
-          # Add npm global to PATH
-          set -gx PATH $HOME/.npm-global/bin $PATH
+          # Ensure local user scripts and npm globals are first on PATH
+          if type -q fish_add_path
+            fish_add_path -m $HOME/.npm-global/bin
+            fish_add_path -m $HOME/.local/bin
+          else
+            if not contains -- $HOME/.npm-global/bin $PATH
+              set -gx PATH $HOME/.npm-global/bin $PATH
+            end
+            if not contains -- $HOME/.local/bin $PATH
+              set -gx PATH $HOME/.local/bin $PATH
+            end
+          end
+
+          # Add Snap binaries when available (Ubuntu/non-NixOS)
+          if test -d /snap/bin; and not contains -- /snap/bin $PATH
+            set -gx PATH /snap/bin $PATH
+          end
 
           # Make autocomplete/suggestions and arguments less colorful
           # - Keep arguments neutral white instead of blue

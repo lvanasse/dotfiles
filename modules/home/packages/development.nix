@@ -33,6 +33,7 @@
           nil
           nixd
           codex # Codex CLI for AI code assistance
+          claude-code # Claude Code CLI for AI code assistance
 
           # Build tools
           gnumake

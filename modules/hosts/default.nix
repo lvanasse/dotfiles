@@ -27,7 +27,6 @@ let
       modules = [
         "profile.workstation"
         "desktop.sway"
-        "desktop.kde"
         "host.hm-only"
       ];
     };

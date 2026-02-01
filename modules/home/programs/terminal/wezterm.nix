@@ -1,7 +1,7 @@
 { ... }:
 {
   flake.modules.homeManager.terminalWezterm =
-    { config, ... }:
+    { config, pkgs, ... }:
     {
       # WezTerm: modern terminal with right-click copy/paste and Gruvbox Dark Hard theme
       # Note: For Wayland support on non-NixOS systems, install libegl1-mesa via system package manager
@@ -31,6 +31,65 @@
               end
             end
 
+            local function basename(path)
+              if not path or path == "" then
+                return nil
+              end
+              return path:gsub('(.*[/\\])', "")
+            end
+
+            local function cwd_from_pane(pane)
+              local cwd = pane.current_working_dir
+              if not cwd then
+                return nil
+              end
+              if type(cwd) == 'string' then
+                if wezterm.url and wezterm.url.parse then
+                  local ok, url = pcall(wezterm.url.parse, cwd)
+                  if ok and url and url.file_path then
+                    return url.file_path
+                  end
+                end
+                return cwd:gsub('^file://[^/]*', "")
+              end
+              if type(cwd) == 'table' or type(cwd) == 'userdata' then
+                local ok, file_path = pcall(function()
+                  return cwd.file_path
+                end)
+                if ok and file_path and file_path ~= "" then
+                  return file_path
+                end
+              end
+              return nil
+            end
+
+            wezterm.on('format-window-title', function(tab, pane)
+              local proc = pane.foreground_process_name
+              proc = basename(proc) or pane.title
+              if proc == 'wezterm' then
+                proc = nil
+              end
+
+              local cwd = cwd_from_pane(pane)
+              if cwd then
+                local home = wezterm.home_dir
+                if home and cwd:sub(1, #home) == home then
+                  cwd = '~' .. cwd:sub(#home + 1)
+                end
+              end
+
+              if proc and cwd then
+                return proc .. ' - ' .. cwd
+              end
+              if cwd then
+                return cwd
+              end
+              if proc and proc ~= "" then
+                return proc
+              end
+              return 'wezterm'
+            end)
+
             local enable_wayland = true
             local wayland_env = os.getenv('WEZTERM_ENABLE_WAYLAND')
             if wayland_env == '0' or wayland_env == 'false' then
@@ -49,6 +108,8 @@
                 'Liberation Mono',
                 'monospace',
               }),
+              -- Force Fish as the default shell inside WezTerm
+              default_prog = { '${pkgs.fish}/bin/fish', '-l' },
               font_size = 11.0,
 
               -- Minimal chrome

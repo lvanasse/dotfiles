@@ -34,8 +34,7 @@
           gparted
           popsicle
 
-          # Terminal applications
-          wezterm
+          # Terminal applications (wezterm installed via programs.wezterm)
           alacritty
           foot
 

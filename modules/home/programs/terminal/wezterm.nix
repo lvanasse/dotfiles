@@ -4,6 +4,8 @@
     { config, ... }:
     {
       # WezTerm: modern terminal with right-click copy/paste and Gruvbox Dark Hard theme
+      # Note: For Wayland support on non-NixOS systems, install libegl1-mesa via system package manager
+      # (e.g., `sudo apt install libegl1-mesa` on Ubuntu/Debian). WezTerm will fallback to X11 if unavailable.
       programs.wezterm = {
         enable = true;
         extraConfig =
@@ -29,9 +31,24 @@
               end
             end
 
+            local enable_wayland = true
+            local wayland_env = os.getenv('WEZTERM_ENABLE_WAYLAND')
+            if wayland_env == '0' or wayland_env == 'false' then
+              enable_wayland = false
+            end
+
             return {
               -- Font configuration
-              font = wezterm.font('FiraCode Nerd Font'),
+              -- Try FiraCode Nerd Font first, fallback to common monospace fonts
+              font = wezterm.font_with_fallback({
+                'FiraCode Nerd Font Mono',
+                'FiraCode Nerd Font',
+                'Fira Code',
+                'FiraCode',
+                'DejaVu Sans Mono',
+                'Liberation Mono',
+                'monospace',
+              }),
               font_size = 11.0,
 
               -- Minimal chrome
@@ -83,7 +100,8 @@
 
               -- Quality of life
               adjust_window_size_when_changing_font_size = false,
-              enable_wayland = true,
+              -- Enable Wayland if available, fallback to X11
+              enable_wayland = enable_wayland,
               audible_bell = 'Disabled',
 
               -- Disable notifications for completed commands

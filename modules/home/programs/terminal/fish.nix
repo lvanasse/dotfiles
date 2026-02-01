@@ -79,8 +79,6 @@
           l = "ls -l";
 
           # Nix abbreviations
-          nrs = "nh os switch -H pc";
-          hms = "home-manager switch --flake .#ludovic@pc";
           nfc = "nix flake check";
         };
 
@@ -140,6 +138,18 @@
           dotfiles = {
             body = "cd $HOME/Code/personal/dotfiles";
             description = "Navigate to dotfiles directory";
+          };
+
+          # Unified nix-switch for both NixOS and standalone Home Manager
+          nix-switch = {
+            description = "Switch NixOS/Home Manager configuration";
+            body = ''
+              set -l flake_dir "$HOME/Code/personal/dotfiles"
+              if set -q NH_FLAKE
+                set flake_dir "$NH_FLAKE"
+              end
+              bash "$flake_dir/scripts/nix-switch.sh" $argv
+            '';
           };
 
           # Set terminal/window title to the full path like Starship's directory module

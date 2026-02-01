@@ -19,9 +19,6 @@
         test -n "''${WAYLAND_DISPLAY:-}" || exit 1
         session_env="''${XDG_SESSION_DESKTOP:-}''${XDG_CURRENT_DESKTOP:-}''${DESKTOP_SESSION:-}"
         echo "$session_env" | ${grep} -qi sway || exit 1
-        if ${pkgs.systemd}/bin/busctl --user list | ${grep} -q org.freedesktop.Notifications; then
-          exit 1
-        fi
       '';
     in
     {
@@ -35,7 +32,7 @@
           After = [ swayTarget ];
         };
         Service = {
-          # Only activate on Sway sessions (not KDE) and avoid clashing with other DBus notifiers
+          # Only activate on Sway sessions (not KDE)
           ExecCondition = conditionScript;
           ExecStart = "${pkgs.mako}/bin/mako";
           Restart = "on-failure";

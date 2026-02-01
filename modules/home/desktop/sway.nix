@@ -40,16 +40,30 @@ in
       ];
 
       # User session entry for display managers on non-NixOS (e.g., Ubuntu)
+      # On non-NixOS, we need to use system graphics drivers via __EGL_VENDOR_LIBRARY_FILENAMES
       home.file.".local/share/wayland-sessions/sway.desktop".text = ''
         [Desktop Entry]
         Name=Sway
-        Comment=An i3-compatible Wayland compositor
+        Comment=Wayland compositor
         Exec=${config.wayland.windowManager.sway.package}/bin/sway
         TryExec=${config.wayland.windowManager.sway.package}/bin/sway
         Type=Application
         DesktopNames=sway
         X-GDM-SessionRegister=true
       '';
+
+      # Wrapper script to launch sway with proper graphics driver setup on non-NixOS
+      home.file.".local/bin/sway-launch" = {
+        executable = true;
+        text = ''
+          #!/bin/sh
+          # Use system EGL/Mesa on non-NixOS to avoid graphics driver incompatibilities
+          export __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/50_mesa.json
+          export LIBGL_DRIVERS_PATH=/usr/lib/x86_64-linux-gnu/dri
+          export LIBVA_DRIVERS_PATH=/usr/lib/x86_64-linux-gnu/dri
+          exec ${config.wayland.windowManager.sway.package}/bin/sway "$@"
+        '';
+      };
 
       wayland.windowManager.sway = {
         enable = true;
@@ -62,6 +76,15 @@ in
 
           # Start background, tray, and Waybar
           startup = [
+            {
+              command =
+                "${pkgs.systemd}/bin/systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE";
+              always = true;
+            }
+            {
+              command = "${pkgs.systemd}/bin/systemctl --user restart mako.service";
+              always = true;
+            }
             {
               command = "swaybg -i ${config.home.homeDirectory}/.local/share/wallpapers/1458678242783.jpg -m fill";
               always = true;
@@ -122,9 +145,9 @@ in
             let
               mod = "Mod4";
             in
-            lib.mkOptionDefault {
+            lib.mkDefault {
               # Launchers
-              "${mod}+Return" = "exec wezterm";
+              "${mod}+Return" = "exec ${config.wayland.windowManager.sway.config.terminal}";
               "${mod}+d" = "exec rofi-combi";
               "${mod}+Shift+d" = "exec rofi-run-only";
               "${mod}+Shift+q" = "kill";
@@ -133,6 +156,8 @@ in
               "${mod}+Shift+r" = "exec swaymsg reload";
               "Ctrl+${mod}+r" = "restart";
               "${mod}+Shift+e" = "exec swaynag -t warning -m 'Exit Sway?' -b 'Yes, exit' 'swaymsg exit'";
+              "Ctrl+Shift+e" =
+                "exec swaynag -t warning -m 'Exit Sway?' -b 'Yes, exit' 'swaymsg exit'";
 
               # Session
               "${mod}+Shift+x" =
@@ -150,12 +175,12 @@ in
               "${mod}+Up" = "focus up";
               "${mod}+Right" = "focus right";
 
-              # Focus movement (vim + i3-style)
+              # Focus movement (vim-style)
               "${mod}+j" = "focus down";
               "${mod}+k" = "focus up";
               "${mod}+l" = "focus right";
 
-              # Split orientation (i3-style)
+              # Split orientation
               "${mod}+h" = "split h";
               "${mod}+v" = "split v";
 
@@ -184,7 +209,7 @@ in
               # GUI screenshot with selection + annotation (grim + slurp + swappy)
               "${mod}+Print" = "exec screenshot-annotate";
 
-              # Layouts (i3-like)
+              # Layouts
               "${mod}+w" = "layout tabbed";
               "${mod}+s" = "layout stacking";
               "${mod}+e" = "layout toggle split";
@@ -216,6 +241,28 @@ in
               "${mod}+Shift+8" = "move container to workspace 8";
               "${mod}+Shift+9" = "move container to workspace 9";
               "${mod}+Shift+0" = "move container to workspace 10";
+
+              # Fallback workspace switching without Mod4
+              "Ctrl+1" = "workspace 1";
+              "Ctrl+2" = "workspace 2";
+              "Ctrl+3" = "workspace 3";
+              "Ctrl+4" = "workspace 4";
+              "Ctrl+5" = "workspace 5";
+              "Ctrl+6" = "workspace 6";
+              "Ctrl+7" = "workspace 7";
+              "Ctrl+8" = "workspace 8";
+              "Ctrl+9" = "workspace 9";
+              "Ctrl+0" = "workspace 10";
+              "Ctrl+Shift+1" = "move container to workspace 1";
+              "Ctrl+Shift+2" = "move container to workspace 2";
+              "Ctrl+Shift+3" = "move container to workspace 3";
+              "Ctrl+Shift+4" = "move container to workspace 4";
+              "Ctrl+Shift+5" = "move container to workspace 5";
+              "Ctrl+Shift+6" = "move container to workspace 6";
+              "Ctrl+Shift+7" = "move container to workspace 7";
+              "Ctrl+Shift+8" = "move container to workspace 8";
+              "Ctrl+Shift+9" = "move container to workspace 9";
+              "Ctrl+Shift+0" = "move container to workspace 10";
             };
 
           assigns = {

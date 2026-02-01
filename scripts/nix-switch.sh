@@ -57,7 +57,8 @@ if is_nixos; then
     NH_FLAKE="${FLAKE_DIR}" nh os switch -H "${HOST}" $EXTRA_ARGS
 else
     # Non-NixOS: symlink Wayland session files for GDM visibility
-    WAYLAND_SESSIONS_SRC="$HOME/.nix-profile/share/wayland-sessions"
+    # Use ~/.local/share (home-manager managed) which has the wrapped sway path
+    WAYLAND_SESSIONS_SRC="$HOME/.local/share/wayland-sessions"
     WAYLAND_SESSIONS_DST="/usr/share/wayland-sessions"
 
     if [ -d "$WAYLAND_SESSIONS_SRC" ]; then
@@ -65,10 +66,12 @@ else
         for session in "$WAYLAND_SESSIONS_SRC"/*.desktop; do
             [ -f "$session" ] || continue
             name=$(basename "$session")
+            # Resolve the symlink to get the actual nix store path (GDM can't traverse ~/...)
+            resolved=$(readlink -f "$session")
             target="$WAYLAND_SESSIONS_DST/$name"
-            if [ ! -L "$target" ] || [ "$(readlink "$target")" != "$session" ]; then
-                sudo ln -sf "$session" "$target"
-                echo "    Linked: $name"
+            if [ ! -L "$target" ] || [ "$(readlink "$target")" != "$resolved" ]; then
+                sudo ln -sf "$resolved" "$target"
+                echo "    Linked: $name -> $resolved"
             else
                 echo "    Already linked: $name"
             fi

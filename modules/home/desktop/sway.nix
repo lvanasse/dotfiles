@@ -39,6 +39,10 @@ in
         xdg-desktop-portal-wlr
       ];
 
+      # Ensure the wallpaper file is present in the user's home
+      home.file.".local/share/wallpapers/1458678242783.jpg".source =
+        ../../../wallpapers/1458678242783.jpg;
+
       # User session entry for display managers on non-NixOS (e.g., Ubuntu)
       # On non-NixOS, we need to use system graphics drivers via __EGL_VENDOR_LIBRARY_FILENAMES
       home.file.".local/share/wayland-sessions/sway.desktop".text = ''
@@ -303,8 +307,9 @@ in
           # Keep font size; just tighten the chrome a bit
           titlebar_padding 1 4
           titlebar_border_thickness 0
-          default_border pixel 0
-          default_floating_border pixel 0
+          # Ensure titlebars render (pixel 0 disables them)
+          default_border normal
+          default_floating_border normal
 
           # Focus windows when the mouse enters them
           focus_follows_mouse yes

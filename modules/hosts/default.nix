@@ -22,13 +22,13 @@ let
         "host.laptop"
       ];
     };
-    laptop-ubuntu = {
+    "hm-only" = {
       nixos = false;
       modules = [
         "profile.workstation"
         "desktop.sway"
         "desktop.kde"
-        "host.laptop-ubuntu"
+        "host.hm-only"
       ];
     };
     steamdeck = {

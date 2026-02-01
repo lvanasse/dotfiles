@@ -32,6 +32,7 @@
           starship # Cross-shell prompt
           nil
           nixd
+          codex # Codex CLI for AI code assistance
 
           # Build tools
           gnumake

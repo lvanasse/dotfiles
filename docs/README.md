@@ -25,9 +25,11 @@ Laptop uses `host.laptop` (not `host.pc`).
 
 Per-host system entrypoints live under `nixos/<host>/<host>.nix`; they import the host’s hardware and service files and are wired into the matrix via `flake.modules.nixos."host.<name>"`.
 
-## SSH Setup
+## Setup Guides
 
 - `docs/setup-ssh-keys.md` – detailed SSH + secrets flow.
+- `docs/remove-nix.md` – completely removing Nix from your system.
+- `docs/install-home-manager.md` – installing Home Manager on non-NixOS systems (e.g., Ubuntu).
 
 ## Common Commands
 
@@ -39,6 +41,7 @@ nh os switch -H laptop
 # Apply Home Manager
 home-manager switch --flake .#ludovic@pc
 home-manager switch --flake .#ludovic@laptop
+home-manager switch --flake .#ludovic@hm-only  # For non-NixOS systems
 
 # Validate
 nix flake check

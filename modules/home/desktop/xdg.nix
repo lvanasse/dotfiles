@@ -32,7 +32,8 @@
         };
       };
 
-      # Allow Home Manager to replace an existing ~/.config/mimeapps.list
+      # Allow Home Manager to replace existing mimeapps.list files
       xdg.configFile."mimeapps.list".force = true;
+      xdg.dataFile."applications/mimeapps.list".force = true;
     };
 }

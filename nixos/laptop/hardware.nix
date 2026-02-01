@@ -1,4 +1,4 @@
-{ ... }:
+{ pkgs, ... }:
 {
   # Boot configuration
   boot.loader.grub = {
@@ -12,4 +12,14 @@
   # Laptop-specific features
   hardware.bluetooth.enable = true;
   services.blueman.enable = true;
+
+  # Graphics
+  hardware.graphics = {
+    enable = true;
+    enable32Bit = true;
+    extraPackages = with pkgs; [
+      mesa
+      libva-utils
+    ];
+  };
 }

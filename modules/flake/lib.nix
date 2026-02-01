@@ -81,6 +81,7 @@ let
       system,
       modules,
       extraModules ? [ ],
+      username ? config.flake.lib.username,
       ...
     }:
     let
@@ -90,6 +91,9 @@ let
       pkgs = import inputs.nixpkgs {
         inherit system overlays;
         config.allowUnfree = true;
+      };
+      extraSpecialArgs = {
+        inherit inputs username;
       };
       modules =
         hmModules

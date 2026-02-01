@@ -24,6 +24,7 @@
       home.packages = with pkgs; [
         nerd-fonts.fira-code
         nixgl.nixGLIntel # For wrapping GL applications
+        ripgrep
       ];
 
       # Use snap-friendly GTK theming on hm-only to avoid snap warnings

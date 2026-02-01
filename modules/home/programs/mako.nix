@@ -50,11 +50,11 @@
         border-size=4
         border-radius=0
         default-timeout=5000
-        # Force a high-contrast look to validate config is applied
-        background-color=#FFFFFFFF
-        text-color=#000000FF
-        border-color=#FF0000FF
-        progress-color=over ${opa palette.blue}
+        # Gruvbox Dark Hard
+        background-color=${opa palette.dark0_hard}
+        text-color=${opa palette.light1}
+        border-color=${opa palette.dark2}
+        progress-color=over ${opa palette.bright_orange}
         anchor=top-right
         layer=top
       '';

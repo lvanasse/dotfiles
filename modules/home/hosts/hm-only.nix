@@ -26,6 +26,23 @@
         nixgl.nixGLIntel # For wrapping GL applications
       ];
 
+      # Use snap-friendly GTK theming on hm-only to avoid snap warnings
+      gtk.theme = lib.mkForce {
+        name = "Adwaita-dark";
+        package = pkgs.gnome-themes-extra;
+      };
+      gtk.iconTheme = lib.mkForce {
+        name = "Adwaita";
+        package = pkgs.adwaita-icon-theme;
+      };
+      gtk.cursorTheme = lib.mkForce {
+        name = "Adwaita";
+        package = pkgs.adwaita-icon-theme;
+      };
+      dconf.settings."org/gnome/desktop/interface".gtk-theme = lib.mkForce "Adwaita-dark";
+      dconf.settings."org/gnome/desktop/interface".icon-theme = lib.mkForce "Adwaita";
+      dconf.settings."org/gnome/desktop/interface".cursor-theme = lib.mkForce "Adwaita";
+
       # Wrapper for Google Chrome on Wayland to enable PipeWire screen sharing.
       home.file.".local/bin/google-chrome" = {
         executable = true;

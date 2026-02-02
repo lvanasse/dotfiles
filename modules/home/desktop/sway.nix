@@ -26,6 +26,7 @@ in
         wl-clipboard
         sway-contrib.grimshot
         swappy
+        satty
         grim
         slurp
         swaybg
@@ -37,7 +38,42 @@ in
         wofi
         mako
         xdg-desktop-portal-wlr
+        gst_all_1.gstreamer
+        gst_all_1."gst-plugins-base"
+        gst_all_1."gst-plugins-good"
+        gst_all_1."gst-plugins-bad"
+        gst_all_1."gst-plugins-ugly"
+        gst_all_1."gst-libav"
       ];
+
+      # Portals for Wayland screencast (needed by Kooha on non-NixOS hm-only)
+      xdg.portal = {
+        enable = true;
+        extraPortals = with pkgs; [
+          xdg-desktop-portal-wlr
+          xdg-desktop-portal-gtk
+        ];
+        config = {
+          sway = {
+            default = lib.mkForce "wlr;gtk";
+          };
+        };
+      };
+
+      # Ensure xdg-desktop-portal routes screencast/screenshot to the wlr backend.
+      xdg.configFile."xdg-desktop-portal/sway-portals.conf".text = ''
+        [preferred]
+        default=gtk
+        org.freedesktop.impl.portal.Screenshot=wlr
+        org.freedesktop.impl.portal.ScreenCast=wlr
+      '';
+
+      # Force a known chooser for xdg-desktop-portal-wlr (avoids missing PATH issues).
+      xdg.configFile."xdg-desktop-portal-wlr/config".text = ''
+        [screencast]
+        chooser_type=simple
+        chooser_cmd=${pkgs.slurp}/bin/slurp -f %o -or
+      '';
 
       # Ensure the wallpaper file is present in the user's home
       home.file.".local/share/wallpapers/1458678242783.jpg".source =
@@ -82,7 +118,7 @@ in
           startup = [
             {
               command =
-                "${pkgs.systemd}/bin/systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE";
+                "${pkgs.dbus}/bin/dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE";
               always = true;
             }
             {
@@ -210,8 +246,10 @@ in
               "Print" = "exec screenshot copy area";
               "Shift+Print" = "exec screenshot save area";
               "Ctrl+Print" = "exec screenshot copy output";
-              # GUI screenshot with selection + annotation (grim + slurp + swappy)
+              # GUI screenshot with selection + annotation (satty; swappy fallback)
               "${mod}+Print" = "exec screenshot-annotate";
+              # Screen recording (GUI) - use desktop entry to match Wofi launch
+              "${mod}+Shift+Print" = "exec gtk-launch io.github.seadve.Kooha";
 
               # Layouts
               "${mod}+w" = "layout tabbed";

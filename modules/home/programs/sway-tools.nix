@@ -183,10 +183,33 @@
         (pkgs.writeShellScriptBin "screenshot-annotate" ''
           #!/usr/bin/env bash
           set -euo pipefail
-          if command -v grim >/dev/null 2>&1 && command -v slurp >/dev/null 2>&1 && command -v swappy >/dev/null 2>&1; then
-            grim -g "$(slurp)" - | swappy -f -
+          have() { command -v "$1" >/dev/null 2>&1; }
+
+          if have grim && have slurp; then
+            if have satty; then
+              shots_dir="$HOME/Pictures/Screenshots"
+              ts="$(date +'%F_%H-%M-%S')"
+              out_file="$shots_dir/Satty_$ts.png"
+              mkdir -p "$shots_dir" || true
+              selection="$(slurp -o -r -c '#ff0000ff')" || exit 0
+              copy_cmd="${pkgs.wl-clipboard}/bin/wl-copy --type image/png"
+              satty_args=(--filename - --fullscreen --output-filename "$out_file" --early-exit)
+              if satty --help 2>&1 | ${pkgs.gnugrep}/bin/grep -q -- '--copy-command'; then
+                satty_args+=(--copy-command "$copy_cmd")
+              fi
+              grim -g "$selection" -t ppm - | satty "''${satty_args[@]}"
+              if [ -s "$out_file" ] && have wl-copy; then
+                ${pkgs.wl-clipboard}/bin/wl-copy --type image/png < "$out_file"
+              fi
+            elif have swappy; then
+              selection="$(slurp)" || exit 0
+              grim -g "$selection" - | swappy -f -
+            else
+              echo "screenshot-annotate: requires satty or swappy (plus grim + slurp)" >&2
+              exit 1
+            fi
           else
-            echo "screenshot-annotate: requires grim, slurp, swappy" >&2
+            echo "screenshot-annotate: requires grim and slurp" >&2
             exit 1
           fi
         '')

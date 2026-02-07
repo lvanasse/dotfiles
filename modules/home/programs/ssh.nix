@@ -70,6 +70,11 @@
             controlMaster = "auto";
             controlPath = "~/.ssh/master-%r@%h:%p";
             controlPersist = "10m";
+            addKeysToAgent = "yes";
+            identityFile = [
+              "~/.ssh/id_ed25519_personal"
+              "~/.ssh/id_ed25519_work"
+            ];
           };
         };
       };

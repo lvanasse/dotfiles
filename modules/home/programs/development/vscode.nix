@@ -20,6 +20,8 @@
           llvm-vs-code-extensions.vscode-clangd
           rust-lang.rust-analyzer
           github.vscode-github-actions
+          github.copilot
+          github.copilot-chat
           ms-vscode.cpptools-extension-pack
           ms-vscode.cpptools
           ms-vscode.cmake-tools

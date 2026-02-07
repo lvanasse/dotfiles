@@ -8,6 +8,13 @@
         date_utc=$(date -u +%H:%M:%S)
         printf "%s | %s" "$date_local" "$date_utc"
       '';
+      modeScript = pkgs.writeShellScript "waybar-sway-mode" ''
+        set -euo pipefail
+        mode="$(${pkgs.sway}/bin/swaymsg -t get_binding_modes -r | ${pkgs.jq}/bin/jq -r '.[0]')"
+        if [ -n "$mode" ] && [ "$mode" != "default" ] && [ "$mode" != "null" ]; then
+          printf "󰌽 %s" "$mode"
+        fi
+      '';
 
       waybarConfig = {
         layer = "top";
@@ -15,7 +22,10 @@
         height = 28;
         margin = "0";
         exclusive = true; # reserve space so clients don't render underneath
-        "modules-left" = [ "sway/workspaces" ];
+        "modules-left" = [
+          "sway/workspaces"
+          "custom/mode"
+        ];
         "modules-center" = [ ];
         "modules-right" = [
           "custom/power"
@@ -31,6 +41,12 @@
           "on-click" = "activate";
         };
 
+        "custom/mode" = {
+          interval = 1;
+          exec = "${modeScript}";
+          tooltip = false;
+        };
+
         "custom/datetime" = {
           interval = 5;
           exec = "${datetimeScript}";
@@ -43,6 +59,13 @@
           "format-ethernet" = "󰈁  {ifname}";
           "format-disconnected" = "";
           tooltip = false;
+        };
+
+        tray = {
+          # Some apps (including Slack) publish as passive; keep them visible.
+          "show-passive-items" = true;
+          spacing = 6;
+          "icon-size" = 16;
         };
 
         battery = {
@@ -69,7 +92,7 @@
 
         "custom/weather" = {
           interval = 600;
-          exec = "bash -lc 'curl -sf https://wttr.in/?format=1'";
+          exec = "bash -lc 'curl -sf https://wttr.in/Montreal,QC?format=1'";
           format = "{}";
           tooltip = false;
         };
@@ -89,7 +112,8 @@
         window#waybar { background: ${config.theme.waybar.backgroundRgba}; color: ${config.theme.waybar.foreground}; border: none; outline: none; box-shadow: none; }
         #workspaces button { padding: 0 4px; color: ${config.theme.waybar.workspaceInactive}; background: transparent; }
         #workspaces button.active, #workspaces button.focused { color: ${config.theme.waybar.workspaceActiveFg}; background: ${config.theme.palette.dark1}; box-shadow: inset 0 -2px ${config.theme.palette.bright_orange}; font-weight: 600; }
-        #battery, #tray, #custom-weather, #custom-datetime, #custom-power { padding: 0 10px; }
+        #battery, #tray, #custom-weather, #custom-datetime, #custom-power, #custom-mode { padding: 0 10px; }
+        #custom-mode { background: ${config.theme.palette.dark1}; color: ${config.theme.palette.bright_orange}; font-weight: 600; }
         /* Add spacing between individual tray icons */
         #tray > .passive, #tray > .active, #tray > .needs-attention { padding: 0 5px; }
       '';

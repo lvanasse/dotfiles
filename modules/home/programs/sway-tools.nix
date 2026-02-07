@@ -224,11 +224,19 @@
           runtime_dir="''${XDG_RUNTIME_DIR:-/tmp}"
           raw="$runtime_dir/swaylock-raw.png"
           out="$runtime_dir/swaylock-pixel.png"
+          wallpaper="$HOME/.local/share/wallpapers/1458678242783.jpg"
 
-          if ! "$grim" -t png "$raw"; then
+          src=""
+          if [ -f "$wallpaper" ]; then
+            src="$wallpaper"
+          elif "$grim" -t png "$raw"; then
+            src="$raw"
+          fi
+
+          if [ -z "$src" ]; then
             exec "$swaylock" -f -c 000000
           fi
-          if ! "$convert" "$raw" -scale 10% -scale 1000% "$out"; then
+          if ! "$convert" "$src" -scale 10% -scale 1000% "$out"; then
             exec "$swaylock" -f -c 000000
           fi
 

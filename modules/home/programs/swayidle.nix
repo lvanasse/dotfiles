@@ -14,11 +14,13 @@
 
         # Timeouts in seconds
         timeouts = [
-          # Lock after 5 minutes
+          # Lock after 5 minutes (temporarily disabled)
+          /*
           {
             timeout = 300;
             command = swaylockPixelate;
           }
+          */
           # Turn displays off after 10 minutes (resume turns them back on)
           {
             timeout = 600;
@@ -33,20 +35,24 @@
         ];
 
         events = [
-          # Ensure we lock right before system sleep
+          # Ensure we lock right before system sleep (temporarily disabled)
+          /*
           {
             event = "before-sleep";
             command = "${swaylockPixelate}; swaymsg 'output * power off'";
           }
+          */
           # Wake displays after resume
           {
             event = "after-resume";
             command = "swaymsg 'output * power on'";
           }
+          /*
           {
             event = "lock";
             command = swaylockPixelate;
           }
+          */
         ];
       };
     };

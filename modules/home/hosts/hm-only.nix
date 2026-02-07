@@ -68,6 +68,25 @@
         '';
       };
 
+      # Electron apps need --no-sandbox because the SUID helper can't be set in the Nix store.
+      home.file.".local/bin/discord" = {
+        executable = true;
+        text = ''
+          #!/bin/sh
+          export ELECTRON_NO_SANDBOX=1
+          exec ${pkgs.discord}/bin/discord --disable-setuid-sandbox --no-sandbox "$@"
+        '';
+      };
+
+      home.file.".local/bin/vesktop" = {
+        executable = true;
+        text = ''
+          #!/bin/sh
+          export ELECTRON_NO_SANDBOX=1
+          exec ${pkgs.vesktop}/bin/vesktop --disable-setuid-sandbox --no-sandbox "$@"
+        '';
+      };
+
       home.file.".local/bin/google-chrome-stable" = {
         executable = true;
         text = ''
@@ -98,6 +117,64 @@
           DesktopNames=sway
           X-GDM-SessionRegister=true
         '';
+      };
+
+      services.kanshi = {
+        enable = true;
+        systemdTarget = "sway-session.target";
+        settings = [
+          {
+            profile = {
+              name = "desk";
+              outputs = [
+                {
+                  criteria = "eDP-1";
+                  mode = "1920x1200@60.001Hz";
+                  position = "0,1080";
+                }
+                {
+                  criteria = "DP-1";
+                  mode = "1920x1080@60.000Hz";
+                  position = "1920,0";
+                }
+                {
+                  criteria = "HDMI-A-1";
+                  mode = "1920x1080@60.000Hz";
+                  position = "0,0";
+                }
+              ];
+            };
+          }
+          {
+            profile = {
+              name = "projector-mirror";
+              outputs = [
+                {
+                  criteria = "eDP-1";
+                  mode = "1920x1080@60.001Hz";
+                  position = "0,0";
+                }
+                {
+                  criteria = "HDMI-A-1";
+                  mode = "1920x1080@60.000Hz";
+                  position = "0,0";
+                }
+              ];
+            };
+          }
+          {
+            profile = {
+              name = "mobile";
+              outputs = [
+                {
+                  criteria = "eDP-1";
+                  mode = "1920x1200@60.001Hz";
+                  position = "0,0";
+                }
+              ];
+            };
+          }
+        ];
       };
     };
 }

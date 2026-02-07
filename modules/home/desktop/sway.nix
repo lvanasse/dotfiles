@@ -135,7 +135,11 @@ in
             }
             {
               command =
-                "${pkgs.bash}/bin/bash -lc '${pkgs.procps}/bin/pkill -x waybar >/dev/null 2>&1 || true; exec ${pkgs.waybar}/bin/waybar -c ${config.home.homeDirectory}/.config/waybar/config-sway.jsonc -s ${config.home.homeDirectory}/.config/waybar/style-sway.css'";
+                "${pkgs.bash}/bin/bash -lc 'if ${pkgs.procps}/bin/pgrep -x waybar >/dev/null 2>&1; then ${pkgs.procps}/bin/pkill -USR2 -x waybar; else exec ${pkgs.waybar}/bin/waybar -c ${config.home.homeDirectory}/.config/waybar/config-sway.jsonc -s ${config.home.homeDirectory}/.config/waybar/style-sway.css; fi'";
+              always = true;
+            }
+            {
+              command = "${pkgs.systemd}/bin/systemctl --user restart kanshi";
               always = true;
             }
             # Autostart chat apps (Slack + Discord/Vesktop) at login
@@ -200,14 +204,14 @@ in
                 "exec swaynag -t warning -m 'Exit Sway?' -b 'Yes, exit' 'swaymsg exit'";
 
               # Session
-              "${mod}+Shift+x" =
-                "exec swaylock-pixelate";
+              "${mod}+Shift+x" = "exec swaylock-pixelate";
 
               # Window state
               "${mod}+f" = "fullscreen toggle";
               "${mod}+Shift+space" = "floating toggle";
               "${mod}+space" = "focus mode_toggle";
               "${mod}+a" = "focus parent";
+              "${mod}+r" = "mode \"resize\"";
 
               # Focus movement (arrows)
               "${mod}+Left" = "focus left";
@@ -284,28 +288,25 @@ in
               "${mod}+Shift+9" = "move container to workspace 9";
               "${mod}+Shift+0" = "move container to workspace 10";
 
-              # Fallback workspace switching without Mod4
-              "Ctrl+1" = "workspace 1";
-              "Ctrl+2" = "workspace 2";
-              "Ctrl+3" = "workspace 3";
-              "Ctrl+4" = "workspace 4";
-              "Ctrl+5" = "workspace 5";
-              "Ctrl+6" = "workspace 6";
-              "Ctrl+7" = "workspace 7";
-              "Ctrl+8" = "workspace 8";
-              "Ctrl+9" = "workspace 9";
-              "Ctrl+0" = "workspace 10";
-              "Ctrl+Shift+1" = "move container to workspace 1";
-              "Ctrl+Shift+2" = "move container to workspace 2";
-              "Ctrl+Shift+3" = "move container to workspace 3";
-              "Ctrl+Shift+4" = "move container to workspace 4";
-              "Ctrl+Shift+5" = "move container to workspace 5";
-              "Ctrl+Shift+6" = "move container to workspace 6";
-              "Ctrl+Shift+7" = "move container to workspace 7";
-              "Ctrl+Shift+8" = "move container to workspace 8";
-              "Ctrl+Shift+9" = "move container to workspace 9";
-              "Ctrl+Shift+0" = "move container to workspace 10";
             };
+
+          modes = {
+            resize = {
+              "Left" = "resize shrink width 10 px or 10 ppt";
+              "Down" = "resize grow height 10 px or 10 ppt";
+              "Up" = "resize shrink height 10 px or 10 ppt";
+              "Right" = "resize grow width 10 px or 10 ppt";
+
+              "h" = "resize shrink width 10 px or 10 ppt";
+              "j" = "resize grow height 10 px or 10 ppt";
+              "k" = "resize shrink height 10 px or 10 ppt";
+              "l" = "resize grow width 10 px or 10 ppt";
+              "semicolon" = "resize grow width 10 px or 10 ppt";
+
+              "Return" = "mode default";
+              "Escape" = "mode default";
+            };
+          };
 
           assigns = {
             # Workspace assignments
@@ -378,11 +379,6 @@ in
           bindsym Ctrl+Mod4+Shift+8 move container to workspace 18
           bindsym Ctrl+Mod4+Shift+9 move container to workspace 19
           bindsym Ctrl+Mod4+Shift+0 move container to workspace 20
-
-          # Add only missing bindings to the built-in resize mode to avoid duplicates
-          mode "resize" {
-            bindsym semicolon resize grow width 10 px or 10 ppt
-          }
 
           # Firefox: no compositor border
           for_window [app_id="firefox"] border pixel 0

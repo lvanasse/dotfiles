@@ -102,5 +102,9 @@ in
         enable = true;
         package = pkgs.openjdk21;
       };
+
+      # Electron apps like Bitwarden expect a working SUID sandbox.
+      security.chromiumSuidSandbox.enable = true;
+      environment.sessionVariables.CHROME_DEVEL_SANDBOX = "/run/wrappers/bin/chrome-sandbox";
     };
 }

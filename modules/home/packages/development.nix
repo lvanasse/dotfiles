@@ -24,7 +24,6 @@
           sonarlint-ls # CLI language server companion for SonarLint 4.37.0
           devenv
           direnv
-          git
           rustup
           nodejs
           home-manager
@@ -34,10 +33,12 @@
           nixd
           codex # Codex CLI for AI code assistance
           claude-code # Claude Code CLI for AI code assistance
+          act
 
           # Build tools
           gnumake
           gcc
+          binutils
           cmake
           automake
           autoconf
@@ -48,6 +49,7 @@
           gettext
           texinfo
           gperf
+          diffutils
 
           # Embedded development
           gcc-arm-embedded
@@ -59,6 +61,12 @@
           lshw
           dmidecode
           usbutils
+          gnugrep
+          gnupg
+          git-lfs
+          gh
+          vim
+          curl
 
           # Nix tools
           nixfmt-rfc-style

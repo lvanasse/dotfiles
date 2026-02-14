@@ -9,6 +9,7 @@
         [
           # Web browsers
           ungoogled-chromium
+          google-chrome
 
           # Communication
           vesktop
@@ -20,6 +21,7 @@
           vlc
           spotify
           kooha
+          simplescreenrecorder
 
           # Office and productivity
           onlyoffice-desktopeditors
@@ -33,6 +35,8 @@
           # System utilities
           gparted
           popsicle
+          firmware-updater
+          gnome-software
 
           # Terminal applications (wezterm installed via programs.wezterm)
           alacritty
@@ -43,6 +47,7 @@
           btop
           nvtopPackages.full
           screenfetch
+          nload
 
           # Network tools
           netcat-gnu
@@ -72,7 +77,9 @@
           networkmanagerapplet
           pamixer
           brightnessctl
-          arandr
+          efibootmgr
+          btrfs-progs
+          pciutils
 
           # Desktop utilities
           blueman
@@ -84,6 +91,7 @@
 
           # Fonts
           font-awesome
+          kdePackages.breeze-icons
           ibus
 
         ]

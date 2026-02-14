@@ -97,7 +97,10 @@ let
         inherit inputs username;
       };
       modules =
-        hmModules
+        [
+          inputs.agenix.homeManagerModules.default
+        ]
+        ++ hmModules
         ++ [
           inputs.plasma-manager.homeModules.plasma-manager
           inputs.stylix.homeModules.stylix

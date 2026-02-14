@@ -1,7 +1,12 @@
-{ ... }:
+{ inputs, ... }:
 {
   flake.modules.homeManager."host.hm-only" =
-    { pkgs, lib, config, ... }:
+    {
+      pkgs,
+      lib,
+      config,
+      ...
+    }:
     let
       # Wrap sway with nixGL for proper OpenGL/Vulkan support on non-NixOS
       swayWrapped = pkgs.writeShellScriptBin "sway" ''
@@ -16,6 +21,11 @@
         export MOZ_GTK_TITLEBAR_DECORATION=system
         exec ${pkgs.nixgl.nixGLIntel}/bin/nixGLIntel ${config.wayland.windowManager.sway.package}/bin/sway "$@"
       '';
+      homeDir = config.home.homeDirectory;
+      jiraCfgAge = "${inputs.secrets}/jira/config.yml.age";
+      jiraTokenAge = "${inputs.secrets}/jira/api_token.age";
+      hasJiraCfg = builtins.pathExists jiraCfgAge;
+      hasJiraToken = builtins.pathExists jiraTokenAge;
     in
     {
       # Host-specific overrides for the Home Manager-only configuration go here.
@@ -24,8 +34,48 @@
       home.packages = with pkgs; [
         nerd-fonts.fira-code
         nixgl.nixGLIntel # For wrapping GL applications
+        fd
         ripgrep
+        poetry
+        (python3.withPackages (ps: [ ps.tkinter ]))
       ];
+
+      programs.git.package = pkgs.gitFull;
+
+      # Symlink tcl & tk data under a common parent so PyInstaller can find both
+      # (Nix splits them into separate store paths, which breaks PyInstaller's path derivation)
+      home.file.".local/share/tcltk/lib/${pkgs.tcl.libPrefix}".source = "${pkgs.tcl}/lib/${pkgs.tcl.libPrefix}";
+      home.file.".local/share/tcltk/lib/${pkgs.tk.libPrefix}".source = "${pkgs.tk}/lib/${pkgs.tk.libPrefix}";
+
+      home.sessionVariables = {
+        EDITOR = "vim";
+        VISUAL = "vim";
+        POETRY_VIRTUALENVS_OPTIONS_SYSTEM_SITE_PACKAGES = "true";
+        TCL_LIBRARY = "${homeDir}/.local/share/tcltk/lib/${pkgs.tcl.libPrefix}";
+        TK_LIBRARY = "${homeDir}/.local/share/tcltk/lib/${pkgs.tk.libPrefix}";
+      };
+
+      # Decrypt Jira CLI secrets for hm-only via agenix (if present in secrets repo).
+      age.identityPaths = [
+        "${homeDir}/.ssh/id_ed25519_personal"
+        "${homeDir}/.ssh/id_ed25519_work"
+      ];
+
+      age.secrets =
+        (lib.optionalAttrs hasJiraCfg {
+          "jira-config" = {
+            file = jiraCfgAge;
+            path = "${homeDir}/.config/.jira/.config.yml";
+            mode = "0600";
+          };
+        })
+        // (lib.optionalAttrs hasJiraToken {
+          "jira-api-token" = {
+            file = jiraTokenAge;
+            path = "${homeDir}/.config/.jira/JIRA_API_TOKEN";
+            mode = "0600";
+          };
+        });
 
       # Use snap-friendly GTK theming on hm-only to avoid snap warnings
       gtk.theme = lib.mkForce {
@@ -68,6 +118,16 @@
         '';
       };
 
+      # Provide a PAM service file for swaylock on non-NixOS systems.
+      # The nix-switch script will install this into /etc/pam.d/swaylock.
+      home.file.".local/share/pam/swaylock".text = ''
+        #%PAM-1.0
+        auth      required pam_unix.so nullok try_first_pass
+        account   required pam_unix.so
+        password  required pam_unix.so
+        session   required pam_unix.so
+      '';
+
       # Electron apps need --no-sandbox because the SUID helper can't be set in the Nix store.
       home.file.".local/bin/discord" = {
         executable = true;
@@ -99,6 +159,8 @@
       programs.wezterm.package = pkgs.writeShellScriptBin "wezterm" ''
         exec ${pkgs.nixgl.nixGLIntel}/bin/nixGLIntel ${pkgs.wezterm}/bin/wezterm "$@"
       '';
+      # Wrapper package doesn't include profile.d/wezterm.sh
+      programs.wezterm.enableBashIntegration = false;
 
       # Use wezterm as the terminal in sway (with full paths for non-NixOS)
       wayland.windowManager.sway.config = {

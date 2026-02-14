@@ -1,11 +1,12 @@
 { ... }:
 {
   flake.modules.homeManager.devGit =
-    { lib, ... }:
+    { lib, pkgs, ... }:
     {
       # Git configuration with SSH keys for work/personal
       programs.git = {
         enable = true;
+        package = pkgs.gitFull;
 
         # Default configuration (personal) - use mkDefault to allow overrides
         settings.user = {

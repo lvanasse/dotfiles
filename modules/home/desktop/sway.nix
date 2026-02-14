@@ -205,7 +205,6 @@ in
 
               # Session
               "${mod}+Shift+x" = "exec swaylock-pixelate";
-
               # Window state
               "${mod}+f" = "fullscreen toggle";
               "${mod}+Shift+space" = "floating toggle";

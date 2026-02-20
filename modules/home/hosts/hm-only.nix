@@ -36,11 +36,11 @@
         nixgl.nixGLIntel # For wrapping GL applications
         fd
         ripgrep
+        dtc
+        picocom
         poetry
         (python3.withPackages (ps: [ ps.tkinter ]))
       ];
-
-      programs.git.package = pkgs.gitFull;
 
       # Symlink tcl & tk data under a common parent so PyInstaller can find both
       # (Nix splits them into separate store paths, which breaks PyInstaller's path derivation)

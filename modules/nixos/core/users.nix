@@ -17,6 +17,7 @@ in
           "input"
           "video"
           "render"
+          "dialout"
         ];
         shell = pkgs.fish;
         ignoreShellProgramCheck = true;

@@ -46,7 +46,7 @@
             contents = {
               user = {
                 name = "Ludovic Vanasse";
-                email = "lvanasse@luxaerobot.com";
+                email = "ludovic.vanasse@vention.cc";
               };
               core.sshCommand = "ssh -i ~/.ssh/id_ed25519_work";
             };

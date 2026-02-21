@@ -66,9 +66,17 @@ let
 
 in
 {
-  flake.modules.nixos."host.pc" = ../../nixos/pc/pc.nix;
-  flake.modules.nixos."host.laptop" = ../../nixos/laptop/laptop.nix;
-  flake.modules.nixos."host.server" = ../../nixos/server/server.nix;
+  # NixOS host modules
+  flake.modules.nixos."host.pc" = ./pc/pc.nix;
+  flake.modules.nixos."host.laptop" = ./laptop/laptop.nix;
+  flake.modules.nixos."host.server" = ./server/server.nix;
+
+  # Home Manager host modules
+  flake.modules.homeManager."host.pc" = ./pc/home.nix;
+  flake.modules.homeManager."host.laptop" = ./laptop/home.nix;
+  flake.modules.homeManager."host.hm-only" = ./hm-only/home.nix;
+  flake.modules.homeManager."host.steamdeck" = ./steamdeck/home.nix;
+  flake.modules.homeManager."host.server" = ./server/home.nix;
 
   flake.nixosConfigurations = lib.mapAttrs mkNixos (
     lib.filterAttrs (_: host: host.nixos or false) hosts

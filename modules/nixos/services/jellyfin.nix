@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.nixos."server.jellyfin" =
+  flake.modules.nixos."services.jellyfin" =
     { ... }:
     {
       virtualisation.oci-containers.containers.jellyfin = {

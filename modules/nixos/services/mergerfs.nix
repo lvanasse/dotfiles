@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.nixos."server.mergerfs" =
+  flake.modules.nixos."services.mergerfs" =
     { pkgs, ... }:
     {
       environment.systemPackages = [ pkgs.mergerfs ];

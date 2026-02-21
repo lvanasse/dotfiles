@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.nixos."server.vaultwarden" =
+  flake.modules.nixos."services.vaultwarden" =
     { config, ... }:
     {
       # TODO: Move ADMIN_TOKEN to agenix secret

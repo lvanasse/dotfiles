@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.nixos."server.docker" =
+  flake.modules.nixos."services.docker" =
     { ... }:
     {
       virtualisation.docker = {

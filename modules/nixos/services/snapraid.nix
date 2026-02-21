@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.nixos."server.snapraid" =
+  flake.modules.nixos."services.snapraid" =
     { pkgs, ... }:
     {
       environment.systemPackages = [ pkgs.snapraid ];

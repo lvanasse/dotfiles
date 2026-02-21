@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.nixos."server.nextcloud" =
+  flake.modules.nixos."services.nextcloud" =
     { ... }:
     {
       virtualisation.oci-containers.containers.nextcloud = {

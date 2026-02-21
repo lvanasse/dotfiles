@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.nixos."server.cloudflared" =
+  flake.modules.nixos."services.cloudflared" =
     { config, ... }:
     {
       # TODO: Move TUNNEL_TOKEN to agenix secret

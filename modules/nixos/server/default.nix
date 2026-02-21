@@ -5,15 +5,15 @@
     {
       imports = [
         config.flake.modules.nixos.core
-        config.flake.modules.nixos."server.ssh"
-        config.flake.modules.nixos."server.docker"
-        config.flake.modules.nixos."server.snapraid"
-        config.flake.modules.nixos."server.mergerfs"
-        config.flake.modules.nixos."server.jellyfin"
-        config.flake.modules.nixos."server.arr"
-        config.flake.modules.nixos."server.nextcloud"
-        config.flake.modules.nixos."server.vaultwarden"
-        config.flake.modules.nixos."server.cloudflared"
+        config.flake.modules.nixos.servicesSsh
+        config.flake.modules.nixos."services.docker"
+        config.flake.modules.nixos."services.snapraid"
+        config.flake.modules.nixos."services.mergerfs"
+        config.flake.modules.nixos."services.jellyfin"
+        config.flake.modules.nixos."services.arr"
+        config.flake.modules.nixos."services.nextcloud"
+        config.flake.modules.nixos."services.vaultwarden"
+        config.flake.modules.nixos."services.cloudflared"
       ];
 
       # Headless server settings

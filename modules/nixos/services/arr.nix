@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.nixos."server.arr" =
+  flake.modules.nixos."services.arr" =
     { ... }:
     {
       # Sonarr - TV shows

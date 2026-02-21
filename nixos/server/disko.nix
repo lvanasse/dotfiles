@@ -5,7 +5,7 @@
     disk = {
       main = {
         type = "disk";
-        device = "/dev/sdb";
+        device = "/dev/sdc";
         content = {
           type = "gpt";
           partitions = {

@@ -16,42 +16,6 @@
         # Pre-install core packages Spacemacs expects to avoid ELPA bootstrap issues
         extraPackages =
           epkgs:
-          let
-            claudeCode = epkgs.trivialBuild {
-              pname = "claude-code";
-              version = "unstable-2025-10-10";
-              src = pkgs.fetchFromGitHub {
-                owner = "stevemolitor";
-                repo = "claude-code.el";
-                rev = "becece683bcf60f7b150a87a30ef14885dcf8ce3";
-                hash = "sha256-AW3Q5XScvT3UAmzvoMS53iZtijrii6pwvQjw+VW353w=";
-              };
-              packageRequires = with epkgs; [
-                vterm
-                inheritenv
-                transient
-              ];
-            };
-            aiCodeInterface = epkgs.trivialBuild {
-              pname = "ai-code-interface";
-              version = "0.60.0";
-              src = pkgs.fetchFromGitHub {
-                owner = "tninja";
-                repo = "ai-code-interface.el";
-                rev = "ec8c8ca8b839bcaa3bb93a1b79cf27ba86372094";
-                hash = "sha256-zgKmy3QARY1J8B1Y72vs4seO2SsH3dsxabDp6AaSQyk=";
-              };
-              nativeBuildInputs = [ pkgs.gitMinimal ];
-              packageRequires =
-                (with epkgs; [
-                  org
-                  magit
-                  transient
-                  seq
-                ])
-                ++ [ claudeCode ];
-            };
-          in
           (with epkgs; [
             use-package
             evil
@@ -78,12 +42,7 @@
             mu4e-alert
             vterm
             clipetty
-          ])
-          ++ lib.optional (epkgs ? copilot) epkgs.copilot
-          ++ [
-            claudeCode
-            aiCodeInterface
-          ];
+          ]);
       };
 
       # Spacemacs user configuration: set Gruvbox Dark Hard theme
@@ -119,8 +78,9 @@
                    mu4e-enable-notifications t
                    mu4e-enable-mode-line t
                    mu4e-use-maildirs-extension t)
+             whitespace
            )
-            dotspacemacs-additional-packages '(gruvbox-theme ai-code-interface vterm gptel mcp gptel-autocomplete ement clipetty copilot)
+            dotspacemacs-additional-packages '(gruvbox-theme vterm ement clipetty)
             dotspacemacs-excluded-packages '(forge)))
 
         (defun dotspacemacs/init ()
@@ -141,6 +101,11 @@
             (setq native-comp-async-report-warnings-errors 'silent)))
 
           (defun dotspacemacs/user-config ()
+          (setq-default
+           whitespace-style '(face trailing tabs tab-mark)
+           whitespace-line-column 100)
+          (add-hook 'before-save-hook #'delete-trailing-whitespace)
+
           ;; Clipboard integration: use system clipboard in GUI and OSC52 in TTY.
           (setq select-enable-clipboard t
                 save-interprogram-paste-before-kill t)
@@ -230,39 +195,11 @@
             :mode "\\.nix\\'"
             :config
             (setq nix-indent-function 'nix-indent-line
-                  nix-nixfmt-bin "nixfmt-rfc-style")
+                  nix-nixfmt-bin "nixfmt")
             (add-hook 'nix-mode-hook #'my/nix-mode-setup)
             (with-eval-after-load 'eglot
               (add-to-list 'eglot-server-programs
                            `(nix-mode . ,#'my/nixd-contact))))
-
-          (use-package claude-code
-            :init
-            (setq claude-code-terminal-backend 'vterm
-                  claude-code-program "codex"
-                  claude-code-program-switches nil))
-
-          (use-package ai-code-interface
-            :commands (ai-code-menu ai-code-cli-start ai-code-cli-resume ai-code-cli-switch-to-buffer ai-code-send-command)
-            :init
-            (setq ai-code-cli "codex")
-            :config
-            (ai-code-set-backend 'codex)
-            (global-set-key (kbd "C-c a") #'ai-code-menu)
-            (with-eval-after-load 'magit
-              (ai-code-magit-setup-transients)))
-
-          (use-package copilot
-            :commands (copilot-mode copilot-complete)
-            :hook (prog-mode . copilot-mode)
-            :init
-            (setq copilot-idle-delay 0.2
-                  copilot-max-char -1)
-            :config
-            (define-key copilot-mode-map (kbd "M-]") #'copilot-next-completion)
-            (define-key copilot-mode-map (kbd "M-[") #'copilot-previous-completion)
-            (define-key copilot-mode-map (kbd "M-RET") #'copilot-accept-completion)
-            (define-key copilot-mode-map (kbd "C-c C-g") #'copilot-clear-overlay))
 
           (use-package ement
             :commands (ement-connect)
@@ -271,15 +208,6 @@
             (setq ement-save-session t))
 
           (require 'core-keybindings)
-          (spacemacs/declare-prefix "oc" "AI Code")
-          (spacemacs/set-leader-keys
-            "oca" #'ai-code-menu
-            "ocs" #'ai-code-cli-start
-            "ocr" #'ai-code-cli-resume
-            "ocb" #'ai-code-cli-switch-to-buffer
-            "occ" #'ai-code-code-change
-            "ocp" #'ai-code-send-command
-            "oc|" #'ai-code-apply-prompt-on-current-file)
 
           ;; Ensure GNU Make files detect correctly (Makefile, .mk, etc.)
             (add-to-list 'auto-mode-alist '("\\.mk\\'" . makefile-gmake-mode))
@@ -301,37 +229,6 @@
               (treemacs-define-RET-action 'file-node-closed #'treemacs-visit-node-ace)
               (treemacs-define-RET-action 'file-node-open #'treemacs-visit-node-ace))
 
-          ;; --- AI CLI helpers via gptel + MCP (keyless, CLI-driven) -----------
-          ;; We do NOT configure any remote API backends; we drive local CLIs.
-          ;; Packages are in dotspacemacs-additional-packages for MELPA install.
-
-          (use-package gptel
-            :commands (gptel gptel-send gptel-menu)
-            :init (setq gptel-default-mode 'org-mode))
-
-          (use-package mcp
-            :after gptel
-            :commands (mcp-hub mcp-hub-start-server mcp-connect-server mcp-call-tool)
-            :init (require 'mcp-hub)
-            :config
-            ;; Start Codex MCP on demand; Claude Code optional via npx.
-            (setq mcp-hub-servers
-                  '(("codex" . (:command "codex" :args ("mcp-server"))))))
-
-          (use-package gptel-autocomplete
-            :after gptel
-            :commands (gptel-complete gptel-accept-completion)
-            :init
-            (define-minor-mode ai-code-ac-accept-tab-mode
-              "Accept gptel-autocomplete with TAB when visible."
-              :init-value t :lighter " AC-TAB"
-              (if ai-code-ac-accept-tab-mode
-                  (local-set-key (kbd "TAB") #'gptel-accept-completion)
-                (local-unset-key (kbd "TAB"))))
-            (dolist (hook '(prog-mode-hook text-mode-hook))
-              (add-hook hook (lambda () (ai-code-ac-accept-tab-mode 1)))))
-
-          ;; --------------------------------------------------------------------
           )
       '';
 

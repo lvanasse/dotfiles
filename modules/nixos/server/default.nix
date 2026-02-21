@@ -12,8 +12,12 @@
         config.flake.modules.nixos."services.jellyfin"
         config.flake.modules.nixos."services.arr"
         config.flake.modules.nixos."services.nextcloud"
+        config.flake.modules.nixos."services.mariadb"
         config.flake.modules.nixos."services.vaultwarden"
         config.flake.modules.nixos."services.cloudflared"
+        config.flake.modules.nixos."services.planka"
+        config.flake.modules.nixos."services.linkwarden"
+        config.flake.modules.nixos."services.ebooks"
       ];
 
       # Headless server settings

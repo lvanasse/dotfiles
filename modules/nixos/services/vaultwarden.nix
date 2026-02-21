@@ -1,22 +1,34 @@
-{ ... }:
+{ inputs, ... }:
+let
+  vaultwardenEnvAge = "${inputs.secrets}/server/vaultwarden.env.age";
+in
 {
   flake.modules.nixos."services.vaultwarden" =
-    { config, ... }:
+    { config, lib, ... }:
+    let
+      hasVaultwardenEnv = builtins.pathExists vaultwardenEnvAge;
+    in
     {
-      # TODO: Move ADMIN_TOKEN to agenix secret
-      virtualisation.oci-containers.containers.vaultwarden = {
-        image = "vaultwarden/server:latest";
-        environment = {
-          SIGNUPS_ALLOWED = "false";
-          INVITATIONS_ALLOWED = "true";
-          WEBSOCKET_ENABLED = "true";
-          # ADMIN_TOKEN should be set via environmentFiles with agenix
+      age.secrets = lib.mkIf hasVaultwardenEnv {
+        "vaultwarden-env" = {
+          file = vaultwardenEnvAge;
+          path = "/run/agenix/vaultwarden-env";
+          owner = "root";
+          group = "root";
+          mode = "0400";
         };
-        environmentFiles = [
-          # config.age.secrets.vaultwarden-env.path
-        ];
+      };
+
+      virtualisation.oci-containers.containers.vaultwarden = {
+        image = "vaultwarden/server";
+        environment = {
+          SIGNUPS_ALLOWED = "true";
+          INVITATIONS_ALLOWED = "true";
+          WEBSOCKET_ENABLED = "false";
+        };
+        environmentFiles = lib.optional hasVaultwardenEnv config.age.secrets."vaultwarden-env".path;
         volumes = [
-          "/var/lib/vaultwarden:/data"
+          "/mnt/storage/appdata/vaultwarden:/data"
         ];
         ports = [ "4743:80" ];
       };

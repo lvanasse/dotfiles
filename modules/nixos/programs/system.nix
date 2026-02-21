@@ -1,4 +1,4 @@
-{ config, inputs, ... }:
+{ config, ... }:
 let
   username = config.flake.lib.username;
 in
@@ -6,13 +6,6 @@ in
   flake.modules.nixos.programsSystem =
     { pkgs, ... }:
     let
-      # Prefer agenix from flake input; fall back if available in nixpkgs
-      agenixPkg =
-        if pkgs ? agenix then
-          pkgs.agenix
-        else
-          inputs.agenix.packages.${pkgs.stdenv.hostPlatform.system}.default;
-      llmAgents = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system};
       nhOsWithHome = pkgs.writeShellScriptBin "nh-os-with-home" ''
         set -euo pipefail
 
@@ -57,7 +50,7 @@ in
         rsync
         pavucontrol
         openssh
-        agenixPkg
+        agenix
         nh
         nix-du
         home-manager
@@ -65,7 +58,7 @@ in
         nixpkgs-review
         nixfmt-rfc-style
         treefmt
-        llmAgents.codex
+        codex
         gh
         act
       ];

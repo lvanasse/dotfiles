@@ -1,10 +1,10 @@
-{ inputs, ... }:
+{ ... }:
 {
   flake.modules.homeManager.codex =
     { lib, config, pkgs, ... }:
     let
       defaultArgs = "--search -s danger-full-access -a on-request";
-      codexPkg = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.codex;
+      codexPkg = pkgs.codex;
       codexWrapped = pkgs.writeShellScriptBin "codex" ''
         exec ${lib.getExe codexPkg} ${defaultArgs} "$@"
       '';

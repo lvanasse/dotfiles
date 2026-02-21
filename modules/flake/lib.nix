@@ -7,9 +7,13 @@
 let
   overlays = [
     config.flake.overlays.qbittorrent510_2505
+    config.flake.overlays.jiraCliFromUnstable
+    config.flake.overlays.agenixFromInput
     inputs.nix-vscode-extensions.overlays.default
     inputs.emacs-overlay.overlays.default
+    inputs.llm-agents.overlays.default
     config.flake.overlays.sonarlintHashFix
+    inputs.nix-openclaw.overlays.default
     inputs.nixgl.overlay
   ];
 

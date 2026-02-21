@@ -12,6 +12,7 @@
         htop
         tmux
         git
+        openclaw
       ];
 
       programs.bash.enable = true;

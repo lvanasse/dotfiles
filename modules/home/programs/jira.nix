@@ -1,4 +1,4 @@
-{ inputs, ... }:
+{ ... }:
 {
   flake.modules.homeManager.jira =
     {
@@ -9,11 +9,8 @@
     }:
     let
       # Prefer jira-cli-go (ankitpokhrel/jira-cli). Fallback to go-jira if needed.
-      unstable = inputs."nixpkgs-unstable".legacyPackages.${pkgs.stdenv.hostPlatform.system};
       jiraPkg =
-        if unstable ? jira-cli-go then
-          unstable.jira-cli-go
-        else if pkgs ? jira-cli-go then
+        if pkgs ? jira-cli-go then
           pkgs.jira-cli-go
         else
           pkgs.go-jira;

@@ -40,6 +40,13 @@ let
         "host.steamdeck"
       ];
     };
+    server = {
+      nixos = true;
+      modules = [
+        "profile.server"
+        "host.server"
+      ];
+    };
   };
 
   mkNixos =
@@ -61,6 +68,7 @@ in
 {
   flake.modules.nixos."host.pc" = ../../nixos/pc/pc.nix;
   flake.modules.nixos."host.laptop" = ../../nixos/laptop/laptop.nix;
+  flake.modules.nixos."host.server" = ../../nixos/server/server.nix;
 
   flake.nixosConfigurations = lib.mapAttrs mkNixos (
     lib.filterAttrs (_: host: host.nixos or false) hosts

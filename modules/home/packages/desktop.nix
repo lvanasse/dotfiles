@@ -91,7 +91,6 @@
 
           # Fonts
           font-awesome
-          kdePackages.breeze-icons
           ibus
 
         ]

@@ -12,6 +12,7 @@ in
           pkgs.agenix
         else
           inputs.agenix.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      llmAgents = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system};
       nhOsWithHome = pkgs.writeShellScriptBin "nh-os-with-home" ''
         set -euo pipefail
 
@@ -64,8 +65,7 @@ in
         nixpkgs-review
         nixfmt-rfc-style
         treefmt
-        codex
-        claude-code
+        llmAgents.codex
         gh
         act
       ];
@@ -79,7 +79,7 @@ in
       # Disable legacy command-not-found (uses channels DB and is noisy)
       programs.command-not-found.enable = false;
 
-      # Enable nix-ld for running dynamically linked binaries (e.g., Claude Code VSCode extension)
+      # Enable nix-ld for running dynamically linked binaries.
       programs.nix-ld = {
         enable = true;
         libraries = with pkgs; [

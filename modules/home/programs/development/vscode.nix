@@ -44,7 +44,6 @@
           jebbs.plantuml
           openai.chatgpt
           james-yu.latex-workshop
-          anthropic.claude-code
           mermaidchart.vscode-mermaid-chart
           ms-vscode-remote.remote-containers
         ];

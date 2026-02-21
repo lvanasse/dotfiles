@@ -6,7 +6,6 @@
 }:
 let
   overlays = [
-    config.flake.overlays.codexFromUnstable
     config.flake.overlays.qbittorrent510_2505
     inputs.nix-vscode-extensions.overlays.default
     inputs.emacs-overlay.overlays.default

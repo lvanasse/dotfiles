@@ -10,7 +10,6 @@
         config.flake.modules.homeManager.development
         config.flake.modules.homeManager.slack
         config.flake.modules.homeManager.codex
-        config.flake.modules.homeManager.programsClaude
         config.flake.modules.homeManager.jira
         config.flake.modules.homeManager.firefox
         config.flake.modules.homeManager.email

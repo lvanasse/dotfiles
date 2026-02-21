@@ -1,16 +1,5 @@
 { inputs, ... }:
 let
-  # Pull codex from nixpkgs-unstable so it tracks its latest available build
-  codexFromUnstable =
-    _final: prev:
-    let
-      system = prev.stdenv.hostPlatform.system;
-      unstable = inputs.nixpkgs-unstable.legacyPackages.${system};
-    in
-    {
-      codex = unstable.codex;
-    };
-
   qbittorrent510_2505 =
     _final: prev:
     let
@@ -32,7 +21,6 @@ in
 {
   flake.overlays = {
     inherit
-      codexFromUnstable
       qbittorrent510_2505
       sonarlintHashFix
       ;

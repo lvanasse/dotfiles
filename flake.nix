@@ -43,6 +43,7 @@
       url = "github:nix-community/nix-vscode-extensions";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    llm-agents.url = "github:numtide/llm-agents.nix";
 
     # Additional package sources
     "nixpkgs-unstable".url = "github:NixOS/nixpkgs/nixpkgs-unstable";

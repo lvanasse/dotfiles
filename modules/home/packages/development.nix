@@ -31,8 +31,6 @@
           starship # Cross-shell prompt
           nil
           nixd
-          codex # Codex CLI for AI code assistance
-          claude-code # Claude Code CLI for AI code assistance
           act
 
           # Build tools

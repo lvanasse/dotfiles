@@ -1,48 +1,77 @@
 # Repository Guidelines
 
-## Project Structure & Module Organization
+## Architecture
 
-- `flake.nix` – Flake entrypoint defining inputs/outputs and host configs.
-- `nixos/` – Per-host NixOS entrypoints (e.g., `nixos/pc/pc.nix`, `nixos/laptop/laptop.nix`); do not edit `hardware-configuration.nix`.
-- `modules/hosts/` – Host matrix (maps module sets to each host for NixOS + Home Manager).
-- `modules/nixos/` – Shared NixOS modules.
-- `modules/home/` – Shared Home Manager modules.
-- `wallpapers/` – Desktop assets.
+This repository uses a flake-based NixOS/Home Manager setup with `flake-parts` and `import-tree`.
+
+Dendritic layout:
+- `modules/` contains reusable modules that self-register under `flake.modules.*`.
+- `hosts/` contains host-specific configs that are explicitly registered in `hosts/default.nix`.
+
+Module naming patterns:
+- `profile.*` for bundles (for example `profile.workstation`, `profile.server`)
+- `desktop.*` for desktop stacks
+- `services.*` for services
+- `feature.*` for optional features
+- `host.*` for host entrypoints
+
+## Project Structure
+
+- `flake.nix`: flake entrypoint and outputs wiring.
+- `hosts/default.nix`: host matrix and module registration.
+- `hosts/<host>/`: per-host NixOS entrypoint + Home Manager overrides.
+- `modules/flake/`: custom lib/helpers, overlays, packages, checks, formatter.
+- `modules/nixos/`: shared NixOS modules.
+- `modules/home/`: shared Home Manager modules.
+- `wallpapers/`: desktop assets.
 
 ## Build, Test, and Development Commands
 
-- Switch NixOS host: `nh os switch -H pc` (or `laptop`) — build and activate system.
-- Apply Home Manager: `home-manager switch --flake .#ludovic@pc` — update user env.
-- Format Nix: `nixfmt-rfc-style **/*.nix` — enforce consistent style.
-- Update inputs: `nix flake update` — refresh and lock dependencies.
+- Switch NixOS host: `nh os switch -H pc` (or `laptop`, `server`).
+- Apply Home Manager: `home-manager switch --flake .#ludovic@pc`.
+- Unified switch script: `./scripts/nix-switch.sh <host>`.
+- Validate: `nix flake check` and `nixos-rebuild dry-run --flake .#pc`.
+- Format: `nix fmt` (or `nixfmt-rfc-style **/*.nix`).
+- Update inputs: `nix flake update` and commit `flake.lock`.
 
-## Coding Style & Naming Conventions
+## Coding Style & Naming
 
-- Indentation: 2 spaces (standard Nix formatting).
-- Files: kebab-case for modules; `hostname.nix` for host configs.
-- Variables: camelCase for Nix attributes; kebab-case for package names.
-- Always run `nixfmt-rfc-style` before committing; keep changes minimal and modular.
+- Use 2-space indentation in Nix files.
+- Use kebab-case filenames for modules.
+- Use `hostname.nix` naming for host entrypoints.
+- Use camelCase for Nix attributes and kebab-case package names.
+- Keep changes minimal, modular, and focused.
 
 ## Testing Guidelines
 
-- Manual testing only: verify builds evaluate and activate on target host(s).
-- For shared changes, test both `pc` and `laptop`.
-- Typical flow: edit → `nh os switch -H <host>` → `home-manager switch --flake .#ludovic@<host>` → verify runtime behavior.
+- Manual testing only: evaluate and activate on target host(s).
+- For shared changes, test both `pc` and `laptop` when applicable.
+- Typical flow: edit -> `nh os switch -H <host>` -> `home-manager switch --flake .#ludovic@<host>` -> runtime verification.
 
-## Commit & Pull Request Guidelines
+## Adding Hosts and Services
 
-- Commit format: `scope: brief description` (e.g., `pc: Enable flathub`, `home: Add Java support`).
-- Scopes: `pc`, `laptop`, `home`, `modules`, `doc`, `fix`, `cleanup`.
-- One logical change per commit. Note hosts tested and key commands run.
-- After `nix flake update`, commit `flake.lock` to ensure reproducibility.
+Adding a host:
+1. Create `hosts/<hostname>/` with `<hostname>.nix`, `home.nix`, and generated `hardware-configuration.nix`.
+2. Register it in `hosts/default.nix` under both host matrix and `flake.modules.nixos/homeManager."host.<hostname>"`.
 
-## Security & Configuration Tips
+Adding a service module:
+1. Create `modules/nixos/services/<service>.nix`.
+2. Register as `flake.modules.nixos."services.<service>"`.
+3. Include it from the relevant profile module.
 
-- Never hand-edit `hardware-configuration.nix`.
-- SSH: root login disabled; password auth enabled per host config.
-- Trusted users: `root`, `ludovic`. Firewall enabled (allowing port 59793 for torrenting).
+## Commit Guidelines
+
+- Use `scope: brief description` (for example `pc: enable flathub`, `home: add Java support`).
+- Suggested scopes: `pc`, `laptop`, `server`, `home`, `modules`, `doc`, `fix`, `cleanup`.
+- Keep one logical change per commit and note hosts tested + commands run.
+
+## Security Notes
+
+- Never hand-edit `hosts/*/hardware-configuration.nix`.
+- SSH hardening and firewall settings are host-controlled; keep changes explicit and reviewable.
 
 ## Agent Notes
 
-- Keep patches focused; avoid unrelated edits. Respect existing structure and naming.
-- When adding modules, wire imports in `nixos/<host>/<host>.nix` and test both hosts.
+- Keep patches focused and avoid unrelated edits.
+- Respect the `modules/` vs `hosts/` separation.
+- When adding modules, ensure they are correctly wired through host/profile imports.

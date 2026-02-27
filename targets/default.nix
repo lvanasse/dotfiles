@@ -1,0 +1,69 @@
+{ config, lib, ... }:
+let
+  defaultUsername = config.flake.lib.username;
+  system = "x86_64-linux";
+  targets = {
+    pc = {
+      nixos = true;
+      modules = [ "target.pc" ];
+    };
+    laptop = {
+      nixos = true;
+      modules = [ "target.laptop" ];
+    };
+    "hm-only" = {
+      nixos = false;
+      modules = [ "target.hm-only" ];
+    };
+    steamdeck = {
+      nixos = false;
+      username = "deck";
+      modules = [ "target.steamdeck" ];
+    };
+    server = {
+      nixos = true;
+      modules = [ "target.server" ];
+    };
+  };
+
+  mkNixos =
+    hostname: target:
+    config.flake.lib.mkNixosConfiguration {
+      username = defaultUsername;
+      inherit hostname system;
+      modules = target.modules;
+    };
+
+  mkHome =
+    _hostname: target:
+    config.flake.lib.mkHomeConfiguration {
+      inherit system;
+      modules = target.modules;
+    };
+
+in
+{
+  # NixOS target modules
+  flake.modules.nixos."target.pc" = ./pc/nixos.nix;
+  flake.modules.nixos."target.laptop" = ./laptop/nixos.nix;
+  flake.modules.nixos."target.server" = ./server/nixos.nix;
+
+  # Home Manager target modules
+  flake.modules.homeManager."target.pc" = ./pc/home.nix;
+  flake.modules.homeManager."target.laptop" = ./laptop/home.nix;
+  flake.modules.homeManager."target.hm-only" = ./hm-only/home.nix;
+  flake.modules.homeManager."target.steamdeck" = ./steamdeck/home.nix;
+  flake.modules.homeManager."target.server" = ./server/home.nix;
+
+  flake.nixosConfigurations = lib.mapAttrs mkNixos (
+    lib.filterAttrs (_: target: target.nixos or false) targets
+  );
+
+  flake.homeConfigurations = lib.mapAttrs' (
+    hostname: target:
+    let
+      targetUsername = target.username or defaultUsername;
+    in
+    lib.nameValuePair "${targetUsername}@${hostname}" (mkHome hostname target)
+  ) targets;
+}

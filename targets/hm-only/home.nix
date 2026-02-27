@@ -1,5 +1,6 @@
 {
   inputs,
+  flakeModules,
   pkgs,
   lib,
   config,
@@ -26,6 +27,16 @@ let
   hasJiraToken = builtins.pathExists jiraTokenAge;
 in
 {
+  imports = [
+    flakeModules.homeManager.core
+    flakeModules.homeManager.theme
+    flakeModules.homeManager."desktop.common"
+    flakeModules.homeManager."desktop.sway"
+    flakeModules.homeManager.programs
+    flakeModules.homeManager.services
+    flakeModules.homeManager.packages
+  ];
+
   # Host-specific overrides for the Home Manager-only configuration go here.
   # Install fonts for non-NixOS systems
   fonts.fontconfig.enable = true;

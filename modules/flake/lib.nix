@@ -37,6 +37,7 @@ let
       inherit system;
       specialArgs = {
         inherit inputs username;
+        flakeModules = config.flake.modules;
       };
       modules = [
         (
@@ -61,6 +62,10 @@ let
               useUserPackages = true;
               backupFileExtension = "hm-bak";
               overwriteBackup = true;
+              extraSpecialArgs = {
+                inherit inputs username;
+                flakeModules = config.flake.modules;
+              };
               users.${username} = {
                 imports = hmModules;
                 nixpkgs = {
@@ -98,6 +103,7 @@ let
       };
       extraSpecialArgs = {
         inherit inputs username;
+        flakeModules = config.flake.modules;
       };
       modules =
         [

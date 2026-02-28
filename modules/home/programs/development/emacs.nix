@@ -65,6 +65,8 @@
              syntax-checking
              ;; Choose one completion framework (ivy/helm/vertico). Default to ivy.
              ivy
+             ;; Embedded/Yocto tooling
+             yocto
              ;; Language layers for day-to-day development
              c-c++
              cmake
@@ -98,13 +100,24 @@
         (defun dotspacemacs/user-init ()
           ;; Quieten native-comp warnings during async compilation
           (when (boundp 'native-comp-async-report-warnings-errors)
-            (setq native-comp-async-report-warnings-errors 'silent)))
+            (setq native-comp-async-report-warnings-errors 'silent))
+          (when (boundp 'comp-async-report-warnings-errors)
+            (setq comp-async-report-warnings-errors 'silent))
+          (when (boundp 'warning-suppress-types)
+            (add-to-list 'warning-suppress-types '(native-compiler))))
 
           (defun dotspacemacs/user-config ()
           (setq-default
            whitespace-style '(face trailing tabs tab-mark)
            whitespace-line-column 100)
           (add-hook 'before-save-hook #'delete-trailing-whitespace)
+
+          ;; Ensure Home Manager profiles are visible to GUI-launched Emacs.
+          (dolist (path '("~/.nix-profile/bin" "~/.local/state/nix/profile/bin"))
+            (let ((expanded (expand-file-name path)))
+              (when (file-directory-p expanded)
+                (add-to-list 'exec-path expanded)
+                (setenv "PATH" (concat expanded path-separator (getenv "PATH"))))))
 
           ;; Clipboard integration: use system clipboard in GUI and OSC52 in TTY.
           (setq select-enable-clipboard t
@@ -137,12 +150,19 @@
             (mu4e-alert-enable-mode-line-display)
             (mu4e-alert-enable-notifications))
 
-          ;; Ensure all interactive shells (SPC ') use fish with our system config
-          (setq shell-file-name "/run/current-system/sw/bin/fish"
-                explicit-shell-file-name "/run/current-system/sw/bin/fish"
-                vterm-shell "/run/current-system/sw/bin/fish"
-                multi-term-program "/run/current-system/sw/bin/fish")
-          (setenv "SHELL" "/run/current-system/sw/bin/fish")
+          ;; Ensure all interactive shells (SPC ') use fish when available.
+          (let* ((fish-candidates (list
+                                   (executable-find "fish")
+                                   (expand-file-name "~/.nix-profile/bin/fish")
+                                   (expand-file-name "~/.local/state/nix/profile/bin/fish")
+                                   "/run/current-system/sw/bin/fish"))
+                 (fish (seq-find #'file-executable-p fish-candidates)))
+            (when fish
+              (setq shell-file-name fish
+                    explicit-shell-file-name fish
+                    vterm-shell fish
+                    multi-term-program fish)
+              (setenv "SHELL" fish)))
           (with-eval-after-load 'shell-pop
             (setq shell-pop-shell-type
                   '("vterm" "*vterm*" (lambda () (vterm)))))

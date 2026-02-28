@@ -1,11 +1,11 @@
 {
-  # Disko configuration for Samsung SSD 850 EVO 500GB (sdb)
-  # Run with: sudo nix --experimental-features "nix-command flakes" run github:nix-community/disko -- --mode disko ./disko.nix
+  # Disko configuration for Samsung SSD 850 EVO 500GB
+  # Run with: sudo nix --experimental-features "nix-command flakes" run github:nix-community/disko -- --mode disko ./hardware/server/disko.nix
   disko.devices = {
     disk = {
       main = {
         type = "disk";
-        device = "/dev/sdc";
+        device = "/dev/disk/by-id/ata-Samsung_SSD_850_EVO_500GB_S21JNXAG556540E";
         content = {
           type = "gpt";
           partitions = {

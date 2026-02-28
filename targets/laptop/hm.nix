@@ -9,7 +9,6 @@
     flakeModules.homeManager.programs
     flakeModules.homeManager.services
     flakeModules.homeManager.packages
+    flakeModules.homeManager."targetConfig.laptop"
   ];
-
-  # Laptop-specific Home Manager overrides go here
 }

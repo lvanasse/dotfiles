@@ -1,12 +1,14 @@
+{ ... }:
 {
-  inputs,
-  flakeModules,
-  pkgs,
-  lib,
-  config,
-  ...
-}:
-let
+  flake.modules.homeManager."targetConfig.hm-only" =
+    {
+      inputs,
+      pkgs,
+      lib,
+      config,
+      ...
+    }:
+    let
   # Wrap sway with nixGL for proper OpenGL/Vulkan support on non-NixOS
   swayWrapped = pkgs.writeShellScriptBin "sway" ''
     export PATH="$HOME/.local/bin:$HOME/.nix-profile/bin:$HOME/.local/state/nix/profile/bin:$PATH"
@@ -27,16 +29,6 @@ let
   hasJiraToken = builtins.pathExists jiraTokenAge;
 in
 {
-  imports = [
-    flakeModules.homeManager.core
-    flakeModules.homeManager.theme
-    flakeModules.homeManager."desktop.common"
-    flakeModules.homeManager."desktop.sway"
-    flakeModules.homeManager.programs
-    flakeModules.homeManager.services
-    flakeModules.homeManager.packages
-  ];
-
   # Host-specific overrides for the Home Manager-only configuration go here.
   # Install fonts for non-NixOS systems
   fonts.fontconfig.enable = true;
@@ -247,4 +239,5 @@ in
       }
     ];
   };
+    };
 }

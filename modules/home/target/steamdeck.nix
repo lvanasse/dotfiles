@@ -1,0 +1,14 @@
+{ ... }:
+{
+  flake.modules.homeManager."targetConfig.steamdeck" =
+    { pkgs, ... }:
+    {
+      home.username = "deck";
+      home.homeDirectory = "/home/deck";
+
+      home.packages = with pkgs; [
+        xrdp
+        pulseaudio-module-xrdp
+      ];
+    };
+}

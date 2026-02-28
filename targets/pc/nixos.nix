@@ -8,6 +8,6 @@
     flakeModules.nixos."desktop.sway"
     flakeModules.nixos."desktop.kde"
     flakeModules.nixos."feature.steam"
-    ./pc.nix
+    flakeModules.nixos."targetConfig.pc"
   ];
 }

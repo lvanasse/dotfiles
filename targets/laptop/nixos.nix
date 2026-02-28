@@ -7,6 +7,6 @@
     flakeModules.nixos.programs
     flakeModules.nixos."desktop.sway"
     flakeModules.nixos."desktop.kde"
-    ./laptop.nix
+    flakeModules.nixos."targetConfig.laptop"
   ];
 }

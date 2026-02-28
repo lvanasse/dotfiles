@@ -49,11 +49,11 @@ in
   flake.modules.nixos."target.server" = ./server/nixos.nix;
 
   # Home Manager target modules
-  flake.modules.homeManager."target.pc" = ./pc/home.nix;
-  flake.modules.homeManager."target.laptop" = ./laptop/home.nix;
-  flake.modules.homeManager."target.hm-only" = ./hm-only/home.nix;
-  flake.modules.homeManager."target.steamdeck" = ./steamdeck/home.nix;
-  flake.modules.homeManager."target.server" = ./server/home.nix;
+  flake.modules.homeManager."target.pc" = ./pc/hm.nix;
+  flake.modules.homeManager."target.laptop" = ./laptop/hm.nix;
+  flake.modules.homeManager."target.hm-only" = ./hm-only/hm.nix;
+  flake.modules.homeManager."target.steamdeck" = ./steamdeck/hm.nix;
+  flake.modules.homeManager."target.server" = ./server/hm.nix;
 
   flake.nixosConfigurations = lib.mapAttrs mkNixos (
     lib.filterAttrs (_: target: target.nixos or false) targets

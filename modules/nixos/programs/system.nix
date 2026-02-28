@@ -52,7 +52,6 @@ in
         openssh
         agenix
         tailscale
-        agenixPkg
         nh
         nix-du
         home-manager

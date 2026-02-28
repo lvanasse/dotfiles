@@ -33,6 +33,22 @@ let
     else
       { };
 
+  # Keep codex sourced from unstable.
+  codexFromUnstable =
+    _final: prev:
+    let
+      pkgsUnstable = import inputs."nixpkgs-unstable" {
+        system = prev.stdenv.hostPlatform.system;
+        config.allowUnfree = true;
+      };
+    in
+    if pkgsUnstable ? codex then
+      {
+        codex = pkgsUnstable.codex;
+      }
+    else
+      { };
+
   # Ensure agenix is always available via pkgs, even if nixpkgs drops it.
   agenixFromInput =
     _final: prev:
@@ -49,6 +65,7 @@ in
     inherit
       qbittorrent510_2505
       jiraCliFromUnstable
+      codexFromUnstable
       agenixFromInput
       sonarlintHashFix
       ;

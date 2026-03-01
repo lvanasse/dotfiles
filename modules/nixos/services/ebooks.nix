@@ -13,12 +13,24 @@
           NETWORK_SHARE_MODE = "true";
         };
         volumes = [
-          "/mnt/storage/appdata/calibre-web-automated/config:/config"
+          "/mnt/data3/appdata/calibre-web-automated/config:/config"
           "/mnt/storage/data/books/ingest:/cwa-book-ingest"
           "/mnt/storage/data/books/library:/calibre-library"
-          "/mnt/storage/appdata/calibre-web-automated/plugins:/config/.config/calibre/plugins"
+          "/mnt/data3/appdata/calibre-web-automated/plugins:/config/.config/calibre/plugins"
         ];
         ports = [ "8083:8083" ];
+        extraOptions = [ "--label=com.centurylinklabs.watchtower.enable=true" ];
+      };
+
+      systemd.services.docker-calibre-web-automated = {
+        requires = [
+          "mnt-data3.mount"
+          "mnt-storage.mount"
+        ];
+        after = [
+          "mnt-data3.mount"
+          "mnt-storage.mount"
+        ];
       };
 
       networking.firewall.allowedTCPPorts = [ 8083 ];
@@ -32,6 +44,7 @@
         wants = [ "docker-calibre-web-automated.service" ];
         serviceConfig = {
           Type = "oneshot";
+          TimeoutStartSec = "15s";
         };
         path = with pkgs; [
           bash
@@ -41,18 +54,16 @@
         script = ''
           set -euo pipefail
 
-          db="/mnt/storage/appdata/calibre-web-automated/config/app.db"
-
-          # Wait briefly for first-run initialization to create app.db
-          for _ in $(seq 1 90); do
-            if [ -f "$db" ]; then
-              break
-            fi
-            sleep 2
-          done
+          db="/mnt/data3/appdata/calibre-web-automated/config/app.db"
 
           if [ ! -f "$db" ]; then
             echo "[cwa-kosync-enable] app.db not found at $db; skipping"
+            exit 0
+          fi
+
+          if ! sqlite3 "$db" "SELECT name FROM sqlite_master WHERE type='table' AND name='cwa_settings';" \
+            | grep -q cwa_settings; then
+            echo "[cwa-kosync-enable] cwa_settings table not ready yet; skipping"
             exit 0
           fi
 

@@ -1,15 +1,26 @@
-{ inputs, ... }:
+{ inputs, lib, ... }:
 let
   cloudflaredEnvAge = "${inputs.secrets}/server/cloudflared.env.age";
+  cloudflaredEnvPlainRepo = "${inputs.secrets}/server/cloudflared.env";
+  cloudflaredEnvPlainOverride = ../../../overrides/cloudflared.env;
 in
 {
   flake.modules.nixos."services.cloudflared" =
-    { config, lib, ... }:
+    { config, ... }:
     let
-      hasCloudflaredEnv = builtins.pathExists cloudflaredEnvAge;
+      hasCloudflaredEnvAge = builtins.pathExists cloudflaredEnvAge;
+      hasCloudflaredEnvPlainRepo = builtins.pathExists cloudflaredEnvPlainRepo;
+      hasCloudflaredEnvPlainOverride = builtins.pathExists cloudflaredEnvPlainOverride;
+      hasCloudflaredEnvPlain = hasCloudflaredEnvPlainRepo || hasCloudflaredEnvPlainOverride;
+      hasCloudflaredEnv = hasCloudflaredEnvAge || hasCloudflaredEnvPlain;
+      cloudflaredEnvPath =
+        if hasCloudflaredEnvAge then
+          "/run/agenix/cloudflared-env"
+        else
+          "/etc/cloudflared.env";
     in
     {
-      age.secrets = lib.mkIf hasCloudflaredEnv {
+      age.secrets = lib.mkIf hasCloudflaredEnvAge {
         "cloudflared-env" = {
           file = cloudflaredEnvAge;
           path = "/run/agenix/cloudflared-env";
@@ -18,6 +29,19 @@ in
           mode = "0400";
         };
       };
+
+      environment.etc."cloudflared.env" = lib.mkIf hasCloudflaredEnvPlain {
+        source =
+          if hasCloudflaredEnvPlainRepo then
+            cloudflaredEnvPlainRepo
+          else
+            cloudflaredEnvPlainOverride;
+        mode = "0400";
+      };
+
+      systemd.tmpfiles.rules = [
+        "d /mnt/data3/appdata/cloudflared 0755 root root -"
+      ];
 
       virtualisation.oci-containers.containers.cloudflared = {
         image = "figro/unraid-cloudflared-tunnel";
@@ -31,9 +55,9 @@ in
           TUNNEL_METRICS = "0.0.0.0:46495";
           TUNNEL_LOGLEVEL = "info";
         };
-        environmentFiles = lib.optional hasCloudflaredEnv config.age.secrets."cloudflared-env".path;
+        environmentFiles = lib.optional hasCloudflaredEnv cloudflaredEnvPath;
         volumes = [
-          "/mnt/storage/appdata/cloudflared:/appdata"
+          "/mnt/data3/appdata/cloudflared:/appdata"
         ];
         ports = [ "46495:46495" ];
       };

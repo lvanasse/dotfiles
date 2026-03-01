@@ -9,10 +9,10 @@
           PUID = "99";
           PGID = "100";
           UMASK = "022";
-          JELLYFIN_PublishedServerUrl = "192.168.0.50";
+          JELLYFIN_PublishedServerUrl = "https://jellyfin.ludovicvanasse.com";
         };
         volumes = [
-          "/mnt/storage/appdata/jellyfin:/config"
+          "/mnt/data3/appdata/jellyfin:/config"
           "/mnt/storage/data:/data"
         ];
         ports = [
@@ -25,5 +25,16 @@
 
       networking.firewall.allowedTCPPorts = [ 8096 8920 ];
       networking.firewall.allowedUDPPorts = [ 7359 1900 ];
+
+      systemd.services.docker-jellyfin = {
+        requires = [
+          "mnt-data3.mount"
+          "mnt-storage.mount"
+        ];
+        after = [
+          "mnt-data3.mount"
+          "mnt-storage.mount"
+        ];
+      };
     };
 }

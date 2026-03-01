@@ -1,3 +1,8 @@
 # Ignore Nix build symlinks
 result
 result-*
+overrides/arr-secrets.yml
+overrides/planka.env
+overrides/cloudflared.env
+overrides/vaultwarden.env
+overrides/headplane.yaml

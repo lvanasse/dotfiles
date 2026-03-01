@@ -8,8 +8,15 @@
         address = "0.0.0.0";
         port = 8080;
         settings = {
-          server_url = "http://192.168.0.50:8080";
-          dns.base_domain = "tailnet.lan";
+          server_url = "https://headscale.ludovicvanasse.com";
+          dns = {
+            base_domain = "tailnet.lan";
+            override_local_dns = false;
+            nameservers.global = [
+              "1.1.1.1"
+              "1.0.0.1"
+            ];
+          };
         };
       };
 

@@ -1,4 +1,16 @@
-{ ... }:
+{ lib, ... }:
+let
+  storageBackedUnits = [
+    "docker-sonarr"
+    "docker-radarr"
+    "docker-bazarr"
+    "docker-lidarr"
+    "docker-prowlarr"
+    "docker-jellyseerr"
+    "docker-qbittorrent"
+    "docker-calibre"
+  ];
+in
 {
   flake.modules.nixos."services.arr" =
     { ... }:
@@ -12,7 +24,7 @@
           UMASK = "022";
         };
         volumes = [
-          "/mnt/storage/appdata/sonarr:/config"
+          "/mnt/data3/appdata/sonarr:/config"
           "/mnt/storage/data:/data"
         ];
         ports = [ "8989:8989" ];
@@ -27,7 +39,7 @@
           UMASK = "022";
         };
         volumes = [
-          "/mnt/storage/appdata/radarr:/config"
+          "/mnt/data3/appdata/radarr:/config"
           "/mnt/storage/data:/data"
         ];
         ports = [ "7878:7878" ];
@@ -42,41 +54,25 @@
           UMASK = "022";
         };
         volumes = [
-          "/mnt/storage/appdata/bazarr:/config"
+          "/mnt/data3/appdata/bazarr:/config"
           "/mnt/storage/data:/data"
         ];
         ports = [ "6767:6767" ];
       };
 
-      # Readarr - Books
-      virtualisation.oci-containers.containers.readarr = {
-        image = "ghcr.io/hotio/readarr:latest";
+      # Lidarr - Music
+      virtualisation.oci-containers.containers.lidarr = {
+        image = "lscr.io/linuxserver/lidarr:latest";
         environment = {
           PUID = "99";
           PGID = "100";
-          UMASK = "002";
-          PRIVOXY_ENABLED = "false";
-          UNBOUND_ENABLED = "false";
-          VPN_ENABLED = "false";
-          VPN_CONF = "wg0";
-          VPN_PROVIDER = "generic";
-          VPN_AUTO_PORT_FORWARD = "true";
-          VPN_KEEP_LOCAL_DNS = "false";
-          VPN_FIREWALL_TYPE = "auto";
-          VPN_PIA_DIP_TOKEN = "no";
-          VPN_PIA_PORT_FORWARD_PERSIST = "false";
+          UMASK = "022";
         };
         volumes = [
-          "/mnt/storage/appdata/readarr:/config"
+          "/mnt/data3/appdata/lidarr:/config"
           "/mnt/storage/data:/data"
         ];
-        ports = [ "8787:8787" ];
-        extraOptions = [
-          "--hostname=readarr.internal"
-          "--cap-add=NET_ADMIN"
-          "--sysctl=net.ipv4.conf.all.src_valid_mark=1"
-          "--sysctl=net.ipv6.conf.all.disable_ipv6=1"
-        ];
+        ports = [ "8686:8686" ];
       };
 
       # Prowlarr - Indexer manager
@@ -88,7 +84,7 @@
           UMASK = "022";
         };
         volumes = [
-          "/mnt/storage/appdata/prowlarr:/config"
+          "/mnt/data3/appdata/prowlarr:/config"
         ];
         ports = [ "9696:9696" ];
       };
@@ -103,19 +99,19 @@
           UMASK = "022";
         };
         volumes = [
-          "/mnt/storage/appdata/jellyseerr:/app/config"
+          "/mnt/data3/appdata/jellyseerr:/app/config"
         ];
         ports = [ "5055:5055" ];
       };
 
       # qBittorrent
       virtualisation.oci-containers.containers.qbittorrent = {
-        image = "lscr.io/linuxserver/qbittorrent";
+        image = "lscr.io/linuxserver/qbittorrent:5.1.0";
         environment = {
           PUID = "99";
           PGID = "100";
           UMASK = "022";
-          WEBUI_PORT = "8080";
+          WEBUI_PORT = "8081";
           TORRENTING_PORT = "6881";
         };
         volumes = [
@@ -123,8 +119,11 @@
           "/mnt/storage/data:/data"
           "/mnt/storage/data/torrents:/data/torrents"
         ];
+        extraOptions = [
+          "--label=com.centurylinklabs.watchtower.enable=false"
+        ];
         ports = [
-          "8080:8080"
+          "8081:8081"
           "6881:6881"
           "6881:6881/udp"
         ];
@@ -158,8 +157,33 @@
         ports = [ "8191:8191" ];
       };
 
+      # Ensure storage pool is mounted before media containers start.
+      systemd.services = lib.genAttrs storageBackedUnits (
+        _: {
+          requires = [
+            "mnt-data3.mount"
+            "mnt-storage.mount"
+          ];
+          after = [
+            "mnt-data3.mount"
+            "mnt-storage.mount"
+          ];
+        }
+      );
+
       networking.firewall.allowedTCPPorts = [
-        8989 7878 6767 8787 9696 5055 8080 6881 8780 8781 8981 8191
+        8989
+        7878
+        6767
+        8686
+        9696
+        5055
+        8081
+        6881
+        8780
+        8781
+        8981
+        8191
       ];
       networking.firewall.allowedUDPPorts = [ 6881 ];
     };

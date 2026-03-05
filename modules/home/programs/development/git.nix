@@ -1,7 +1,10 @@
 { ... }:
 {
   flake.modules.homeManager.devGit =
-    { lib, pkgs, ... }:
+    { config, lib, pkgs, ... }:
+    let
+      homeDir = config.home.homeDirectory;
+    in
     {
       # Git configuration with SSH keys for work/personal
       programs.git = {
@@ -31,7 +34,7 @@
         includes = [
           {
             # Personal projects
-            condition = "gitdir:~/Code/personal/";
+            condition = "gitdir:${homeDir}/Code/personal/";
             contents = {
               user = {
                 name = "Ludovic Vanasse";
@@ -42,7 +45,7 @@
           }
           {
             # Work projects
-            condition = "gitdir:~/Code/work/";
+            condition = "gitdir:${homeDir}/Code/work/";
             contents = {
               user = {
                 name = "Ludovic Vanasse";

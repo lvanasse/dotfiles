@@ -1,7 +1,7 @@
 { inputs, lib, ... }:
 {
   flake.modules.nixos."core.nix" =
-    { ... }:
+    { pkgs, ... }:
     {
       # Nix package manager configuration
 
@@ -38,6 +38,13 @@
       nix.registry.nixpkgs = lib.mkForce {
         flake = inputs.self;
       };
+
+      # Disk space visibility tools available on all NixOS targets.
+      environment.systemPackages = with pkgs; [
+        duf
+        dust
+        ncdu
+      ];
 
       # System state version
       system.stateVersion = "25.05";

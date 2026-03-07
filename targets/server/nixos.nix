@@ -8,6 +8,7 @@
     flakeModules.nixos."services.mergerfs"
     flakeModules.nixos."services.jellyfin"
     flakeModules.nixos."services.arr"
+    flakeModules.nixos."services.arr-sync"
     flakeModules.nixos."services.nextcloud"
     flakeModules.nixos."services.mariadb"
     flakeModules.nixos."services.vaultwarden"

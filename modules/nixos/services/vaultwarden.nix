@@ -34,7 +34,7 @@ in
       virtualisation.oci-containers.containers.vaultwarden = {
         image = "vaultwarden/server";
         environment = {
-          SIGNUPS_ALLOWED = "true";
+          SIGNUPS_ALLOWED = "false";
           INVITATIONS_ALLOWED = "true";
           WEBSOCKET_ENABLED = "false";
         };

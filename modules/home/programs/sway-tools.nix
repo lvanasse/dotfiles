@@ -271,7 +271,10 @@
           # Prefer Vesktop over Discord if both installed
           launch_if_missing slack
           if command -v vesktop >/dev/null 2>&1; then
-            launch_if_missing vesktop
+            # Start minimized so Vesktop reliably registers its tray item.
+            if ! "$PGREP" -x vesktop >/dev/null 2>&1; then
+              (vesktop --start-minimized >/dev/null 2>&1 &)
+            fi
           else
             launch_if_missing discord
           fi

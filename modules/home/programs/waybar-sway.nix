@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.homeManager.waybarSway =
+  flake.modules.homeManager."programs.waybar-sway" =
     { pkgs, config, ... }:
     let
       datetimeScript = pkgs.writeShellScript "waybar-datetime" ''

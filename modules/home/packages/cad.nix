@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.homeManager.packagesCad =
+  flake.modules.homeManager."packages.cad" =
     { pkgs, ... }:
     {
       # CAD and design packages

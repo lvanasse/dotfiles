@@ -31,7 +31,7 @@
           ".sync/"
           ".Trash-*/"
         ];
-        sync.interval = "daily";
+        sync.interval = "Tue,Fri 03:00";
         scrub = {
           interval = "weekly";
           plan = 10;

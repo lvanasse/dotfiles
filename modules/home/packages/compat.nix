@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.homeManager.packagesCompat =
+  flake.modules.homeManager."packages.compat" =
     { pkgs, ... }:
     {
       # Windows compatibility layer

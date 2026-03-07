@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.homeManager.devGit =
+  flake.modules.homeManager."programs.development.git" =
     { config, lib, pkgs, ... }:
     let
       homeDir = config.home.homeDirectory;

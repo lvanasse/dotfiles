@@ -3,7 +3,7 @@ let
   username = config.flake.lib.username;
 in
 {
-  flake.modules.nixos.programsVirtualization =
+  flake.modules.nixos."programs.virtualization" =
     { ... }:
     {
       services.printing.enable = true;

@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.homeManager.rofi =
+  flake.modules.homeManager."programs.rofi" =
     { config, ... }:
     let
       palette = config.theme.palette;

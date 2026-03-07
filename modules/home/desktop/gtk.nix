@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.homeManager.desktopGtk =
+  flake.modules.homeManager."desktop.gtk" =
     { pkgs, ... }:
     {
       # Enforce a dark GTK theme for GTK3/GTK4 apps (Plasma and Sway)

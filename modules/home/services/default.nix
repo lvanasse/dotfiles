@@ -4,7 +4,7 @@
     { ... }:
     {
       imports = [
-        config.flake.modules.homeManager.servicesGnomeKeyring
+        config.flake.modules.homeManager."services.gnome-keyring"
       ];
     };
 }

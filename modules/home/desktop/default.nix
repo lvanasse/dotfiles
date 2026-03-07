@@ -4,8 +4,8 @@
     { ... }:
     {
       imports = [
-        config.flake.modules.homeManager.desktopGtk
-        config.flake.modules.homeManager.desktopXdg
+        config.flake.modules.homeManager."desktop.gtk"
+        config.flake.modules.homeManager."desktop.xdg"
       ];
     };
 }

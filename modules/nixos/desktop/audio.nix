@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.nixos.desktopAudio =
+  flake.modules.nixos."desktop.audio" =
     { ... }:
     {
       # Audio configuration with PipeWire

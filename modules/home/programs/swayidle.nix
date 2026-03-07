@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.homeManager.swayidle =
+  flake.modules.homeManager."programs.swayidle" =
     { config, pkgs, ... }:
     let
       # Use absolute path so systemd user services don't depend on PATH ordering.

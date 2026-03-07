@@ -3,7 +3,7 @@ let
   username = config.flake.lib.username;
 in
 {
-  flake.modules.nixos.users =
+  flake.modules.nixos."core.users" =
     { pkgs, ... }:
     {
       users.users.${username} = {

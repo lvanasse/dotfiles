@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.homeManager.packagesSerial =
+  flake.modules.homeManager."packages.serial" =
     { pkgs, ... }:
     {
       # Serial / device utilities

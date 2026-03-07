@@ -4,9 +4,9 @@
     { ... }:
     {
       imports = [
-        config.flake.modules.nixos.programsSystem
-        config.flake.modules.nixos.programsGaming
-        config.flake.modules.nixos.programsVirtualization
+        config.flake.modules.nixos."programs.system"
+        config.flake.modules.nixos."programs.gaming"
+        config.flake.modules.nixos."programs.virtualization"
       ];
     };
 }

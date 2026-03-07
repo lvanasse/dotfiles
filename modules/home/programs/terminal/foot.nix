@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.homeManager.terminalFoot =
+  flake.modules.homeManager."terminal.foot" =
     { config, lib, ... }:
     let
       # Remove # prefix from hex colors for foot

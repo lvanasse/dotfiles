@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.homeManager.calendar =
+  flake.modules.homeManager."programs.calendar" =
     { config, lib, ... }:
     let
       # Toggle to enable once server URL and credentials are known

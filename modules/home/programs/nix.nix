@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.homeManager.programsNix =
+  flake.modules.homeManager."programs.nix" =
     { config, ... }:
     {
       programs.nh = {

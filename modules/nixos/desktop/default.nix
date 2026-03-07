@@ -4,8 +4,8 @@
     { ... }:
     {
       imports = [
-        config.flake.modules.nixos.desktopAudio
-        config.flake.modules.nixos.desktopFonts
+        config.flake.modules.nixos."desktop.audio"
+        config.flake.modules.nixos."desktop.fonts"
       ];
     };
 }

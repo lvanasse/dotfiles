@@ -4,10 +4,10 @@
     { ... }:
     {
       imports = [
-        config.flake.modules.nixos.nix
-        config.flake.modules.nixos.locale
-        config.flake.modules.nixos.networking
-        config.flake.modules.nixos.users
+        config.flake.modules.nixos."core.nix"
+        config.flake.modules.nixos."core.locale"
+        config.flake.modules.nixos."core.networking"
+        config.flake.modules.nixos."core.users"
       ];
     };
 }

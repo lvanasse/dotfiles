@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.homeManager.firefox =
+  flake.modules.homeManager."programs.firefox" =
     { ... }:
     {
       programs.firefox = {

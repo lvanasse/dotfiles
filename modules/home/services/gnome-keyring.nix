@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.homeManager.servicesGnomeKeyring =
+  flake.modules.homeManager."services.gnome-keyring" =
     { ... }:
     {
       # GNOME Keyring integration for user sessions

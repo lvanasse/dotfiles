@@ -4,13 +4,13 @@
     { ... }:
     {
       imports = [
-        config.flake.modules.homeManager.packagesDevelopment
-        config.flake.modules.homeManager.packagesDesktop
-        config.flake.modules.homeManager.packagesCad
-        config.flake.modules.homeManager.packagesCompat
-        config.flake.modules.homeManager.packagesContainers
-        config.flake.modules.homeManager.packagesSerial
-        config.flake.modules.homeManager.packagesGaming
+        config.flake.modules.homeManager."packages.development"
+        config.flake.modules.homeManager."packages.desktop"
+        config.flake.modules.homeManager."packages.cad"
+        config.flake.modules.homeManager."packages.compat"
+        config.flake.modules.homeManager."packages.containers"
+        config.flake.modules.homeManager."packages.serial"
+        config.flake.modules.homeManager."packages.gaming"
       ];
     };
 }

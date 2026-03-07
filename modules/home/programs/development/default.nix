@@ -1,14 +1,14 @@
 { config, ... }:
 {
-  flake.modules.homeManager.development =
+  flake.modules.homeManager."programs.development" =
     { ... }:
     {
       imports = [
-        config.flake.modules.homeManager.devGit
-        config.flake.modules.homeManager.devEmacs
-        config.flake.modules.homeManager.devDirenv
-        config.flake.modules.homeManager.devJava
-        config.flake.modules.homeManager.devVscode
+        config.flake.modules.homeManager."programs.development.git"
+        config.flake.modules.homeManager."programs.development.emacs"
+        config.flake.modules.homeManager."programs.development.direnv"
+        config.flake.modules.homeManager."programs.development.java"
+        config.flake.modules.homeManager."programs.development.vscode"
       ];
     };
 }

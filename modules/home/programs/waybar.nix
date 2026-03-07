@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.homeManager.waybar =
+  flake.modules.homeManager."programs.waybar" =
     { ... }:
     {
       # Waybar package (Sway will start it)

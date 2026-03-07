@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.homeManager.slack =
+  flake.modules.homeManager."programs.slack" =
     { pkgs, config, ... }:
     {
       # Slack needs --no-sandbox because the SUID helper can't be set in the Nix store.

@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.nixos.networking =
+  flake.modules.nixos."core.networking" =
     { ... }:
     {
       # Basic networking configuration

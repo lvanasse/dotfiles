@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.homeManager.jira =
+  flake.modules.homeManager."programs.jira" =
     {
       config,
       pkgs,

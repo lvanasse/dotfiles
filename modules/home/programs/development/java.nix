@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.homeManager.devJava =
+  flake.modules.homeManager."programs.development.java" =
     { pkgs, ... }:
     {
       programs.java = {

@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.nixos.locale =
+  flake.modules.nixos."core.locale" =
     { ... }:
     {
       # Locale, timezone, and keyboard configuration

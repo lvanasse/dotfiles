@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.homeManager.mako =
+  flake.modules.homeManager."programs.mako" =
     {
       pkgs,
       lib,

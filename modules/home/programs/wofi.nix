@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.homeManager.wofi =
+  flake.modules.homeManager."programs.wofi" =
     { ... }:
     {
       # Wofi configured to be a minimal, dmenu-like launcher

@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.homeManager.packagesDesktop =
+  flake.modules.homeManager."packages.desktop" =
     { pkgs, ... }:
     {
       # Desktop applications and utilities

@@ -12,13 +12,13 @@ in
     }:
     {
       imports = [
-        flakeConfig.flake.modules.homeManager.waybar
-        flakeConfig.flake.modules.homeManager.waybarSway
-        flakeConfig.flake.modules.homeManager.wofi
-        flakeConfig.flake.modules.homeManager.mako
-        flakeConfig.flake.modules.homeManager.swayTools
-        flakeConfig.flake.modules.homeManager.rofi
-        flakeConfig.flake.modules.homeManager.swayidle
+        flakeConfig.flake.modules.homeManager."programs.waybar"
+        flakeConfig.flake.modules.homeManager."programs.waybar-sway"
+        flakeConfig.flake.modules.homeManager."programs.wofi"
+        flakeConfig.flake.modules.homeManager."programs.mako"
+        flakeConfig.flake.modules.homeManager."programs.sway-tools"
+        flakeConfig.flake.modules.homeManager."programs.rofi"
+        flakeConfig.flake.modules.homeManager."programs.swayidle"
       ];
 
       # Sway-specific packages and Wayland tooling

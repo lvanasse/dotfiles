@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.homeManager.devVscode =
+  flake.modules.homeManager."programs.development.vscode" =
     { pkgs, ... }:
     let
       # Use a recent Node.js for SonarLint's Node dependency

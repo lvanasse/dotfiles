@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.homeManager.packagesContainers =
+  flake.modules.homeManager."packages.containers" =
     { pkgs, ... }:
     {
       # Containers / local tooling

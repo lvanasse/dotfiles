@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.homeManager.packagesGaming =
+  flake.modules.homeManager."packages.gaming" =
     { pkgs, ... }:
     {
       # Gaming packages

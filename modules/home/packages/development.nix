@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.homeManager.packagesDevelopment =
+  flake.modules.homeManager."packages.development" =
     { pkgs, ... }:
     let
       # Minimal but capable TeX Live for LaTeX Workshop (PDF build + bib + fonts)

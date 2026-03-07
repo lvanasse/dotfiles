@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.homeManager.terminalFish =
+  flake.modules.homeManager."terminal.fish" =
     { pkgs, ... }:
     {
       # Fish shell configuration

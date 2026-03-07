@@ -1,6 +1,6 @@
 { inputs, lib, ... }:
 {
-  flake.modules.nixos.nix =
+  flake.modules.nixos."core.nix" =
     { ... }:
     {
       # Nix package manager configuration

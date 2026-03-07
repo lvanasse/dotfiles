@@ -2,8 +2,8 @@
 {
   imports = [
     flakeModules.homeManager.core
-    flakeModules.homeManager.terminalFish
-    flakeModules.homeManager.terminalStarship
+    flakeModules.homeManager."terminal.fish"
+    flakeModules.homeManager."terminal.starship"
     flakeModules.homeManager."targetConfig.steamdeck"
   ];
 }

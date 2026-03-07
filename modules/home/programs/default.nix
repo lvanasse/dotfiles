@@ -5,15 +5,15 @@
     {
       imports = [
         config.flake.modules.homeManager.terminal
-        config.flake.modules.homeManager.programsNix
-        config.flake.modules.homeManager.programsSsh
-        config.flake.modules.homeManager.development
-        config.flake.modules.homeManager.slack
-        config.flake.modules.homeManager.codex
-        config.flake.modules.homeManager.jira
-        config.flake.modules.homeManager.firefox
-        config.flake.modules.homeManager.email
-        config.flake.modules.homeManager.calendar
+        config.flake.modules.homeManager."programs.nix"
+        config.flake.modules.homeManager."programs.ssh"
+        config.flake.modules.homeManager."programs.development"
+        config.flake.modules.homeManager."programs.slack"
+        config.flake.modules.homeManager."programs.codex"
+        config.flake.modules.homeManager."programs.jira"
+        config.flake.modules.homeManager."programs.firefox"
+        config.flake.modules.homeManager."programs.email"
+        config.flake.modules.homeManager."programs.calendar"
       ];
     };
 }

@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.homeManager.swayTools =
+  flake.modules.homeManager."programs.sway-tools" =
     { pkgs, ... }:
     {
       # Helper scripts for Wayland sessions (Sway) and Rofi wrappers

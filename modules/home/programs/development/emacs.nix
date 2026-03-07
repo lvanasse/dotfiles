@@ -1,6 +1,6 @@
 { inputs, ... }:
 {
-  flake.modules.homeManager.devEmacs =
+  flake.modules.homeManager."programs.development.emacs" =
     {
       config,
       pkgs,

@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.homeManager.desktopXdg =
+  flake.modules.homeManager."desktop.xdg" =
     { ... }:
     {
       # Set default apps (MIME) so xdg-open opens Dolphin for folders

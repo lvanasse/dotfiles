@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.homeManager.terminalStarship =
+  flake.modules.homeManager."terminal.starship" =
     { ... }:
     {
       home.file.".config/starship-emacs.toml".text = ''

@@ -1,6 +1,6 @@
 { inputs, ... }:
 {
-  flake.modules.homeManager.codex =
+  flake.modules.homeManager."programs.codex" =
     { lib, config, pkgs, ... }:
     let
       defaultArgs = "--search -s danger-full-access -a on-request";

@@ -9,7 +9,7 @@ let
   codexBing = "${inputs.secrets}/codex/bing_search_v7_key.age";
 in
 {
-  flake.modules.nixos.servicesSecrets =
+  flake.modules.nixos."services.secrets" =
     { ... }:
     {
       # Secrets deployment via agenix (system-level)

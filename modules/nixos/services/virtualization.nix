@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.nixos.servicesVirtualization =
+  flake.modules.nixos."services.virtualization" =
     { ... }:
     {
       # Virtualization services

@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.nixos.servicesPrinting =
+  flake.modules.nixos."services.printing" =
     { ... }:
     {
       # Printing services

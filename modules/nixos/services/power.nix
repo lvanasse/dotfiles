@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.nixos.servicesPower =
+  flake.modules.nixos."services.power" =
     { ... }:
     {
       # Power management and idle behavior

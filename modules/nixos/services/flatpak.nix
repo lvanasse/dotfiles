@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.nixos.servicesFlatpak =
+  flake.modules.nixos."services.flatpak" =
     { ... }:
     {
       # Flatpak application management

@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.nixos.servicesKeyring =
+  flake.modules.nixos."services.keyring" =
     { ... }:
     {
       # Keyring and credential management

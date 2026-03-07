@@ -3,19 +3,43 @@ let
   username = config.flake.lib.username;
 in
 {
-  flake.modules.nixos.programsSystem =
+  flake.modules.nixos."programs.system" =
     { pkgs, ... }:
     let
-      nhOsWithHome = pkgs.writeShellScriptBin "nh-os-with-home" ''
+      nohm = pkgs.writeShellScriptBin "nohm" ''
         set -euo pipefail
 
         if [ $# -lt 1 ]; then
-          echo "Usage: nh-os-with-home <pc|laptop> [-- <extra nh os args>]" >&2
+          echo "Usage: nohm <host> [--target-host <user@ip>] [-- <extra nh os args>]" >&2
           exit 1
         fi
 
         host="$1"
         shift
+
+        target_host=""
+        pass_args=()
+        while [ $# -gt 0 ]; do
+          case "$1" in
+            --target-host)
+              if [ $# -lt 2 ]; then
+                echo "Missing value for --target-host" >&2
+                exit 1
+              fi
+              target_host="$2"
+              pass_args+=("$1" "$2")
+              shift 2
+              ;;
+            --)
+              pass_args+=("$@")
+              break
+              ;;
+            *)
+              pass_args+=("$1")
+              shift
+              ;;
+          esac
+        done
 
         # Resolve flake path regardless of current directory
         flake_dir="$HOME/Code/personal/dotfiles"
@@ -28,11 +52,19 @@ in
 
         # Use a unique backup extension to avoid clobbering existing *.backup files
         bext="''${HM_BACKUP_EXT:-hm-$(date +%Y%m%d-%H%M%S)}"
-        echo "[1/2] Home Manager: home-manager switch --flake ''${flake_dir}#${username}@''${host} -b ''${bext}" >&2
-        "$hm_bin" switch --flake "''${flake_dir}#${username}@''${host}" -b "''${bext}"
+        if [ -n "''${target_host}" ]; then
+          echo "[1/2] Home Manager: skipped explicit switch (applied by NixOS activation on remote target)" >&2
+        else
+          echo "[1/2] Home Manager: home-manager switch --flake ''${flake_dir}#${username}@''${host} -b ''${bext}" >&2
+          "$hm_bin" switch --flake "''${flake_dir}#${username}@''${host}" -b "''${bext}"
+        fi
 
-        echo "[2/2] NixOS: nh os switch -H ''${host}" >&2
-        NH_FLAKE="''${flake_dir}" "$nh_bin" os switch -H "''${host}" "$@"
+        echo "[2/2] NixOS: nh os switch -H ''${host} ''${pass_args[*]}" >&2
+        NH_FLAKE="''${flake_dir}" "$nh_bin" os switch -H "''${host}" "''${pass_args[@]}"
+      '';
+
+      nhOsWithHomeCompat = pkgs.writeShellScriptBin "nh-os-with-home" ''
+        exec ${nohm}/bin/nohm "$@"
       '';
     in
     {
@@ -55,7 +87,8 @@ in
         nh
         nix-du
         home-manager
-        nhOsWithHome
+        nohm
+        nhOsWithHomeCompat
         nixpkgs-review
         nixfmt-rfc-style
         treefmt

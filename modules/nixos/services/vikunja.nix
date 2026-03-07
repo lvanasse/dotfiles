@@ -78,6 +78,7 @@ in
         environment =
           {
             VIKUNJA_SERVICE_PUBLICURL = "https://vikunja.ludovicvanasse.com/";
+            VIKUNJA_SERVICE_ENABLEREGISTRATION = "false";
             VIKUNJA_DATABASE_TYPE = "postgres";
             VIKUNJA_DATABASE_HOST = "vikunja-db";
           }

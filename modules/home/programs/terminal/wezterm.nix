@@ -1,12 +1,15 @@
-{ ... }:
+{ lib, ... }:
 {
   flake.modules.homeManager.terminalWezterm =
     { config, pkgs, ... }:
+    let
+      hasWeztermTheme = config ? theme && config.theme ? wezterm;
+    in
     {
       # WezTerm: modern terminal with right-click copy/paste and Gruvbox Dark Hard theme
       # Note: For Wayland support on non-NixOS systems, install libegl1-mesa via system package manager
       # (e.g., `sudo apt install libegl1-mesa` on Ubuntu/Debian). WezTerm will fallback to X11 if unavailable.
-      programs.wezterm = {
+      programs.wezterm = lib.mkIf hasWeztermTheme {
         enable = true;
         extraConfig =
           let

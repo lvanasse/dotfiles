@@ -72,6 +72,7 @@
           alias gc "git commit"
           alias gp "git push"
           alias gl "git log --oneline"
+          alias screenshot "screenshot-annotate"
 
         '';
 
@@ -171,6 +172,27 @@
                 set flake_dir "$NH_FLAKE"
               end
               bash "$flake_dir/scripts/nix-switch.sh" $argv
+            '';
+          };
+
+          # Wrapper for local HM+NixOS switch or remote target-host switch
+          nohm = {
+            description = "Run nh-os-with-home locally or nh os switch for remote targets";
+            body = ''
+              if test (count $argv) -lt 1
+                echo "Usage: nohm <host> [--target-host user@ip] [extra nh args]" >&2
+                return 1
+              end
+
+              set -l host $argv[1]
+              set -l rest $argv
+              set -e rest[1]
+
+              if contains -- --target-host $argv
+                command nh os switch -H $host $rest
+              else
+                command nh-os-with-home $argv
+              end
             '';
           };
 

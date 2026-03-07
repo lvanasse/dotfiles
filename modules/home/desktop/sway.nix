@@ -245,10 +245,10 @@ in
               "XF86MonBrightnessUp" = "exec brightnessctl set +5%";
               "XF86MonBrightnessDown" = "exec brightnessctl set 5%-";
 
-              # Screenshots
-              "Print" = "exec screenshot copy area";
-              "Shift+Print" = "exec screenshot save area";
-              "Ctrl+Print" = "exec screenshot copy output";
+              # Screenshots (always annotate)
+              "Print" = "exec screenshot-annotate";
+              "Shift+Print" = "exec screenshot-annotate";
+              "Ctrl+Print" = "exec screenshot-annotate";
               # GUI screenshot with selection + annotation (satty; swappy fallback)
               "${mod}+Print" = "exec screenshot-annotate";
               # Screen recording (GUI) - use desktop entry to match Wofi launch

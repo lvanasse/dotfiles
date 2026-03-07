@@ -5,11 +5,12 @@
     let
       # Remove # prefix from hex colors for foot
       stripHash = color: lib.removePrefix "#" color;
+      hasWeztermTheme = config ? theme && config.theme ? wezterm;
     in
     {
       # Foot: fast, lightweight Wayland-native terminal
       # Supports Ctrl+Shift+C/V for copy/paste, mouse selection works out of the box
-      programs.foot = {
+      programs.foot = lib.mkIf hasWeztermTheme {
         enable = true;
         settings = {
           main = {

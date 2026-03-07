@@ -17,8 +17,7 @@
     flakeModules.nixos."services.linkwarden"
     flakeModules.nixos."services.ebooks"
     flakeModules.nixos."services.actual"
-    flakeModules.nixos."services.watchtower"
-    flakeModules.nixos."services.portainer"
+    flakeModules.nixos."services.dockhand"
     flakeModules.nixos."targetConfig.server"
   ];
 }

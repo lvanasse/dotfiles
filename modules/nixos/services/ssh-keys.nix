@@ -14,7 +14,7 @@ let
   hasWorkPub = builtins.pathExists workPub;
 in
 {
-  flake.modules.nixos.servicesSshKeys =
+  flake.modules.nixos."services.ssh-keys" =
     { ... }:
     {
       # gnome-keyring already starts gcr-ssh-agent; disable the legacy ssh-agent to avoid conflicts.

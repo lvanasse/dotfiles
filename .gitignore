@@ -6,3 +6,4 @@ overrides/planka.env
 overrides/cloudflared.env
 overrides/vaultwarden.env
 overrides/headplane.yaml
+overrides/vikunja.env

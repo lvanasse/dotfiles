@@ -13,7 +13,7 @@
     flakeModules.nixos."services.vaultwarden"
     flakeModules.nixos."services.cloudflared"
     flakeModules.nixos."services.fail2ban"
-    flakeModules.nixos."services.planka"
+    flakeModules.nixos."services.vikunja"
     flakeModules.nixos."services.linkwarden"
     flakeModules.nixos."services.ebooks"
     flakeModules.nixos."services.actual"

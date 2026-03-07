@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.homeManager.programsSsh =
+  flake.modules.homeManager."programs.ssh" =
     { ... }:
     {
       # SSH configuration for different keys
@@ -71,10 +71,7 @@
             controlPath = "~/.ssh/master-%r@%h:%p";
             controlPersist = "10m";
             addKeysToAgent = "yes";
-            identityFile = [
-              "~/.ssh/id_ed25519_personal"
-              "~/.ssh/id_ed25519_work"
-            ];
+            identityFile = "~/.ssh/id_ed25519_personal";
           };
         };
       };

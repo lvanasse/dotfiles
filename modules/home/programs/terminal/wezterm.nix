@@ -1,11 +1,28 @@
 { lib, ... }:
 {
-  flake.modules.homeManager.terminalWezterm =
+  flake.modules.homeManager."terminal.wezterm" =
     { config, pkgs, ... }:
     let
       hasWeztermTheme = config ? theme && config.theme ? wezterm;
     in
     {
+      home.file.".wezterm.lua" = {
+        force = true;
+        text = ''
+          local home = os.getenv("HOME") or "."
+          local config_path = home .. "/.config/wezterm/wezterm.lua"
+          local ok, cfg = pcall(dofile, config_path)
+
+          if ok then
+            return cfg
+          end
+
+          local wezterm = require "wezterm"
+          wezterm.log_warn("Failed to load " .. config_path .. ": " .. tostring(cfg))
+          return {}
+        '';
+      };
+
       # WezTerm: modern terminal with right-click copy/paste and Gruvbox Dark Hard theme
       # Note: For Wayland support on non-NixOS systems, install libegl1-mesa via system package manager
       # (e.g., `sudo apt install libegl1-mesa` on Ubuntu/Debian). WezTerm will fallback to X11 if unavailable.

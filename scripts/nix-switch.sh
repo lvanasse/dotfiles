@@ -51,10 +51,12 @@ echo "==> [1/2] Home Manager: home-manager switch --flake ${FLAKE_DIR}#${USERNAM
 home-manager switch --flake "${FLAKE_DIR}#${USERNAME}@${HOST}" -b "${BEXT}"
 
 # Step 2: NixOS or post-switch tasks
-if is_nixos; then
+if is_nixos && [ "$HOST" != "hm-only" ]; then
     echo "==> [2/2] NixOS: nh os switch -H ${HOST} ${EXTRA_ARGS}"
     # shellcheck disable=SC2086
     NH_FLAKE="${FLAKE_DIR}" nh os switch -H "${HOST}" $EXTRA_ARGS
+elif is_nixos && [ "$HOST" = "hm-only" ]; then
+    echo "==> [2/2] hm-only target detected; skipping NixOS switch"
 else
     # Non-NixOS: symlink Wayland session files for GDM visibility
     # Use ~/.local/share (home-manager managed) which has the wrapped sway path

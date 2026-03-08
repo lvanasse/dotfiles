@@ -188,6 +188,15 @@
               set -l rest $argv
               set -e rest[1]
 
+              if test "$host" = "hm-only"
+                if contains -- --target-host $argv
+                  echo "nohm: --target-host is not supported for hm-only; run nix-switch on that machine." >&2
+                  return 1
+                end
+                nix-switch $argv
+                return $status
+              end
+
               if contains -- --target-host $argv
                 command nh os switch -H $host $rest
               else

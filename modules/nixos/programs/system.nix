@@ -46,6 +46,16 @@ in
         if [ -n "''${NH_FLAKE-}" ]; then
           flake_dir="''${NH_FLAKE}"
         fi
+        nix_switch_script="''${flake_dir}/scripts/nix-switch.sh"
+
+        # hm-only is a Home Manager-only target; delegate to nix-switch helper.
+        if [ "''${host}" = "hm-only" ]; then
+          if [ -n "''${target_host}" ]; then
+            echo "nohm: --target-host is not supported for hm-only; run nix-switch on that machine." >&2
+            exit 1
+          fi
+          exec bash "''${nix_switch_script}" "''${host}"
+        fi
 
         nh_bin="${pkgs.nh}/bin/nh"
         hm_bin="${pkgs.home-manager}/bin/home-manager"

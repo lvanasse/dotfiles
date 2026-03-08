@@ -8,8 +8,26 @@
         executable = true;
         text = ''
           #!/bin/sh
+          set -eu
+
           export ELECTRON_NO_SANDBOX=1
-          exec ${pkgs.slack}/bin/slack --disable-setuid-sandbox --no-sandbox "$@"
+
+          WAYLAND_FLAGS=""
+          if [ -n "''${WAYLAND_DISPLAY:-}" ]; then
+            WAYLAND_FLAGS="--ozone-platform=wayland --enable-features=UseOzonePlatform,WebRTCPipeWireCapturer"
+          fi
+
+          GPU_FLAGS=""
+          if [ "''${SLACK_DISABLE_GPU:-0}" = "1" ]; then
+            GPU_FLAGS="--disable-gpu --disable-gpu-compositing"
+          fi
+
+          exec ${pkgs.slack}/bin/slack \
+            --disable-setuid-sandbox \
+            --no-sandbox \
+            $WAYLAND_FLAGS \
+            $GPU_FLAGS \
+            "$@"
         '';
       };
 

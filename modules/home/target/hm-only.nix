@@ -20,6 +20,8 @@
     export SDL_VIDEODRIVER=wayland
     export MOZ_ENABLE_WAYLAND=1
     export MOZ_GTK_TITLEBAR_DECORATION=system
+    export ELECTRON_OZONE_PLATFORM_HINT=wayland
+    export SLACK_DISABLE_GPU=1
     exec ${pkgs.nixgl.nixGLIntel}/bin/nixGLIntel ${config.wayland.windowManager.sway.package}/bin/sway "$@"
   '';
   homeDir = config.home.homeDirectory;
@@ -54,6 +56,9 @@ in
     POETRY_VIRTUALENVS_OPTIONS_SYSTEM_SITE_PACKAGES = "true";
     TCL_LIBRARY = "${homeDir}/.local/share/tcltk/lib/${pkgs.tcl.libPrefix}";
     TK_LIBRARY = "${homeDir}/.local/share/tcltk/lib/${pkgs.tk.libPrefix}";
+    # Slack/Electron screenshare can freeze on some non-NixOS GPU stacks.
+    # Wrapper in programs/slack.nix reads this to disable GPU acceleration.
+    SLACK_DISABLE_GPU = "1";
   };
 
   # Decrypt Jira CLI secrets for hm-only via agenix (if present in secrets repo).

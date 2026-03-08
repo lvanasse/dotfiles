@@ -53,17 +53,13 @@ in
           xdg-desktop-portal-wlr
           xdg-desktop-portal-gtk
         ];
-        config = {
-          sway = {
-            default = lib.mkForce "wlr;gtk";
-          };
-        };
       };
 
       # Ensure xdg-desktop-portal routes screencast/screenshot to the wlr backend.
-      xdg.configFile."xdg-desktop-portal/sway-portals.conf".text = ''
+      # Use mkForce to avoid duplicate [preferred] sections from merged definitions.
+      xdg.configFile."xdg-desktop-portal/sway-portals.conf".text = lib.mkForce ''
         [preferred]
-        default=gtk
+        default=wlr;gtk
         org.freedesktop.impl.portal.Screenshot=wlr
         org.freedesktop.impl.portal.ScreenCast=wlr
       '';

@@ -21,9 +21,9 @@
             command = swaylockPixelate;
           }
           */
-          # Turn displays off after 10 minutes (resume turns them back on)
+          # Turn displays off after 15 minutes (resume turns them back on)
           {
-            timeout = 600;
+            timeout = 900;
             command = "swaymsg 'output * power off'";
             resumeCommand = "swaymsg 'output * power on'";
           }

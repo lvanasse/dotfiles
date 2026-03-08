@@ -24,6 +24,10 @@ let
       nixos = true;
       modules = [ "target.server" ];
     };
+    gateway = {
+      nixos = true;
+      modules = [ "target.gateway" ];
+    };
   };
 
   mkNixos =
@@ -47,6 +51,7 @@ in
   flake.modules.nixos."target.pc" = ./pc/nixos.nix;
   flake.modules.nixos."target.laptop" = ./laptop/nixos.nix;
   flake.modules.nixos."target.server" = ./server/nixos.nix;
+  flake.modules.nixos."target.gateway" = ./gateway/nixos.nix;
 
   # Home Manager target modules
   flake.modules.homeManager."target.pc" = ./pc/hm.nix;
@@ -54,6 +59,7 @@ in
   flake.modules.homeManager."target.hm-only" = ./hm-only/hm.nix;
   flake.modules.homeManager."target.steamdeck" = ./steamdeck/hm.nix;
   flake.modules.homeManager."target.server" = ./server/hm.nix;
+  flake.modules.homeManager."target.gateway" = ./gateway/hm.nix;
 
   flake.nixosConfigurations = lib.mapAttrs mkNixos (
     lib.filterAttrs (_: target: target.nixos or false) targets

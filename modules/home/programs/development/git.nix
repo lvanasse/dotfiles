@@ -40,7 +40,6 @@
                 name = "Ludovic Vanasse";
                 email = "mail@ludovicvanasse.com";
               };
-              core.sshCommand = "ssh -i ~/.ssh/id_ed25519_personal -o IdentitiesOnly=yes";
             };
           }
           {

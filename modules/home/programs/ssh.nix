@@ -45,11 +45,11 @@
             controlPath = "none";
           };
 
-          # Default GitHub (personal)
+          # Default GitHub (work)
           "github.com" = {
             hostname = "github.com";
             user = "git";
-            identityFile = "~/.ssh/id_ed25519_personal";
+            identityFile = "~/.ssh/id_ed25519_work";
             identitiesOnly = true;
           };
 

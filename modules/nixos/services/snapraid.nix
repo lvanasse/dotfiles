@@ -30,6 +30,16 @@
           "*.!sync"
           ".sync/"
           ".Trash-*/"
+          # Transient SQLite/runtime artifacts that frequently change during sync
+          "*.db-wal"
+          "*.db-shm"
+          "*.db-journal"
+          "*.log"
+          "*.log.*"
+          "*.pid"
+          "*.pid.lock"
+          "*.sock"
+          "*ipc-socket"
         ];
         sync.interval = "Tue,Fri 03:00";
         scrub = {

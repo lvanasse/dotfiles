@@ -259,6 +259,14 @@
             done
           done
 
+          # Give Waybar time to bring up tray watcher so tray-only apps register.
+          for i in {1..40}; do
+            if "$PGREP" -x waybar >/dev/null 2>&1; then
+              break
+            fi
+            sleep 0.25
+          done
+
           launch_if_missing() {
             local bin="$1"
             if command -v "$bin" >/dev/null 2>&1; then
@@ -273,7 +281,7 @@
           if command -v vesktop >/dev/null 2>&1; then
             # Start minimized so Vesktop reliably registers its tray item.
             if ! "$PGREP" -x vesktop >/dev/null 2>&1; then
-              (vesktop --start-minimized >/dev/null 2>&1 &)
+              (vesktop --start-minimized --ozone-platform-hint=auto >/dev/null 2>&1 &)
             fi
           else
             launch_if_missing discord

@@ -3,6 +3,7 @@
   imports = [
     flakeModules.nixos.core
     flakeModules.nixos."services.ssh"
+    flakeModules.nixos."services.ssh-keys"
     flakeModules.nixos."services.docker"
     flakeModules.nixos."services.snapraid"
     flakeModules.nixos."services.mergerfs"

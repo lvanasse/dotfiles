@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.nixos."targetConfig.pc.programs" =
+  flake.modules.nixos."target.config.pc.programs" =
     { ... }:
     {
       # Programs

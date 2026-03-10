@@ -4,6 +4,6 @@
     flakeModules.homeManager.core
     flakeModules.homeManager.terminal
     flakeModules.homeManager."programs.codex"
-    flakeModules.homeManager."targetConfig.server"
+    flakeModules.homeManager."target.config.server"
   ];
 }

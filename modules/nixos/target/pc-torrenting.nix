@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.nixos."targetConfig.pc.torrenting" =
+  flake.modules.nixos."target.config.pc.torrenting" =
     { pkgs, ... }:
     {
       # Firewall for torrenting

@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.nixos."targetConfig.pc.networking" =
+  flake.modules.nixos."target.config.pc.networking" =
     { ... }:
     {
       # PC-specific networking

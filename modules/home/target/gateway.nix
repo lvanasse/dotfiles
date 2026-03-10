@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.homeManager."targetConfig.gateway" =
+  flake.modules.homeManager."target.config.gateway" =
     { pkgs, ... }:
     {
       # Minimal home profile for gateway maintenance.

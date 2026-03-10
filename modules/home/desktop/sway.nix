@@ -53,6 +53,8 @@ in
           xdg-desktop-portal-wlr
           xdg-desktop-portal-gtk
         ];
+        # Avoid xdg-desktop-portal 1.17+ warning when no default is declared.
+        config.common.default = "*";
       };
 
       # Ensure xdg-desktop-portal routes screencast/screenshot to the wlr backend.

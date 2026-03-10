@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.homeManager."targetConfig.server" =
+  flake.modules.homeManager."target.config.server" =
     { pkgs, ... }:
     {
       # Minimal server home config

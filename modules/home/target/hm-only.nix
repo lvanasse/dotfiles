@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.homeManager."targetConfig.hm-only" =
+  flake.modules.homeManager."target.config.hm-only" =
     {
       inputs,
       pkgs,

@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.homeManager."targetConfig.pc" =
+  flake.modules.homeManager."target.config.pc" =
     {
       config,
       lib,
@@ -25,6 +25,7 @@
           pkgs.pulseaudio
           pkgs.jq
           pkgs.coreutils
+          pkgs.gawk
           pkgs.gnugrep
           pkgs.gnused
         ];
@@ -36,7 +37,7 @@
               for ((i=0; i<20; i++)); do
                 if pactl info >/dev/null 2>&1; then
                   # Look for sources whose description contains "Yeti" (case-insensitive)
-                  if pactl --help 2>&1 | grep -q "--format"; then
+                  if pactl --help 2>&1 | grep -q -- "--format"; then
                     mapfile -t SOURCES < <(pactl --format=json list sources \
                       | jq -r '.[] | select(.description|test("Yeti"; "i")) | .name') || true
                   else

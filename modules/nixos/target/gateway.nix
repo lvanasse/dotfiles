@@ -8,7 +8,7 @@ let
   lanPrefixLength = 24;
 in
 {
-  flake.modules.nixos."targetConfig.gateway" =
+  flake.modules.nixos."target.config.gateway" =
     { pkgs, username, ... }:
     {
       # Router-specific bootstrap setting.

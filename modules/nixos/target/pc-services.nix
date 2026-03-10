@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.nixos."targetConfig.pc.services" =
+  flake.modules.nixos."target.config.pc.services" =
     { lib, ... }:
     {
       services = {

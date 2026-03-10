@@ -9,6 +9,6 @@
     flakeModules.homeManager.programs
     flakeModules.homeManager.services
     flakeModules.homeManager.packages
-    flakeModules.homeManager."targetConfig.pc"
+    flakeModules.homeManager."target.config.pc"
   ];
 }

@@ -8,6 +8,6 @@
     flakeModules.homeManager.programs
     flakeModules.homeManager.services
     flakeModules.homeManager.packages
-    flakeModules.homeManager."targetConfig.hm-only"
+    flakeModules.homeManager."target.config.hm-only"
   ];
 }

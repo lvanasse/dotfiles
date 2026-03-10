@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.homeManager."targetConfig.steamdeck" =
+  flake.modules.homeManager."target.config.steamdeck" =
     { pkgs, ... }:
     {
       home.username = "deck";

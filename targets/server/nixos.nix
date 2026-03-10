@@ -20,6 +20,6 @@
     flakeModules.nixos."services.ebooks"
     flakeModules.nixos."services.actual"
     flakeModules.nixos."services.dockhand"
-    flakeModules.nixos."targetConfig.server"
+    flakeModules.nixos."target.config.server"
   ];
 }

@@ -1,6 +1,6 @@
 { lib, ... }:
 {
-  flake.modules.nixos."targetConfig.server" =
+  flake.modules.nixos."target.config.server" =
     { inputs, username, pkgs, ... }:
     {
       imports = [

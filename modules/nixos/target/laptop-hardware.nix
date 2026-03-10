@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.nixos."targetConfig.laptop.hardware" =
+  flake.modules.nixos."target.config.laptop.hardware" =
     { pkgs, ... }:
     {
       # Boot configuration

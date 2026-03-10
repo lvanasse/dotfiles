@@ -6,6 +6,6 @@
     flakeModules.nixos."services.ssh-keys"
     flakeModules.nixos."services.fail2ban"
     flakeModules.nixos."services.tailscale"
-    flakeModules.nixos."targetConfig.gateway"
+    flakeModules.nixos."target.config.gateway"
   ];
 }

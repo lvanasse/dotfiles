@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.nixos."targetConfig.pc.packages" =
+  flake.modules.nixos."target.config.pc.packages" =
     { pkgs, ... }:
     {
       # PC-specific packages

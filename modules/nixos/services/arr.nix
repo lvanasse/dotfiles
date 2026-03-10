@@ -112,20 +112,21 @@ in
           PGID = "100";
           UMASK = "022";
           WEBUI_PORT = "8081";
-          TORRENTING_PORT = "6881";
+          TORRENTING_PORT = "59793";
         };
         volumes = [
           "/mnt/storage/appdata/qbittorrent:/config"
           "/mnt/storage/data:/data"
           "/mnt/storage/data/torrents:/data/torrents"
+          "/mnt/storage/data/torrents:/downloads"
         ];
         extraOptions = [
           "--label=com.centurylinklabs.watchtower.enable=false"
         ];
         ports = [
           "8081:8081"
-          "6881:6881"
-          "6881:6881/udp"
+          "59793:59793"
+          "59793:59793/udp"
         ];
       };
 
@@ -179,12 +180,12 @@ in
         9696
         5055
         8081
-        6881
+        59793
         8780
         8781
         8981
         8191
       ];
-      networking.firewall.allowedUDPPorts = [ 6881 ];
+      networking.firewall.allowedUDPPorts = [ 59793 ];
     };
 }

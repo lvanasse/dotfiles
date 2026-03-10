@@ -72,8 +72,8 @@
         trustedInterfaces = [ "tailscale0" "docker0" ];
         allowedTCPPorts = lib.mkForce [ ];
         allowedUDPPorts = lib.mkForce [ ];
-        interfaces.enp1s0.allowedTCPPorts = lib.mkForce [ 22 ];
-        interfaces.enp1s0.allowedUDPPorts = lib.mkForce [ ];
+        interfaces.enp1s0.allowedTCPPorts = lib.mkForce [ 22 59793 ];
+        interfaces.enp1s0.allowedUDPPorts = lib.mkForce [ 59793 ];
       };
 
       services.openssh.openFirewall = lib.mkForce false;

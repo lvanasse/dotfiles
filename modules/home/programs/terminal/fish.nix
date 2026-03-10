@@ -34,6 +34,25 @@
             source ${pkgs.fishPlugins.bass}/share/fish/vendor_functions.d/bass.fish
           end
 
+          # Recover from stale SSH_AUTH_SOCK (for example a dead terminal-managed agent socket)
+          set -l _gcr_ssh "/run/user/"(id -u)"/gcr/ssh"
+          set -l _keyring_ssh "/run/user/"(id -u)"/keyring/ssh"
+          if set -q SSH_AUTH_SOCK; and not test -S "$SSH_AUTH_SOCK"
+            if test -S "$_gcr_ssh"
+              set -gx SSH_AUTH_SOCK "$_gcr_ssh"
+            else if test -S "$_keyring_ssh"
+              set -gx SSH_AUTH_SOCK "$_keyring_ssh"
+            else
+              set -e SSH_AUTH_SOCK
+            end
+          else if not set -q SSH_AUTH_SOCK
+            if test -S "$_gcr_ssh"
+              set -gx SSH_AUTH_SOCK "$_gcr_ssh"
+            else if test -S "$_keyring_ssh"
+              set -gx SSH_AUTH_SOCK "$_keyring_ssh"
+            end
+          end
+
           # Ensure local user scripts and npm globals are first on PATH
           if type -q fish_add_path
             fish_add_path -m $HOME/.npm-global/bin

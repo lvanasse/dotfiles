@@ -30,6 +30,25 @@
             . /nix/var/nix/profiles/default/etc/profile.d/nix.sh
           fi
 
+          # Recover from stale SSH_AUTH_SOCK (for example a dead terminal-managed agent socket)
+          _gcr_ssh="/run/user/$(id -u)/gcr/ssh"
+          _keyring_ssh="/run/user/$(id -u)/keyring/ssh"
+          if [ -n "''${SSH_AUTH_SOCK:-}" ] && [ ! -S "$SSH_AUTH_SOCK" ]; then
+            if [ -S "$_gcr_ssh" ]; then
+              export SSH_AUTH_SOCK="$_gcr_ssh"
+            elif [ -S "$_keyring_ssh" ]; then
+              export SSH_AUTH_SOCK="$_keyring_ssh"
+            else
+              unset SSH_AUTH_SOCK
+            fi
+          elif [ -z "''${SSH_AUTH_SOCK:-}" ]; then
+            if [ -S "$_gcr_ssh" ]; then
+              export SSH_AUTH_SOCK="$_gcr_ssh"
+            elif [ -S "$_keyring_ssh" ]; then
+              export SSH_AUTH_SOCK="$_keyring_ssh"
+            fi
+          fi
+
           # Ensure local user scripts are on PATH
           case ":$PATH:" in
             *":$HOME/.local/bin:"*) ;;

@@ -26,6 +26,7 @@ in
         username = lib.mkDefault username;
         homeDirectory = lib.mkDefault "/home/${username}";
         stateVersion = "25.11";
+        packages = [ pkgs.ripgrep ];
 
         sessionVariables = {
           NPM_CONFIG_PREFIX = "${config.home.homeDirectory}/.npm-global";

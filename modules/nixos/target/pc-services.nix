@@ -4,6 +4,12 @@
     { lib, ... }:
     {
       services = {
+        # Keep the PC awake while idle; Sway handles display power-off separately.
+        logind.settings.Login = {
+          IdleAction = lib.mkForce "ignore";
+          IdleActionSec = lib.mkForce "0min";
+        };
+
         # DNS configuration
         resolved = {
           enable = true;

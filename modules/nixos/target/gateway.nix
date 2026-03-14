@@ -9,8 +9,14 @@ let
 in
 {
   flake.modules.nixos."target.config.gateway" =
-    { pkgs, username, ... }:
+    { inputs, pkgs, username, ... }:
     {
+      imports = [
+        inputs.disko.nixosModules.disko
+        ../../../hardware/gateway/disko.nix
+        # hardware-configuration.nix will be generated during install
+      ];
+
       # Router-specific bootstrap setting.
       users.users.${username}.initialPassword = "changeme";
 
@@ -50,8 +56,10 @@ in
           allowedTCPPorts = lib.mkForce [ ];
           allowedUDPPorts = lib.mkForce [ ];
 
-          interfaces.${lanIf}.allowedTCPPorts = [ 22 53 3000 ];
-          interfaces.${lanIf}.allowedUDPPorts = [ 53 67 ];
+          interfaces.${lanIf} = {
+            allowedTCPPorts = [ 22 53 3000 ];
+            allowedUDPPorts = [ 53 67 ];
+          };
         };
       };
 
@@ -66,18 +74,17 @@ in
           "bogus-priv" = true;
           "dhcp-authoritative" = true;
           "dhcp-range" = "192.168.10.100,192.168.10.199,255.255.255.0,12h";
+          "dhcp-option" = [
+            "option:router,${lanAddress}"
+            "option:dns-server,${lanAddress}"
+          ];
         };
-        extraConfig = ''
-          dhcp-option=option:router,${lanAddress}
-          dhcp-option=option:dns-server,${lanAddress}
-        '';
       };
 
       # Open-source local recursive resolver (no Google/Cloudflare upstream required).
       services.unbound = {
         enable = true;
         enableRootTrustAnchor = true;
-        interfaces = [ "127.0.0.1" ];
         settings = {
           server = {
             interface = [ "127.0.0.1" ];

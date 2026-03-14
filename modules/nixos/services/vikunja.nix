@@ -81,6 +81,7 @@ in
             VIKUNJA_SERVICE_ENABLEREGISTRATION = "false";
             VIKUNJA_DATABASE_TYPE = "postgres";
             VIKUNJA_DATABASE_HOST = "vikunja-db";
+            XDG_CACHE_HOME = "/tmp/.cache";
           }
           // lib.optionalAttrs (!hasVikunjaEnv) {
             VIKUNJA_DATABASE_USER = "vikunja";
@@ -117,6 +118,10 @@ in
             "docker-network-vikunja.service"
             "mnt-data3.mount"
           ];
+          startLimitIntervalSec = 0;
+          serviceConfig = {
+            RestartSec = 5;
+          };
         };
       };
 

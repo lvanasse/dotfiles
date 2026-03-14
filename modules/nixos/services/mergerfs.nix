@@ -69,7 +69,9 @@
           where = "/mnt/storage";
           type = "fuse.mergerfs";
           options =
-            "defaults,nonempty,allow_other,use_ino,cache.files=off,moveonenospc=true,dropcacheonclose=true,minfreespace=20G,fsname=mergerfs,category.create=mfs";
+            # qBittorrent/libtorrent defaults to mmap-based disk IO.
+            # Use mergerfs' mmap-safe settings that work across older kernel/mergerfs combos.
+            "defaults,nonempty,allow_other,use_ino,cache.files=auto-full,moveonenospc=true,dropcacheonclose=true,minfreespace=20G,fsname=mergerfs,category.create=pfrd,func.getattr=newest";
           wantedBy = [ "multi-user.target" ];
         }
       ];

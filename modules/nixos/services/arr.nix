@@ -13,7 +13,76 @@ let
 in
 {
   flake.modules.nixos."services.arr" =
-    { ... }:
+    { pkgs, ... }:
+    let
+      qBittorrentConfigPath = "/mnt/storage/appdata/qbittorrent/qBittorrent/qBittorrent.conf";
+      qBittorrentCategoriesPath = "/mnt/storage/appdata/qbittorrent/qBittorrent/categories.json";
+      qBittorrentMamConfig = pkgs.writeText "qbittorrent-mam-config.py" ''
+        import configparser
+        import json
+        import os
+        import pathlib
+        import sys
+
+        config_path = pathlib.Path(sys.argv[1])
+        categories_path = pathlib.Path(sys.argv[2])
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        categories_path.parent.mkdir(parents=True, exist_ok=True)
+
+        config = configparser.ConfigParser(interpolation=None)
+        config.optionxform = str
+
+        if config_path.exists():
+          with config_path.open(encoding="utf-8") as fh:
+            config.read_file(fh)
+
+        desired = {
+          "BitTorrent": {
+            r"Session\DHTEnabled": "false",
+            r"Session\LSDEnabled": "false",
+            r"Session\PeXEnabled": "false",
+            r"Session\Port": "59793",
+            r"Session\QueueingSystemEnabled": "false",
+          },
+          "Preferences": {
+            r"Connection\PortRangeMin": "59793",
+            r"Connection\UPnP": "false",
+          },
+        }
+
+        changed = False
+        for section, entries in desired.items():
+          if not config.has_section(section):
+            config.add_section(section)
+            changed = True
+          for key, value in entries.items():
+            if config.get(section, key, fallback=None) != value:
+              config.set(section, key, value)
+              changed = True
+
+        if changed:
+          tmp_path = config_path.with_suffix(config_path.suffix + ".tmp")
+          with tmp_path.open("w", encoding="utf-8") as fh:
+            config.write(fh, space_around_delimiters=False)
+          os.replace(tmp_path, config_path)
+
+        categories = {}
+        if categories_path.exists():
+          with categories_path.open(encoding="utf-8") as fh:
+            try:
+              categories = json.load(fh)
+            except json.JSONDecodeError:
+              categories = {}
+
+        if categories.get("cwa", {}).get("save_path") != "/data/books/ingest":
+          categories["cwa"] = {"save_path": "/data/books/ingest"}
+          tmp_path = categories_path.with_suffix(categories_path.suffix + ".tmp")
+          with tmp_path.open("w", encoding="utf-8") as fh:
+            json.dump(categories, fh, indent=4, sort_keys=True)
+            fh.write("\n")
+          os.replace(tmp_path, categories_path)
+      '';
+    in
     {
       # Sonarr - TV shows
       virtualisation.oci-containers.containers.sonarr = {
@@ -26,6 +95,7 @@ in
         volumes = [
           "/mnt/data3/appdata/sonarr:/config"
           "/mnt/storage/data:/data"
+          "/mnt/storage/data/torrents:/downloads"
         ];
         ports = [ "8989:8989" ];
       };
@@ -41,6 +111,7 @@ in
         volumes = [
           "/mnt/data3/appdata/radarr:/config"
           "/mnt/storage/data:/data"
+          "/mnt/storage/data/torrents:/downloads"
         ];
         ports = [ "7878:7878" ];
       };
@@ -71,6 +142,7 @@ in
         volumes = [
           "/mnt/data3/appdata/lidarr:/config"
           "/mnt/storage/data:/data"
+          "/mnt/storage/data/torrents:/downloads"
         ];
         ports = [ "8686:8686" ];
       };
@@ -159,18 +231,27 @@ in
       };
 
       # Ensure storage pool is mounted before media containers start.
-      systemd.services = lib.genAttrs storageBackedUnits (
-        _: {
-          requires = [
-            "mnt-data3.mount"
-            "mnt-storage.mount"
-          ];
-          after = [
-            "mnt-data3.mount"
-            "mnt-storage.mount"
-          ];
-        }
-      );
+      systemd.services =
+        (lib.genAttrs storageBackedUnits (
+          _: {
+            requires = [
+              "mnt-data3.mount"
+              "mnt-storage.mount"
+            ];
+            after = [
+              "mnt-data3.mount"
+              "mnt-storage.mount"
+            ];
+          }
+        ))
+        // {
+          # Keep the live WebUI/RSS config, but enforce the MaM-safe tracker settings.
+          "docker-qbittorrent".preStart = lib.mkBefore ''
+            ${pkgs.python3}/bin/python3 ${qBittorrentMamConfig} \
+              ${lib.escapeShellArg qBittorrentConfigPath} \
+              ${lib.escapeShellArg qBittorrentCategoriesPath}
+          '';
+        };
 
       networking.firewall.allowedTCPPorts = [
         8989

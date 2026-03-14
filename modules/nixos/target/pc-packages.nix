@@ -10,6 +10,7 @@
         coolercontrol.coolercontrold
         coolercontrol.coolercontrol-gui
         coolercontrol.coolercontrol-ui-data
+        openconnect
         mesa
         gmp
         libmpc

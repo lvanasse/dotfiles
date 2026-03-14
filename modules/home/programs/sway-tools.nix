@@ -281,7 +281,7 @@
           if command -v vesktop >/dev/null 2>&1; then
             # Start minimized so Vesktop reliably registers its tray item.
             if ! "$PGREP" -x vesktop >/dev/null 2>&1; then
-              (vesktop --start-minimized --ozone-platform-hint=auto >/dev/null 2>&1 &)
+              (vesktop --start-minimized >/dev/null 2>&1 &)
             fi
           else
             launch_if_missing discord

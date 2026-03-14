@@ -162,6 +162,19 @@
               keys = {
                 { key = 'C', mods = 'CTRL|SHIFT', action = act.CopyTo('Clipboard') },
                 { key = 'V', mods = 'CTRL|SHIFT', action = act.PasteFrom('Clipboard') },
+                {
+                  key = 'Enter',
+                  mods = 'SHIFT',
+                  action = wezterm.action_callback(function(window, pane)
+                    local proc = basename(pane.foreground_process_name)
+                    if proc == 'codex' then
+                      -- Codex treats Ctrl+J as "insert newline" instead of submit.
+                      window:perform_action(act.SendKey({ key = 'j', mods = 'CTRL' }), pane)
+                    else
+                      window:perform_action(act.SendKey({ key = 'Enter' }), pane)
+                    end
+                  end),
+                },
               },
 
               -- Mouse: right-click copy-or-paste

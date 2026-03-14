@@ -59,6 +59,21 @@ in
 
         nh_bin="${pkgs.nh}/bin/nh"
         hm_bin="${pkgs.home-manager}/bin/home-manager"
+        git_bin="${pkgs.git}/bin/git"
+
+        # Git flakes ignore untracked files. Mark untracked paths as intent-to-add
+        # so newly created modules are visible during flake evaluation.
+        if [ "''${NOHM_AUTO_INTENT_TO_ADD:-1}" = "1" ] \
+          && "$git_bin" -C "''${flake_dir}" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+          did_ita=""
+          while IFS= read -r -d $'\0' path; do
+            if [ -z "''${did_ita}" ]; then
+              echo "[pre] Git: marking untracked files as intent-to-add for flake evaluation" >&2
+              did_ita="1"
+            fi
+            "$git_bin" -C "''${flake_dir}" add -N -- "$path"
+          done < <("$git_bin" -C "''${flake_dir}" ls-files --others --exclude-standard -z)
+        fi
 
         # Use a unique backup extension to avoid clobbering existing *.backup files
         bext="''${HM_BACKUP_EXT:-hm-$(date +%Y%m%d-%H%M%S)}"

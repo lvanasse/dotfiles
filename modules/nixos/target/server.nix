@@ -60,7 +60,7 @@
         curl
         wget
         rsync
-        codex
+        unstable.codex
       ];
 
       # Enable fstrim for SSD

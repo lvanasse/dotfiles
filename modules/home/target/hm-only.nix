@@ -42,6 +42,7 @@ in
     dtc
     picocom
     poetry
+    unstable.spotatui
     (python3.withPackages (ps: [ ps.tkinter ]))
   ];
 

@@ -102,7 +102,7 @@ in
         nixpkgs-review
         nixfmt-rfc-style
         treefmt
-        codex
+        unstable.codex
         gh
         act
       ];

@@ -1,5 +1,14 @@
 { inputs, ... }:
 let
+  unstablePackages =
+    _final: prev:
+    {
+      unstable = import inputs."nixpkgs-unstable" {
+        system = prev.stdenv.hostPlatform.system;
+        config.allowUnfree = true;
+      };
+    };
+
   qbittorrent510_2505 =
     _final: prev:
     let
@@ -17,38 +26,6 @@ let
     sonarlint-ls = prev.callPackage ../../overrides/sonarlint-ls/package.nix { };
   };
 
-  # Keep jira-cli-go pinned from unstable, but expose it through pkgs.
-  jiraCliFromUnstable =
-    _final: prev:
-    let
-      pkgsUnstable = import inputs."nixpkgs-unstable" {
-        system = prev.stdenv.hostPlatform.system;
-        config.allowUnfree = true;
-      };
-    in
-    if pkgsUnstable ? jira-cli-go then
-      {
-        jira-cli-go = pkgsUnstable.jira-cli-go;
-      }
-    else
-      { };
-
-  # Keep codex sourced from unstable.
-  codexFromUnstable =
-    _final: prev:
-    let
-      pkgsUnstable = import inputs."nixpkgs-unstable" {
-        system = prev.stdenv.hostPlatform.system;
-        config.allowUnfree = true;
-      };
-    in
-    if pkgsUnstable ? codex then
-      {
-        codex = pkgsUnstable.codex;
-      }
-    else
-      { };
-
   # Ensure agenix is always available via pkgs, even if nixpkgs drops it.
   agenixFromInput =
     _final: prev:
@@ -63,9 +40,8 @@ in
 {
   flake.overlays = {
     inherit
+      unstablePackages
       qbittorrent510_2505
-      jiraCliFromUnstable
-      codexFromUnstable
       agenixFromInput
       sonarlintHashFix
       ;

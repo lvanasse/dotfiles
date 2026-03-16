@@ -161,6 +161,15 @@ in
     '';
   };
 
+  # Override global Firefox defaults for hm-only: use Chrome as default browser.
+  xdg.mimeApps.defaultApplications = {
+    "text/html" = lib.mkForce [ "google-chrome.desktop" ];
+    "x-scheme-handler/http" = lib.mkForce [ "google-chrome.desktop" ];
+    "x-scheme-handler/https" = lib.mkForce [ "google-chrome.desktop" ];
+    "x-scheme-handler/about" = lib.mkForce [ "google-chrome.desktop" ];
+    "x-scheme-handler/unknown" = lib.mkForce [ "google-chrome.desktop" ];
+  };
+
   # Wrap wezterm with nixGL for proper OpenGL support on non-NixOS
   programs.wezterm.package = pkgs.writeShellScriptBin "wezterm" ''
     exec ${pkgs.nixgl.nixGLIntel}/bin/nixGLIntel ${pkgs.wezterm}/bin/wezterm "$@"

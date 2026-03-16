@@ -42,7 +42,14 @@
             mu4e-alert
             vterm
             clipetty
+            copilot-chat
           ]);
+      };
+
+      services.emacs = {
+        enable = true;
+        client.enable = true;
+        startWithUserSession = "graphical";
       };
 
       # Spacemacs user configuration: set Gruvbox Dark Hard theme
@@ -226,6 +233,37 @@
             :init
             ;; Save sessions so you can reconnect quickly after restart.
             (setq ement-save-session t))
+
+          (use-package copilot-chat
+            :commands
+            (copilot-chat-add-current-buffer
+             copilot-chat-custom-prompt-mini-buffer
+             copilot-chat-custom-prompt-selection
+             copilot-chat-del-current-buffer
+             copilot-chat-display
+             copilot-chat-explain
+             copilot-chat-list
+             copilot-chat-review
+             copilot-chat-review-whole-buffer)
+            :init
+            (setq copilot-chat-backend 'curl
+                  copilot-chat-curl-program "${pkgs.curl}/bin/curl"
+                  copilot-chat-frontend 'org
+                  copilot-chat-follow t)
+            :config
+            (spacemacs/set-leader-keys
+              "acc" 'copilot-chat-display
+              "acp" 'copilot-chat-custom-prompt-mini-buffer
+              "acl" 'copilot-chat-list)
+            (dolist (mode '(nix-mode emacs-lisp-mode python-mode))
+              (spacemacs/set-leader-keys-for-major-mode mode
+                "cc" 'copilot-chat-display
+                "ca" 'copilot-chat-add-current-buffer
+                "cd" 'copilot-chat-del-current-buffer
+                "ce" 'copilot-chat-explain
+                "cp" 'copilot-chat-custom-prompt-selection
+                "cr" 'copilot-chat-review
+                "cR" 'copilot-chat-review-whole-buffer)))
 
           (require 'core-keybindings)
 

@@ -209,6 +209,24 @@
             };
           }
           {
+            # Fallback when HDMI is missing right after resume/hotplug.
+            profile = {
+              name = "desk-no-hdmi";
+              outputs = [
+                {
+                  criteria = "eDP-1";
+                  mode = "1920x1200@60.001Hz";
+                  position = "0,0";
+                }
+                {
+                  criteria = "DP-1";
+                  mode = "1920x1080@60.000Hz";
+                  position = "1920,0";
+                }
+              ];
+            };
+          }
+          {
             profile = {
               name = "projector-mirror";
               outputs = [

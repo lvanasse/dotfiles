@@ -60,6 +60,11 @@
             command = "${swaymsg} 'output * power off'";
             resumeCommand = "${wakeDisplaysHard}";
           }
+          # Suspend the machine after 20 minutes
+          {
+            timeout = 1200;
+            command = "${systemctl} suspend";
+          }
         ];
 
         events = [

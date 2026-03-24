@@ -10,6 +10,15 @@ let
     "docker-qbittorrent"
     "docker-calibre"
   ];
+  appDataRoots = {
+    sonarr = "/mnt/data3/appdata/sonarr";
+    radarr = "/mnt/data3/appdata/radarr";
+    bazarr = "/mnt/data3/appdata/bazarr";
+    lidarr = "/mnt/data3/appdata/lidarr";
+    prowlarr = "/mnt/data3/appdata/prowlarr";
+    jellyseerr = "/mnt/data3/appdata/jellyseerr";
+    qbittorrent = "/mnt/storage/appdata/qbittorrent";
+  };
 in
 {
   flake.modules.nixos."services.arr" =
@@ -76,6 +85,13 @@ in
 
         if categories.get("cwa", {}).get("save_path") != "/data/books/ingest":
           categories["cwa"] = {"save_path": "/data/books/ingest"}
+          changed = True
+
+        if categories.get("lazylibrarian", {}).get("save_path") != "/books-downloads":
+          categories["lazylibrarian"] = {"save_path": "/books-downloads"}
+          changed = True
+
+        if changed:
           tmp_path = categories_path.with_suffix(categories_path.suffix + ".tmp")
           with tmp_path.open("w", encoding="utf-8") as fh:
             json.dump(categories, fh, indent=4, sort_keys=True)
@@ -84,6 +100,16 @@ in
       '';
     in
     {
+      systemd.tmpfiles.rules = [
+        "d ${appDataRoots.sonarr} 0775 99 100 -"
+        "d ${appDataRoots.radarr} 0775 99 100 -"
+        "d ${appDataRoots.bazarr} 0775 99 100 -"
+        "d ${appDataRoots.lidarr} 0775 99 100 -"
+        "d ${appDataRoots.prowlarr} 0775 99 100 -"
+        "d ${appDataRoots.jellyseerr} 0775 99 100 -"
+        "d ${appDataRoots.qbittorrent} 0775 99 100 -"
+      ];
+
       # Sonarr - TV shows
       virtualisation.oci-containers.containers.sonarr = {
         image = "lscr.io/linuxserver/sonarr:latest";
@@ -191,6 +217,7 @@ in
           "/mnt/storage/data:/data"
           "/mnt/storage/data/torrents:/data/torrents"
           "/mnt/storage/data/torrents:/downloads"
+          "/mnt/storage/data/books/downloads:/books-downloads"
         ];
         extraOptions = [
           "--label=com.centurylinklabs.watchtower.enable=false"

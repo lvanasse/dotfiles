@@ -75,3 +75,4 @@ Adding a service module:
 - Keep patches focused and avoid unrelated edits.
 - Respect the `modules/` vs `hosts/` separation.
 - When adding modules, ensure they are correctly wired through host/profile imports.
+- Prefer Fish-compatible commands when giving the user shell snippets; if Bash syntax is required, say so explicitly and wrap it with `bash -lc`.

@@ -2,7 +2,31 @@
 {
   flake.modules.homeManager."programs.slack" =
     { pkgs, config, ... }:
+    let
+      slackXdgSettings = pkgs.writeShellScript "slack-xdg-settings" ''
+        #!/bin/sh
+        set -eu
+
+        real_xdg_settings="${pkgs.xdg-utils}/bin/xdg-settings"
+        real_xdg_mime="${pkgs.xdg-utils}/bin/xdg-mime"
+        action="''${1:-}"
+        subcommand="''${2:-}"
+
+        case "$action:$subcommand" in
+          set:default-url-scheme-handler)
+            if [ "$#" -eq 4 ]; then
+              "$real_xdg_mime" default "$4" "x-scheme-handler/$3"
+              exit 0
+            fi
+            ;;
+        esac
+
+        exec "$real_xdg_settings" "$@"
+      '';
+    in
     {
+      home.file.".local/libexec/slack/xdg-settings".source = slackXdgSettings;
+
       # Slack needs --no-sandbox because the SUID helper can't be set in the Nix store.
       home.file.".local/bin/slack" = {
         executable = true;
@@ -11,6 +35,8 @@
           set -eu
 
           export ELECTRON_NO_SANDBOX=1
+          export CHROME_DESKTOP=slack.desktop
+          export PATH="${config.home.homeDirectory}/.local/libexec/slack:$PATH"
 
           WAYLAND_FLAGS=""
           if [ -n "''${WAYLAND_DISPLAY:-}" ]; then

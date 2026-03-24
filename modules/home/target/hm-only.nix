@@ -12,6 +12,7 @@
   # Wrap sway with nixGL for proper OpenGL/Vulkan support on non-NixOS
   swayWrapped = pkgs.writeShellScriptBin "sway" ''
     export PATH="$HOME/.local/bin:$HOME/.nix-profile/bin:$HOME/.local/state/nix/profile/bin:$PATH"
+    export XDG_DATA_DIRS="$HOME/.nix-profile/share:$HOME/.local/state/nix/profile/share:/nix/var/nix/profiles/default/share:''${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
     export XDG_CURRENT_DESKTOP=sway
     export XDG_SESSION_DESKTOP=sway
     export XDG_SESSION_TYPE=wayland
@@ -57,6 +58,7 @@ in
     POETRY_VIRTUALENVS_OPTIONS_SYSTEM_SITE_PACKAGES = "true";
     TCL_LIBRARY = "${homeDir}/.local/share/tcltk/lib/${pkgs.tcl.libPrefix}";
     TK_LIBRARY = "${homeDir}/.local/share/tcltk/lib/${pkgs.tk.libPrefix}";
+    XDG_DATA_DIRS = "${homeDir}/.nix-profile/share:${homeDir}/.local/state/nix/profile/share:/nix/var/nix/profiles/default/share:/usr/local/share:/usr/share";
     # Slack/Electron screenshare can freeze on some non-NixOS GPU stacks.
     # Wrapper in programs/slack.nix reads this to disable GPU acceleration.
     SLACK_DISABLE_GPU = "1";

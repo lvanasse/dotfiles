@@ -1,7 +1,7 @@
 { ... }:
 {
   flake.modules.homeManager."programs.sway-tools" =
-    { pkgs, ... }:
+    { pkgs, config, ... }:
     {
       # Helper scripts for Wayland sessions (Sway) and Rofi wrappers
       home.packages = [
@@ -247,6 +247,7 @@
           set -euo pipefail
 
           PGREP="${pkgs.procps}/bin/pgrep"
+          home_bin="${config.home.homeDirectory}/.local/bin"
 
           # Wait briefly for Secret Service to be ready so Slack can persist login
           # (provided by gnome-keyring). Succeeds quickly if already active.
@@ -267,21 +268,42 @@
             sleep 0.25
           done
 
+          resolve_app() {
+            local bin="$1"
+            local wrapper="$home_bin/$bin"
+
+            if [ -x "$wrapper" ]; then
+              printf '%s\n' "$wrapper"
+              return 0
+            fi
+
+            if command -v "$bin" >/dev/null 2>&1; then
+              command -v "$bin"
+              return 0
+            fi
+
+            return 1
+          }
+
           launch_if_missing() {
             local bin="$1"
-            if command -v "$bin" >/dev/null 2>&1; then
-              if ! "$PGREP" -x "$bin" >/dev/null 2>&1; then
-                ("$bin" >/dev/null 2>&1 &)
-              fi
+            local app
+
+            if ! app="$(resolve_app "$bin")"; then
+              return 0
+            fi
+
+            if ! "$PGREP" -x "$bin" >/dev/null 2>&1; then
+              ("$app" >/dev/null 2>&1 &)
             fi
           }
 
           # Prefer Vesktop over Discord if both installed
           launch_if_missing slack
-          if command -v vesktop >/dev/null 2>&1; then
+          if app="$(resolve_app vesktop)"; then
             # Start minimized so Vesktop reliably registers its tray item.
             if ! "$PGREP" -x vesktop >/dev/null 2>&1; then
-              (vesktop --start-minimized >/dev/null 2>&1 &)
+              ("$app" --start-minimized --ozone-platform-hint=auto >/dev/null 2>&1 &)
             fi
           else
             launch_if_missing discord

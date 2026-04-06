@@ -1,7 +1,21 @@
 { ... }:
 {
   flake.modules.homeManager."packages.desktop" =
-    { pkgs, ... }:
+    {
+      config,
+      pkgs,
+      lib,
+      ...
+    }:
+    let
+      koreaderEnglishDictionary = pkgs.fetchzip {
+        url = "https://www.reader-dict.com/file/en/dict-en-en-noetym.zip";
+        hash = "sha256-k0J/PwEt00I+XTzBLPeQm2HNjDXbeFk2Hc4QEPTxi0A=";
+        stripRoot = false;
+      };
+
+      koreaderDictDir = "${config.home.homeDirectory}/.config/koreader/data/dict";
+    in
     {
       # Desktop applications and utilities
       home.packages = (
@@ -26,6 +40,7 @@
           # Office and productivity
           onlyoffice-desktopeditors
           calibre
+          koreader
           xournalpp
           gnome-calculator
           bitwarden-desktop
@@ -95,5 +110,25 @@
 
         ]
       );
+
+      home.activation.koreaderEnglishDictionary = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        dict_dir="${koreaderDictDir}"
+        res_dir="$dict_dir/res"
+
+        ${pkgs.coreutils}/bin/mkdir -p "$res_dir"
+
+        ${pkgs.coreutils}/bin/install -m644 -T "${koreaderEnglishDictionary}/dict-data.ifo" \
+          "$dict_dir/reader-dict-en-en-noetym.ifo"
+        ${pkgs.coreutils}/bin/install -m644 -T "${koreaderEnglishDictionary}/dict-data.idx" \
+          "$dict_dir/reader-dict-en-en-noetym.idx"
+        ${pkgs.coreutils}/bin/install -m644 -T "${koreaderEnglishDictionary}/dict-data.dict.dz" \
+          "$dict_dir/reader-dict-en-en-noetym.dict.dz"
+        ${pkgs.coreutils}/bin/install -m644 -T "${koreaderEnglishDictionary}/dict-data.syn" \
+          "$dict_dir/reader-dict-en-en-noetym.syn"
+
+        if [ -d "${koreaderEnglishDictionary}/res" ]; then
+          ${pkgs.coreutils}/bin/cp -fR "${koreaderEnglishDictionary}/res/." "$res_dir/"
+        fi
+      '';
     };
 }

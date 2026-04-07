@@ -14,6 +14,11 @@
         stripRoot = false;
       };
 
+      koreaderCwaSyncPlugin = pkgs.fetchzip {
+        url = "https://cwa.ludovicvanasse.com/static/koplugin.zip";
+        hash = "sha256-YCUKOtvmtP13uoBO/MRH/SG+4kkTHDfOcHEg7cBgGC8=";
+      };
+
       koreaderDictDir = "${config.home.homeDirectory}/.config/koreader/data/dict";
     in
     {
@@ -130,5 +135,10 @@
           ${pkgs.coreutils}/bin/cp -fR "${koreaderEnglishDictionary}/res/." "$res_dir/"
         fi
       '';
+
+      home.file.".config/koreader/plugins/cwasync.koplugin" = {
+        source = koreaderCwaSyncPlugin;
+        recursive = true;
+      };
     };
 }

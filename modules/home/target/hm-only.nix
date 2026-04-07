@@ -156,6 +156,16 @@ in
     '';
   };
 
+  home.file.".local/bin/bitwarden" = {
+    executable = true;
+    text = ''
+      #!/bin/sh
+      export ELECTRON_NO_SANDBOX=1
+      export CHROME_DESKTOP=bitwarden.desktop
+      exec ${pkgs.bitwarden-desktop}/bin/bitwarden --disable-setuid-sandbox --no-sandbox "$@"
+    '';
+  };
+
   home.file.".local/bin/google-chrome-stable" = {
     executable = true;
     text = ''
@@ -171,6 +181,17 @@ in
     "x-scheme-handler/https" = lib.mkForce [ "google-chrome.desktop" ];
     "x-scheme-handler/about" = lib.mkForce [ "google-chrome.desktop" ];
     "x-scheme-handler/unknown" = lib.mkForce [ "google-chrome.desktop" ];
+  };
+
+  xdg.desktopEntries.bitwarden = {
+    name = "Bitwarden";
+    comment = "Secure and free password manager for all of your devices";
+    exec = "${config.home.homeDirectory}/.local/bin/bitwarden %U";
+    icon = "bitwarden";
+    type = "Application";
+    startupNotify = true;
+    categories = [ "Utility" ];
+    mimeType = [ "x-scheme-handler/bitwarden" ];
   };
 
   # Wrap wezterm with nixGL for proper OpenGL support on non-NixOS

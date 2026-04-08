@@ -11,6 +11,7 @@
         config.flake.modules.homeManager."programs.slack"
         config.flake.modules.homeManager."programs.vesktop"
         config.flake.modules.homeManager."programs.codex"
+        config.flake.modules.homeManager."programs.rtk"
         config.flake.modules.homeManager."programs.jira"
         config.flake.modules.homeManager."programs.firefox"
         config.flake.modules.homeManager."programs.email"

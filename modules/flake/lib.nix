@@ -75,7 +75,6 @@ let
               };
               sharedModules = [
                 inputs.plasma-manager.homeModules.plasma-manager
-                inputs.stylix.homeModules.stylix
               ];
             };
           }
@@ -112,7 +111,6 @@ let
         ++ hmModules
         ++ [
           inputs.plasma-manager.homeModules.plasma-manager
-          inputs.stylix.homeModules.stylix
         ]
         ++ extraModules;
     };

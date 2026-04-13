@@ -216,10 +216,13 @@
                 return $status
               end
 
-              if contains -- --target-host $argv
+              if command -sq nh-os-with-home
+                command nh-os-with-home $argv
+              else if contains -- --target-host $argv
                 command nh os switch -H $host $rest
               else
-                command nh-os-with-home $argv
+                echo "nohm: nh-os-with-home is unavailable on this host." >&2
+                return 127
               end
             '';
           };

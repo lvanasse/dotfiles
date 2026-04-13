@@ -29,7 +29,6 @@
             flycheck
             projectile
             magit
-            forge
             treemacs
             treemacs-evil
             treemacs-projectile
@@ -135,7 +134,9 @@
 
             ;; Ensure Nix-provided Forge is loaded (without ELPA install)
             (with-eval-after-load 'magit
-              (require 'forge))
+              ;; Upstream Forge is currently broken in the Emacs overlay package set.
+              ;; Keep Magit working and load Forge again once the package recovers.
+              (require 'forge nil t))
 
             ;; mu4e basic wiring for Home Manager accounts
             (with-eval-after-load 'mu4e

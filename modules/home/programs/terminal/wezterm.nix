@@ -140,6 +140,7 @@
               window_decorations = 'NONE',
               -- Minimal symmetric padding; Waybar reserves space via exclusive layer
               window_padding = { left = 0, right = 0, top = 0, bottom = 0 },
+              scrollback_lines = 100000,
 
               -- Gruvbox Dark Hard palette (shared)
               colors = {

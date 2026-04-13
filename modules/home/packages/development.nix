@@ -65,6 +65,7 @@
           gh
           vim
           curl
+          devcontainer
 
           # Nix tools
           nixfmt-rfc-style

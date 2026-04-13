@@ -39,6 +39,43 @@ is_nixos() {
     [ -f /etc/NIXOS ]
 }
 
+resolve_nix_config() {
+    local reserve_cores build_cores total_cores max_jobs
+
+    reserve_cores="${MACHINE_RESERVED_CORES:-${NOHM_RESERVED_CORES:-1}}"
+    case "$reserve_cores" in
+        ''|*[!0-9]*) reserve_cores=1 ;;
+    esac
+
+    build_cores="${NOHM_BUILD_CORES:-1}"
+    case "$build_cores" in
+        ''|*[!0-9]*) build_cores=1 ;;
+    esac
+
+    total_cores="$(nproc)"
+    case "$total_cores" in
+        ''|*[!0-9]*) total_cores=1 ;;
+    esac
+
+    max_jobs=$(( total_cores - reserve_cores ))
+    if [ "$max_jobs" -lt 1 ]; then
+        max_jobs=1
+    fi
+
+    printf 'max-jobs = %s\ncores = %s\n' "$max_jobs" "$build_cores"
+}
+
+NIX_WRAPPER_CONFIG="$(resolve_nix_config)"
+if [ -n "${NIX_CONFIG:-}" ]; then
+    NIX_WRAPPER_CONFIG="${NIX_WRAPPER_CONFIG}
+${NIX_CONFIG}
+"
+fi
+WRAPPER_MAX_JOBS="$(printf '%s' "$NIX_WRAPPER_CONFIG" | awk -F' = ' '/^max-jobs = / { print $2; exit }')"
+WRAPPER_BUILD_CORES="$(printf '%s' "$NIX_WRAPPER_CONFIG" | awk -F' = ' '/^cores = / { print $2; exit }')"
+WRAPPER_RESERVED_CORES="${MACHINE_RESERVED_CORES:-${NOHM_RESERVED_CORES:-1}}"
+echo "==> Nix limits: leave ${WRAPPER_RESERVED_CORES} machine core(s) free, max-jobs ${WRAPPER_MAX_JOBS}, cores ${WRAPPER_BUILD_CORES}"
+
 # Pre-switch: remove conflicting files that Home Manager will manage
 echo "==> Removing conflicting files..."
 rm -f "$HOME/.config/Code/User/settings.json" 2>/dev/null || true
@@ -48,13 +85,13 @@ rm -f "$HOME/.local/share/applications/mimeapps.list" 2>/dev/null || true
 # Step 1: Home Manager switch (always)
 BEXT="${HM_BACKUP_EXT:-hm-$(date +%Y%m%d-%H%M%S)}"
 echo "==> [1/2] Home Manager: home-manager switch --flake ${FLAKE_DIR}#${USERNAME}@${HOST} -b ${BEXT}"
-home-manager switch --flake "${FLAKE_DIR}#${USERNAME}@${HOST}" -b "${BEXT}"
+NIX_CONFIG="${NIX_WRAPPER_CONFIG}" home-manager switch --flake "${FLAKE_DIR}#${USERNAME}@${HOST}" -b "${BEXT}"
 
 # Step 2: NixOS or post-switch tasks
 if is_nixos && [ "$HOST" != "hm-only" ]; then
     echo "==> [2/2] NixOS: nh os switch -H ${HOST} ${EXTRA_ARGS}"
     # shellcheck disable=SC2086
-    NH_FLAKE="${FLAKE_DIR}" nh os switch -H "${HOST}" $EXTRA_ARGS
+    NH_FLAKE="${FLAKE_DIR}" NIX_CONFIG="${NIX_WRAPPER_CONFIG}" nh os switch -H "${HOST}" $EXTRA_ARGS
 elif is_nixos && [ "$HOST" = "hm-only" ]; then
     echo "==> [2/2] hm-only target detected; skipping NixOS switch"
 else
@@ -62,29 +99,8 @@ else
     # Use ~/.local/share (home-manager managed) which has the wrapped sway path
     WAYLAND_SESSIONS_SRC="$HOME/.local/share/wayland-sessions"
     WAYLAND_SESSIONS_DST="/usr/share/wayland-sessions"
-
-    PAM_SWAYLOCK_FILE="/etc/pam.d/swaylock"
-    PAM_SWAYLOCK_SRC="$HOME/.local/share/pam/swaylock"
-    if [ -f "$PAM_SWAYLOCK_SRC" ]; then
-        if [ ! -f "$PAM_SWAYLOCK_FILE" ] || ! cmp -s "$PAM_SWAYLOCK_SRC" "$PAM_SWAYLOCK_FILE"; then
-            echo "==> [2/2] Installing PAM config for swaylock..."
-            sudo install -m 0644 "$PAM_SWAYLOCK_SRC" "$PAM_SWAYLOCK_FILE"
-        fi
-    else
-        echo "==> [2/2] Warning: no swaylock PAM template found at $PAM_SWAYLOCK_SRC"
-    fi
-
-    # Nix pam_unix expects unix_chkpwd under /run/wrappers/bin
-    if [ -x /sbin/unix_chkpwd ]; then
-        sudo install -d -m 0755 /run/wrappers/bin
-        if [ ! -e /run/wrappers/bin/unix_chkpwd ] || \
-           [ "$(readlink -f /run/wrappers/bin/unix_chkpwd)" != "/sbin/unix_chkpwd" ]; then
-            echo "==> [2/2] Linking unix_chkpwd for Nix PAM..."
-            sudo ln -sf /sbin/unix_chkpwd /run/wrappers/bin/unix_chkpwd
-        fi
-    else
-        echo "==> [2/2] Warning: /sbin/unix_chkpwd not found; swaylock auth may fail"
-    fi
+    echo "==> [2/2] Ensuring swaylock authentication support..."
+    bash "$FLAKE_DIR/scripts/setup-sway-auth.sh"
 
     if [ -d "$WAYLAND_SESSIONS_SRC" ]; then
         echo "==> [2/2] Symlinking Wayland session files for GDM..."

@@ -127,6 +127,14 @@ in
     '';
   };
 
+  home.file.".local/bin/setup-sway-auth" = {
+    executable = true;
+    text = ''
+      #!/bin/sh
+      exec bash "$HOME/Code/personal/dotfiles/scripts/setup-sway-auth.sh" "$@"
+    '';
+  };
+
   # Provide a PAM service file for swaylock on non-NixOS systems.
   # The nix-switch script will install this into /etc/pam.d/swaylock.
   home.file.".local/share/pam/swaylock".text = ''

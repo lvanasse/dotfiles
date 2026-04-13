@@ -48,6 +48,38 @@ in
         fi
         nix_switch_script="''${flake_dir}/scripts/nix-switch.sh"
 
+        nh_bin="${pkgs.nh}/bin/nh"
+        hm_bin="${pkgs.home-manager}/bin/home-manager"
+        git_bin="${pkgs.git}/bin/git"
+        nproc_bin="${pkgs.coreutils}/bin/nproc"
+
+        reserve_cores="''${MACHINE_RESERVED_CORES:-''${NOHM_RESERVED_CORES:-1}}"
+        case "''${reserve_cores}" in
+          ""|*[!0-9]*) reserve_cores=1 ;;
+        esac
+
+        build_cores="''${NOHM_BUILD_CORES:-1}"
+        case "''${build_cores}" in
+          ""|*[!0-9]*) build_cores=1 ;;
+        esac
+
+        total_cores="$("$nproc_bin")"
+        case "''${total_cores}" in
+          ""|*[!0-9]*) total_cores=1 ;;
+        esac
+
+        max_jobs=$(( total_cores - reserve_cores ))
+        if [ "''${max_jobs}" -lt 1 ]; then
+          max_jobs=1
+        fi
+
+        nix_config=$(printf 'max-jobs = %s\ncores = %s' "''${max_jobs}" "''${build_cores}")
+        if [ -n "''${NIX_CONFIG-}" ]; then
+          nix_config="''${nix_config}
+''${NIX_CONFIG}"
+        fi
+        echo "[cfg] Nix: leaving ''${reserve_cores} machine core(s) free; max-jobs=''${max_jobs}; cores=''${build_cores}" >&2
+
         # hm-only is a Home Manager-only target; delegate to nix-switch helper.
         if [ "''${host}" = "hm-only" ]; then
           if [ -n "''${target_host}" ]; then
@@ -56,10 +88,6 @@ in
           fi
           exec bash "''${nix_switch_script}" "''${host}"
         fi
-
-        nh_bin="${pkgs.nh}/bin/nh"
-        hm_bin="${pkgs.home-manager}/bin/home-manager"
-        git_bin="${pkgs.git}/bin/git"
 
         # Git flakes ignore untracked files. Mark untracked paths as intent-to-add
         # so newly created modules are visible during flake evaluation.
@@ -81,11 +109,11 @@ in
           echo "[1/2] Home Manager: skipped explicit switch (applied by NixOS activation on remote target)" >&2
         else
           echo "[1/2] Home Manager: home-manager switch --flake ''${flake_dir}#${username}@''${host} -b ''${bext}" >&2
-          "$hm_bin" switch --flake "''${flake_dir}#${username}@''${host}" -b "''${bext}"
+          NIX_CONFIG="''${nix_config}" "$hm_bin" switch --flake "''${flake_dir}#${username}@''${host}" -b "''${bext}"
         fi
 
         echo "[2/2] NixOS: nh os switch -H ''${host} ''${pass_args[*]}" >&2
-        NH_FLAKE="''${flake_dir}" "$nh_bin" os switch -H "''${host}" "''${pass_args[@]}"
+        NH_FLAKE="''${flake_dir}" NIX_CONFIG="''${nix_config}" "$nh_bin" os switch -H "''${host}" "''${pass_args[@]}"
       '';
 
       nhOsWithHomeCompat = pkgs.writeShellScriptBin "nh-os-with-home" ''

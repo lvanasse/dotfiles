@@ -22,7 +22,7 @@
         (with pkgs; [
           # Development tools
           sonarlint-ls # CLI language server companion for SonarLint 4.37.0
-          devenv
+          unstable.devenv
           direnv
           rustup
           nodejs

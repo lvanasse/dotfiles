@@ -7,7 +7,6 @@
       home.packages = with pkgs; [
         htop
         git
-        openclaw
       ];
 
       programs.bash.enable = true;

@@ -2,7 +2,23 @@
 {
   flake.modules.nixos."services.ebooks" =
     { pkgs, ... }:
+    let
+      appDataRoot = "/mnt/data3/appdata/calibre-web-automated";
+      ingestRoot = "/mnt/storage/data/books/ingest";
+      libraryRoot = "/mnt/storage/data/books/library";
+    in
     {
+      systemd.tmpfiles.rules = [
+        "d ${appDataRoot} 0775 99 100 -"
+        "d ${appDataRoot}/config 0775 99 100 -"
+        "d ${appDataRoot}/plugins 0775 99 100 -"
+        "f ${appDataRoot}/config/epub-fixer.log 0664 99 100 -"
+        "d ${ingestRoot} 0775 99 100 -"
+        "Z ${ingestRoot} - 99 100 -"
+        "d ${libraryRoot} 0775 99 100 -"
+        "Z ${libraryRoot} - 99 100 -"
+      ];
+
       # Calibre-Web Automated as a BookFusion replacement
       virtualisation.oci-containers.containers.calibre-web-automated = {
         image = "crocodilestick/calibre-web-automated:latest";
@@ -13,10 +29,10 @@
           NETWORK_SHARE_MODE = "true";
         };
         volumes = [
-          "/mnt/data3/appdata/calibre-web-automated/config:/config"
-          "/mnt/storage/data/books/ingest:/cwa-book-ingest"
-          "/mnt/storage/data/books/library:/calibre-library"
-          "/mnt/data3/appdata/calibre-web-automated/plugins:/config/.config/calibre/plugins"
+          "${appDataRoot}/config:/config"
+          "${ingestRoot}:/cwa-book-ingest"
+          "${libraryRoot}:/calibre-library"
+          "${appDataRoot}/plugins:/config/.config/calibre/plugins"
         ];
         ports = [ "8083:8083" ];
         extraOptions = [ "--label=com.centurylinklabs.watchtower.enable=true" ];

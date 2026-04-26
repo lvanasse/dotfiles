@@ -1,0 +1,154 @@
+{ inputs, ... }:
+let
+  arrSecretsAge = "${inputs.secrets}/server/arr-secrets.yml.age";
+  arrSecretsPlainRepo = "${inputs.secrets}/server/arr-secrets.yml";
+  arrSecretsPlainOverride = ../../../overrides/arr-secrets.yml;
+in
+{
+  flake.modules.nixos."services.shelfmark" =
+    { pkgs, ... }:
+    let
+      hasAgeSecrets = builtins.pathExists arrSecretsAge;
+      hasPlainSecretsOverride = builtins.pathExists arrSecretsPlainOverride;
+      arrSecretsPath =
+        if hasAgeSecrets then
+          "/run/agenix/arr-secrets.yml"
+        else if hasPlainSecretsOverride then
+          toString arrSecretsPlainOverride
+        else
+          toString arrSecretsPlainRepo;
+      appDataRoot = "/mnt/data3/appdata/shelfmark";
+      booksIngestRoot = "/mnt/storage/data/books/ingest";
+      audiobookLibraryRoot = "/mnt/storage/data/media/audiobooks";
+      torrentsRoot = "/mnt/storage/data/torrents";
+      cwaConfigRoot = "/mnt/data3/appdata/calibre-web-automated/config";
+      prowlarrConfigPath = "/mnt/data3/appdata/prowlarr/config.xml";
+      shelfmarkEnvPath = "/run/shelfmark/shelfmark.env";
+      pythonWithYaml = pkgs.python3.withPackages (ps: [ ps.pyyaml ]);
+    in
+    {
+      systemd.tmpfiles.rules = [
+        "d ${appDataRoot} 0775 99 100 -"
+        "d /run/shelfmark 0755 root root -"
+      ];
+
+      systemd.services.shelfmark-env = {
+        description = "Generate Shelfmark runtime environment";
+        requires = [
+          "mnt-data3.mount"
+          "mnt-storage.mount"
+        ];
+        after = [
+          "mnt-data3.mount"
+          "mnt-storage.mount"
+        ];
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+        };
+        path = with pkgs; [
+          bash
+          coreutils
+        ];
+        script = ''
+          set -euo pipefail
+
+          mkdir -p /run/shelfmark
+          tmp_env="$(mktemp /run/shelfmark/shelfmark.env.XXXXXX)"
+
+          printf '%s\n' \
+            'QBITTORRENT_URL=http://192.168.0.50:8081' \
+            'QBITTORRENT_CATEGORY=books' \
+            'QBITTORRENT_CATEGORY_AUDIOBOOK=audiobook' \
+            'QBITTORRENT_DOWNLOAD_DIR=/downloads' \
+            'PROWLARR_ENABLED=false' \
+            'PROWLARR_TORRENT_CLIENT=qbittorrent' \
+            > "$tmp_env"
+
+          if [ -r "${arrSecretsPath}" ]; then
+            ${pythonWithYaml}/bin/python3 - "${arrSecretsPath}" >> "$tmp_env" <<'PY'
+import pathlib
+import sys
+import yaml
+
+secrets_path = pathlib.Path(sys.argv[1])
+data = yaml.safe_load(secrets_path.read_text(encoding="utf-8")) or {}
+
+mapping = {
+    "QBITTORRENT_USER": "QBITTORRENT_USERNAME",
+    "QBITTORRENT_PASS": "QBITTORRENT_PASSWORD",
+}
+
+for source_key, env_key in mapping.items():
+    value = data.get(source_key)
+    if value:
+        print(f"{env_key}={value}")
+PY
+          fi
+
+          if [ -r "${prowlarrConfigPath}" ]; then
+            ${pkgs.python3}/bin/python3 - "${prowlarrConfigPath}" >> "$tmp_env" <<'PY'
+import pathlib
+import sys
+import xml.etree.ElementTree as ET
+
+config_path = pathlib.Path(sys.argv[1])
+api_key = (ET.parse(config_path).getroot().findtext("ApiKey") or "").strip()
+
+if api_key:
+    print("PROWLARR_ENABLED=true")
+    print("PROWLARR_URL=http://192.168.0.50:9696")
+    print(f"PROWLARR_API_KEY={api_key}")
+PY
+          fi
+
+          chmod 0400 "$tmp_env"
+          mv "$tmp_env" "${shelfmarkEnvPath}"
+        '';
+      };
+
+      virtualisation.oci-containers.containers.shelfmark = {
+        image = "ghcr.io/calibrain/shelfmark:latest";
+        environment = {
+          PUID = "99";
+          PGID = "100";
+          TZ = "America/Toronto";
+          SEARCH_MODE = "universal";
+          AUTH_METHOD = "cwa";
+          CWA_DB_PATH = "/auth/app.db";
+          CALIBRE_WEB_URL = "http://192.168.0.50:8083";
+          INGEST_DIR = "/books";
+          DESTINATION_AUDIOBOOK = "/audiobooks";
+          FILE_ORGANIZATION = "organize";
+          FILE_ORGANIZATION_AUDIOBOOK = "organize";
+          HARDLINK_TORRENTS = "false";
+          HARDLINK_TORRENTS_AUDIOBOOK = "false";
+        };
+        environmentFiles = [ shelfmarkEnvPath ];
+        volumes = [
+          "${appDataRoot}:/config"
+          "${booksIngestRoot}:/books"
+          "${audiobookLibraryRoot}:/audiobooks"
+          "${torrentsRoot}:/downloads"
+          "${cwaConfigRoot}:/auth:ro"
+        ];
+        ports = [ "8084:8084" ];
+        extraOptions = [ "--label=com.centurylinklabs.watchtower.enable=true" ];
+      };
+
+      systemd.services.docker-shelfmark = {
+        requires = [
+          "mnt-data3.mount"
+          "mnt-storage.mount"
+          "shelfmark-env.service"
+        ];
+        after = [
+          "mnt-data3.mount"
+          "mnt-storage.mount"
+          "shelfmark-env.service"
+        ];
+      };
+
+      networking.firewall.allowedTCPPorts = [ 8084 ];
+    };
+}

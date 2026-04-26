@@ -22,7 +22,6 @@
       # qBittorrent service
       systemd.user.services.qbittorrent-tray = {
         description = "qBittorrent (GUI, tray only)";
-        wantedBy = [ "graphical-session.target" ];
         after = [ "graphical-session.target" ];
         serviceConfig = {
           ExecStart = "${pkgs.qbittorrent}/bin/qbittorrent --no-splash";

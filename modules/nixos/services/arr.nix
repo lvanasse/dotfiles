@@ -24,40 +24,8 @@ in
   flake.modules.nixos."services.arr" =
     { pkgs, ... }:
     let
-      audiobookLibraryRoot = "/mnt/storage/data/media/audiobooks";
+      qBittorrentBooksCategoryPath = "/downloads/books";
       qBittorrentAudiobookCategoryPath = "/downloads/audiobook";
-      qBittorrentAudiobookImportScript = pkgs.writeShellScript "qbt-audiobook-import" ''
-        #!${pkgs.runtimeShell}
-        set -eu
-
-        torrent_name="''${1:-}"
-        save_path="''${2:-}"
-        source_path="''${save_path%/}/$torrent_name"
-        library_root="/data/media/audiobooks"
-        log_path="/config/qBittorrent/audiobook-import.log"
-
-        case "$save_path" in
-          ${qBittorrentAudiobookCategoryPath}|${qBittorrentAudiobookCategoryPath}/*) ;;
-          *) exit 0 ;;
-        esac
-
-        if [ -z "$torrent_name" ] || [ ! -e "$source_path" ]; then
-          printf '%s skip missing source: %s\n' "$(${pkgs.coreutils}/bin/date -Iseconds)" "$source_path" >> "$log_path"
-          exit 0
-        fi
-
-        ${pkgs.coreutils}/bin/mkdir -p "$library_root"
-
-        if [ -d "$source_path" ]; then
-          ${pkgs.coreutils}/bin/cp -an "$source_path" "$library_root/"
-        else
-          target_dir="$library_root/''${torrent_name%.*}"
-          ${pkgs.coreutils}/bin/mkdir -p "$target_dir"
-          ${pkgs.coreutils}/bin/cp -an "$source_path" "$target_dir/"
-        fi
-
-        printf '%s imported %s from %s\n' "$(${pkgs.coreutils}/bin/date -Iseconds)" "$torrent_name" "$save_path" >> "$log_path"
-      '';
       qBittorrentConfigPath = "/mnt/storage/appdata/qbittorrent/qBittorrent/qBittorrent.conf";
       qBittorrentCategoriesPath = "/mnt/storage/appdata/qbittorrent/qBittorrent/categories.json";
       qBittorrentMamConfig = pkgs.writeText "qbittorrent-mam-config.py" ''
@@ -88,8 +56,8 @@ in
             r"Session\QueueingSystemEnabled": "false",
           },
           "AutoRun": {
-            "enabled": "true",
-            "program": "/usr/local/bin/qbt-audiobook-import \"%N\" \"%D\"",
+            "enabled": "false",
+            "program": "",
           },
           "Preferences": {
             r"Connection\PortRangeMin": "59793",
@@ -121,17 +89,18 @@ in
             except json.JSONDecodeError:
               categories = {}
 
-        if categories.get("cwa", {}).get("save_path") != "/data/books/ingest":
-          categories["cwa"] = {"save_path": "/data/books/ingest"}
-          changed = True
-
-        if categories.get("lazylibrarian", {}).get("save_path") != "/books-downloads":
-          categories["lazylibrarian"] = {"save_path": "/books-downloads"}
+        if categories.get("books", {}).get("save_path") != "${qBittorrentBooksCategoryPath}":
+          categories["books"] = {"save_path": "${qBittorrentBooksCategoryPath}"}
           changed = True
 
         if categories.get("audiobook", {}).get("save_path") != "${qBittorrentAudiobookCategoryPath}":
           categories["audiobook"] = {"save_path": "${qBittorrentAudiobookCategoryPath}"}
           changed = True
+
+        for obsolete_category in ("cwa", "lazylibrarian"):
+          if obsolete_category in categories:
+            del categories[obsolete_category]
+            changed = True
 
         if changed:
           tmp_path = categories_path.with_suffix(categories_path.suffix + ".tmp")
@@ -150,8 +119,8 @@ in
         "d ${appDataRoots.prowlarr} 0775 99 100 -"
         "d ${appDataRoots.jellyseerr} 0775 99 100 -"
         "d ${appDataRoots.qbittorrent} 0775 99 100 -"
+        "d /mnt/storage/data/torrents/books 0775 99 100 -"
         "d /mnt/storage/data/torrents/audiobook 0775 99 100 -"
-        "d ${audiobookLibraryRoot} 0775 99 100 -"
       ];
 
       # Sonarr - TV shows
@@ -261,8 +230,6 @@ in
           "/mnt/storage/data:/data"
           "/mnt/storage/data/torrents:/data/torrents"
           "/mnt/storage/data/torrents:/downloads"
-          "/mnt/storage/data/books/downloads:/books-downloads"
-          "${qBittorrentAudiobookImportScript}:/usr/local/bin/qbt-audiobook-import:ro"
         ];
         extraOptions = [
           "--label=com.centurylinklabs.watchtower.enable=false"

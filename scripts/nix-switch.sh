@@ -40,16 +40,11 @@ is_nixos() {
 }
 
 resolve_nix_config() {
-    local reserve_cores build_cores total_cores max_jobs
+    local reserve_cores build_cores total_cores available_cores max_jobs
 
-    reserve_cores="${MACHINE_RESERVED_CORES:-${NOHM_RESERVED_CORES:-1}}"
+    reserve_cores="${MACHINE_RESERVED_CORES:-${NOHM_RESERVED_CORES:-2}}"
     case "$reserve_cores" in
-        ''|*[!0-9]*) reserve_cores=1 ;;
-    esac
-
-    build_cores="${NOHM_BUILD_CORES:-1}"
-    case "$build_cores" in
-        ''|*[!0-9]*) build_cores=1 ;;
+        ''|*[!0-9]*) reserve_cores=2 ;;
     esac
 
     total_cores="$(nproc)"
@@ -57,7 +52,23 @@ resolve_nix_config() {
         ''|*[!0-9]*) total_cores=1 ;;
     esac
 
-    max_jobs=$(( total_cores - reserve_cores ))
+    available_cores=$(( total_cores - reserve_cores ))
+    if [ "$available_cores" -lt 1 ]; then
+        available_cores=1
+    fi
+
+    build_cores="${MACHINE_BUILD_CORES:-${NOHM_BUILD_CORES:-auto}}"
+    case "$build_cores" in
+        ''|auto) build_cores="$available_cores" ;;
+        *[!0-9]*) build_cores="$available_cores" ;;
+    esac
+    if [ "$build_cores" -lt 1 ]; then
+        build_cores=1
+    elif [ "$build_cores" -gt "$available_cores" ]; then
+        build_cores="$available_cores"
+    fi
+
+    max_jobs=$(( available_cores / build_cores ))
     if [ "$max_jobs" -lt 1 ]; then
         max_jobs=1
     fi
@@ -73,8 +84,8 @@ ${NIX_CONFIG}
 fi
 WRAPPER_MAX_JOBS="$(printf '%s' "$NIX_WRAPPER_CONFIG" | awk -F' = ' '/^max-jobs = / { print $2; exit }')"
 WRAPPER_BUILD_CORES="$(printf '%s' "$NIX_WRAPPER_CONFIG" | awk -F' = ' '/^cores = / { print $2; exit }')"
-WRAPPER_RESERVED_CORES="${MACHINE_RESERVED_CORES:-${NOHM_RESERVED_CORES:-1}}"
-echo "==> Nix limits: leave ${WRAPPER_RESERVED_CORES} machine core(s) free, max-jobs ${WRAPPER_MAX_JOBS}, cores ${WRAPPER_BUILD_CORES}"
+WRAPPER_RESERVED_CORES="${MACHINE_RESERVED_CORES:-${NOHM_RESERVED_CORES:-2}}"
+echo "==> Nix limits: leave ${WRAPPER_RESERVED_CORES} machine core(s) free, build cores ${WRAPPER_BUILD_CORES}, max-jobs ${WRAPPER_MAX_JOBS}"
 
 # Pre-switch: remove conflicting files that Home Manager will manage
 echo "==> Removing conflicting files..."

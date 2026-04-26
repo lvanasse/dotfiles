@@ -12,6 +12,7 @@ let
     inputs.nix-vscode-extensions.overlays.default
     inputs.emacs-overlay.overlays.default
     inputs.llm-agents.overlays.default
+    config.flake.overlays.codexBuildTuning
     config.flake.overlays.sonarlintHashFix
     inputs.nix-openclaw.overlays.default
     inputs.nixgl.overlay

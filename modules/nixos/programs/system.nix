@@ -53,14 +53,9 @@ in
         git_bin="${pkgs.git}/bin/git"
         nproc_bin="${pkgs.coreutils}/bin/nproc"
 
-        reserve_cores="''${MACHINE_RESERVED_CORES:-''${NOHM_RESERVED_CORES:-1}}"
+        reserve_cores="''${MACHINE_RESERVED_CORES:-''${NOHM_RESERVED_CORES:-2}}"
         case "''${reserve_cores}" in
-          ""|*[!0-9]*) reserve_cores=1 ;;
-        esac
-
-        build_cores="''${NOHM_BUILD_CORES:-1}"
-        case "''${build_cores}" in
-          ""|*[!0-9]*) build_cores=1 ;;
+          ""|*[!0-9]*) reserve_cores=2 ;;
         esac
 
         total_cores="$("$nproc_bin")"
@@ -68,7 +63,24 @@ in
           ""|*[!0-9]*) total_cores=1 ;;
         esac
 
-        max_jobs=$(( total_cores - reserve_cores ))
+        available_cores=$(( total_cores - reserve_cores ))
+        if [ "''${available_cores}" -lt 1 ]; then
+          available_cores=1
+        fi
+
+        build_cores="''${MACHINE_BUILD_CORES:-''${NOHM_BUILD_CORES:-auto}}"
+        case "''${build_cores}" in
+          ""|auto) build_cores="''${available_cores}" ;;
+          *[!0-9]*) build_cores="''${available_cores}" ;;
+        esac
+
+        if [ "''${build_cores}" -lt 1 ]; then
+          build_cores=1
+        elif [ "''${build_cores}" -gt "''${available_cores}" ]; then
+          build_cores="''${available_cores}"
+        fi
+
+        max_jobs=$(( available_cores / build_cores ))
         if [ "''${max_jobs}" -lt 1 ]; then
           max_jobs=1
         fi
@@ -78,7 +90,7 @@ in
           nix_config="''${nix_config}
 ''${NIX_CONFIG}"
         fi
-        echo "[cfg] Nix: leaving ''${reserve_cores} machine core(s) free; max-jobs=''${max_jobs}; cores=''${build_cores}" >&2
+        echo "[cfg] Nix: leaving ''${reserve_cores} machine core(s) free; build cores=''${build_cores}; max-jobs=''${max_jobs}" >&2
 
         # hm-only is a Home Manager-only target; delegate to nix-switch helper.
         if [ "''${host}" = "hm-only" ]; then
@@ -145,7 +157,7 @@ in
         nixpkgs-review
         nixfmt-rfc-style
         treefmt
-        unstable.codex
+        pkgs.llm-agents.codex
         gh
         act
       ];

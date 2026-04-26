@@ -60,16 +60,11 @@
         curl
         wget
         rsync
-        unstable.codex
+        pkgs.llm-agents.codex
       ];
 
       # Enable fstrim for SSD
       services.fstrim.enable = true;
-
-      # Redis inside ReadMeABook expects memory overcommit for reliable background saves.
-      boot.kernel.sysctl = {
-        "vm.overcommit_memory" = 1;
-      };
 
       # Firewall - trust tailscale and allow LAN access on enp1s0
       networking.firewall = {
@@ -79,9 +74,9 @@
         allowedUDPPorts = lib.mkForce [ ];
         interfaces.enp1s0.allowedTCPPorts = lib.mkForce [
           22
-          3030
           6767
-          5299
+          8083
+          8084
           13378
           59793
         ];

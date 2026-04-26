@@ -9,13 +9,21 @@ let
 
   personalPub = "${inputs.secrets}/keys/id_ed25519_personal.pub";
   workPub = "${inputs.secrets}/keys/id_ed25519_work.pub";
+  personalKeyAge = "${inputs.secrets}/ssh/id_ed25519_personal.age";
 
   hasPersonalPub = builtins.pathExists personalPub;
   hasWorkPub = builtins.pathExists workPub;
+  hasPersonalKeyAge = builtins.pathExists personalKeyAge;
 in
 {
   flake.modules.nixos."services.ssh-keys" =
-    { ... }:
+    { config, ... }:
+    let
+      receivesClientKey = lib.elem config.networking.hostName [
+        "pc"
+        "laptop"
+      ];
+    in
     {
       # gnome-keyring already starts gcr-ssh-agent; disable the legacy ssh-agent to avoid conflicts.
       programs.ssh.startAgent = lib.mkForce false;
@@ -25,7 +33,18 @@ in
         (lib.optionals hasPersonalPub [ (builtins.readFile personalPub) ])
         ++ (lib.optionals hasWorkPub [ (builtins.readFile workPub) ]);
 
-      # SSH keys are now managed manually in ~/.ssh/
-      # Generate with: ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_personal
+      systemd.tmpfiles.rules = lib.optionals receivesClientKey [
+        "d /home/${username}/.ssh 0700 ${username} users -"
+      ];
+
+      age.secrets = lib.optionalAttrs (receivesClientKey && hasPersonalKeyAge) {
+        "ssh-id-ed25519-personal" = {
+          file = personalKeyAge;
+          path = "/home/${username}/.ssh/id_ed25519_personal";
+          mode = "0600";
+          owner = username;
+          group = "users";
+        };
+      };
     };
 }

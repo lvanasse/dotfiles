@@ -11,7 +11,7 @@
           PermitRootLogin = "no";
           PasswordAuthentication = true;
         };
-        authorizedKeysInHomedir = true;
+        authorizedKeysInHomedir = false;
       };
     };
 }

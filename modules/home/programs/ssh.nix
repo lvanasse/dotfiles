@@ -1,20 +1,91 @@
-{ ... }:
+{
+  inputs,
+  lib,
+  ...
+}:
+let
+  personalPub = "${inputs.secrets}/keys/id_ed25519_personal.pub";
+  hasPersonalPub = builtins.pathExists personalPub;
+in
 {
   flake.modules.homeManager."programs.ssh" =
     { ... }:
     {
+      home.file = lib.optionalAttrs hasPersonalPub {
+        ".ssh/id_ed25519_personal.pub".source = personalPub;
+      };
+
       # SSH configuration for different keys
       programs.ssh = {
         enable = true;
         enableDefaultConfig = false; # Disable default config to avoid future warnings
 
         matchBlocks = {
+          # Personal hosts (LAN aliases)
+          "pc" = {
+            hostname = "192.168.0.100";
+            user = "ludovic";
+            identityFile = "~/.ssh/id_ed25519_personal";
+            identitiesOnly = true;
+            identityAgent = "none";
+          };
+
+          "server" = {
+            hostname = "192.168.0.50";
+            user = "ludovic";
+            identityFile = "~/.ssh/id_ed25519_personal";
+            identitiesOnly = true;
+            identityAgent = "none";
+          };
+
+          "gateway" = {
+            hostname = "192.168.0.1";
+            user = "ludovic";
+            identityFile = "~/.ssh/id_ed25519_personal";
+            identitiesOnly = true;
+            identityAgent = "none";
+          };
+
+          "laptop" = {
+            hostname = "laptop";
+            user = "ludovic";
+            identityFile = "~/.ssh/id_ed25519_personal";
+            identitiesOnly = true;
+            identityAgent = "none";
+          };
+
+          # Personal hosts (Tailscale aliases)
+          "pc-ts" = {
+            hostname = "pc.tail7e8d6c.ts.net";
+            user = "ludovic";
+            identityFile = "~/.ssh/id_ed25519_personal";
+            identitiesOnly = true;
+            identityAgent = "none";
+          };
+
+          "server-ts" = {
+            hostname = "server.tail7e8d6c.ts.net";
+            user = "ludovic";
+            identityFile = "~/.ssh/id_ed25519_personal";
+            identitiesOnly = true;
+            identityAgent = "none";
+          };
+
+          "work-laptop" = {
+            hostname = "work-laptop.tail7e8d6c.ts.net";
+            user = "ludovic";
+            identityFile = "~/.ssh/id_ed25519_personal";
+            identitiesOnly = true;
+            identityAgent = "none";
+          };
+
           # Steam Deck (SteamOS)
           "steamdeck" = {
             hostname = "192.168.0.105";
             user = "deck";
             identityFile = "~/.ssh/id_ed25519_personal";
             identitiesOnly = true;
+            identityAgent = "none";
           };
 
           # Personal GitHub account

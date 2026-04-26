@@ -15,6 +15,10 @@ let
       nixos = false;
       modules = [ "target.hm-only" ];
     };
+    "work-laptop" = {
+      nixos = false;
+      modules = [ "target.work-laptop" ];
+    };
     steamdeck = {
       nixos = false;
       username = "deck";
@@ -57,6 +61,7 @@ in
   flake.modules.homeManager."target.pc" = ./pc/hm.nix;
   flake.modules.homeManager."target.laptop" = ./laptop/hm.nix;
   flake.modules.homeManager."target.hm-only" = ./hm-only/hm.nix;
+  flake.modules.homeManager."target.work-laptop" = ./work-laptop/hm.nix;
   flake.modules.homeManager."target.steamdeck" = ./steamdeck/hm.nix;
   flake.modules.homeManager."target.server" = ./server/hm.nix;
   flake.modules.homeManager."target.gateway" = ./gateway/hm.nix;

@@ -118,8 +118,10 @@
 
             return {
               -- Font configuration
-              -- Try FiraCode Nerd Font first, fallback to common monospace fonts
+              -- Prefer JetBrains Mono for crisp rendering, fallback to common monospace fonts
               font = wezterm.font_with_fallback({
+                'JetBrainsMono Nerd Font Mono',
+                'JetBrains Mono',
                 'FiraCode Nerd Font Mono',
                 'FiraCode Nerd Font',
                 'Fira Code',

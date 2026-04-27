@@ -32,6 +32,18 @@
           nil
           nixd
           act
+          unstable.vscode
+          aider-chat
+          clang-tools
+          basedpyright
+          bash-language-server
+          yaml-language-server
+          cmake-language-server
+          actionlint
+          shellcheck
+          shfmt
+          yamllint
+          bear
 
           # Build tools
           gnumake

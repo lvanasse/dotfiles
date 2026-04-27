@@ -7,6 +7,7 @@
         config.flake.modules.homeManager.terminal
         config.flake.modules.homeManager."programs.nix"
         config.flake.modules.homeManager."programs.ssh"
+        config.flake.modules.homeManager."programs.aider"
         config.flake.modules.homeManager."programs.development"
         config.flake.modules.homeManager."programs.slack"
         config.flake.modules.homeManager."programs.vesktop"

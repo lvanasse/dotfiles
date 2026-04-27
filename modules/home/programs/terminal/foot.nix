@@ -15,7 +15,7 @@
         settings = {
           main = {
             # Font configuration
-            font = "FiraCode Nerd Font Mono:size=8";
+            font = "JetBrainsMono Nerd Font Mono:size=8";
             # Fallback fonts are handled automatically by fontconfig
             dpi-aware = "yes";
             pad = "0x0"; # No padding

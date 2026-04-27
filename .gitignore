@@ -7,3 +7,4 @@ overrides/cloudflared.env
 overrides/vaultwarden.env
 overrides/headplane.yaml
 overrides/vikunja.env
+.aider*

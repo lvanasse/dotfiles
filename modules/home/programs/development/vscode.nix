@@ -10,7 +10,7 @@
       # Visual Studio Code configuration
       programs.vscode = {
         enable = true;
-        package = pkgs.vscode;
+        package = pkgs.unstable.vscode;
         # Ensure Home Manager manages extensions deterministically
         mutableExtensionsDir = false;
         profiles.default.extensions = with pkgs.vscode-marketplace; [
@@ -46,6 +46,7 @@
           james-yu.latex-workshop
           mermaidchart.vscode-mermaid-chart
           ms-vscode-remote.remote-containers
+          yocto-project.yocto-bitbake
         ];
         profiles.default.userSettings = {
           "git.autofetch" = true;
@@ -83,7 +84,7 @@
         text = ''
           #!/bin/sh
           export ELECTRON_NO_SANDBOX=1
-          exec ${pkgs.vscode}/bin/code --no-sandbox "$@"
+          exec ${pkgs.unstable.vscode}/bin/code --no-sandbox "$@"
         '';
       };
     };

@@ -92,6 +92,7 @@
           saleae-logic-2
 
           pyenv
+          pre-commit
         ])
         ++ [
           tex # TeX toolchain for LaTeX preview/build

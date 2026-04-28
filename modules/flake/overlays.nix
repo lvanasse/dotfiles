@@ -36,28 +36,6 @@ let
         agenix = inputs.agenix.packages.${prev.stdenv.hostPlatform.system}.default;
       };
 
-  # Tune llm-agents' Codex build for local compile speed.
-  codexBuildTuning =
-    _final: prev:
-    let
-      tunedCodex = prev.llm-agents.codex.overrideAttrs (old: {
-        preBuild =
-          (old.preBuild or "")
-          + ''
-            if grep -q 'codegen-units = 1' Cargo.toml; then
-              substituteInPlace Cargo.toml \
-                --replace-fail 'codegen-units = 1' 'codegen-units = 16'
-            fi
-          '';
-      });
-    in
-    {
-      codex = tunedCodex;
-      llm-agents = prev.llm-agents // {
-        codex = tunedCodex;
-      };
-    };
-
 in
 {
   flake.overlays = {
@@ -65,7 +43,6 @@ in
       unstablePackages
       qbittorrent510_2505
       agenixFromInput
-      codexBuildTuning
       sonarlintHashFix
       ;
   };

@@ -9,6 +9,118 @@
       ...
     }:
     let
+      username = config.home.username;
+      nohm = pkgs.writeShellScriptBin "nohm" ''
+        set -euo pipefail
+
+        if [ $# -lt 1 ]; then
+          echo "Usage: nohm <host>|auth [--target-host <user@ip>] [-- <extra nh os args>]" >&2
+          exit 1
+        fi
+
+        host="$1"
+        shift
+
+        target_host=""
+        pass_args=()
+        while [ $# -gt 0 ]; do
+          case "$1" in
+            --target-host)
+              if [ $# -lt 2 ]; then
+                echo "Missing value for --target-host" >&2
+                exit 1
+              fi
+              target_host="$2"
+              pass_args+=("$1" "$2")
+              shift 2
+              ;;
+            --)
+              pass_args+=("$@")
+              break
+              ;;
+            *)
+              pass_args+=("$1")
+              shift
+              ;;
+          esac
+        done
+
+        flake_dir="$HOME/Code/personal/dotfiles"
+        if [ -n "''${NH_FLAKE-}" ]; then
+          flake_dir="''${NH_FLAKE}"
+        fi
+        nix_switch_script="''${flake_dir}/scripts/nix-switch.sh"
+        setup_sway_auth_script="''${flake_dir}/scripts/setup-sway-auth.sh"
+
+        if [ "''${host}" = "auth" ]; then
+          exec bash "''${setup_sway_auth_script}"
+        fi
+
+        nh_bin="${pkgs.nh}/bin/nh"
+        hm_bin="${pkgs.home-manager}/bin/home-manager"
+        git_bin="${pkgs.git}/bin/git"
+        nproc_bin="${pkgs.coreutils}/bin/nproc"
+
+        reserve_cores="''${MACHINE_RESERVED_CORES:-''${NOHM_RESERVED_CORES:-1}}"
+        case "''${reserve_cores}" in
+          ""|*[!0-9]*) reserve_cores=1 ;;
+        esac
+
+        build_cores="''${NOHM_BUILD_CORES:-1}"
+        case "''${build_cores}" in
+          ""|*[!0-9]*) build_cores=1 ;;
+        esac
+
+        total_cores="$("$nproc_bin")"
+        case "''${total_cores}" in
+          ""|*[!0-9]*) total_cores=1 ;;
+        esac
+
+        max_jobs=$(( total_cores - reserve_cores ))
+        if [ "''${max_jobs}" -lt 1 ]; then
+          max_jobs=1
+        fi
+
+        nix_config=$(printf 'max-jobs = %s\ncores = %s' "''${max_jobs}" "''${build_cores}")
+        if [ -n "''${NIX_CONFIG-}" ]; then
+          nix_config="''${nix_config}
+''${NIX_CONFIG}"
+        fi
+        echo "[cfg] Nix: leaving ''${reserve_cores} machine core(s) free; max-jobs=''${max_jobs}; cores=''${build_cores}" >&2
+
+          if [ "''${host}" = "hm-only" ]; then
+          if [ -n "''${target_host}" ]; then
+            echo "nohm: --target-host is not supported for hm-only; run nohm on that machine." >&2
+            exit 1
+          fi
+          exec bash "''${nix_switch_script}" "''${host}"
+        fi
+
+        if [ "''${NOHM_AUTO_INTENT_TO_ADD:-1}" = "1" ] \
+          && "$git_bin" -C "''${flake_dir}" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+          did_ita=""
+          while IFS= read -r -d $'\0' path; do
+            if [ -z "''${did_ita}" ]; then
+              echo "[pre] Git: marking untracked files as intent-to-add for flake evaluation" >&2
+              did_ita="1"
+            fi
+            "$git_bin" -C "''${flake_dir}" add -N -- "$path"
+          done < <("$git_bin" -C "''${flake_dir}" ls-files --others --exclude-standard -z)
+        fi
+
+        bext="''${HM_BACKUP_EXT:-hm-$(date +%Y%m%d-%H%M%S)}"
+        if [ -n "''${target_host}" ]; then
+          echo "[1/2] Home Manager: skipped explicit switch (applied by NixOS activation on remote target)" >&2
+        else
+          echo "[1/2] Home Manager: home-manager switch --flake ''${flake_dir}#${username}@''${host} -b ''${bext}" >&2
+          NIX_CONFIG="''${nix_config}" "$hm_bin" switch --flake "''${flake_dir}#${username}@''${host}" -b "''${bext}"
+        fi
+
+        echo "[2/2] NixOS: nh os switch -H ''${host} ''${pass_args[*]}" >&2
+        NH_FLAKE="''${flake_dir}" NIX_CONFIG="''${nix_config}" "$nh_bin" os switch -H "''${host}" "''${pass_args[@]}"
+      '';
+    in
+    let
   # Wrap sway with nixGL for proper OpenGL/Vulkan support on non-NixOS
   swayWrapped = pkgs.writeShellScriptBin "sway" ''
     export PATH="$HOME/.local/bin:$HOME/.nix-profile/bin:$HOME/.local/state/nix/profile/bin:$PATH"
@@ -45,6 +157,7 @@ in
     poetry
     unstable.spotatui
     (python3.withPackages (ps: [ ps.tkinter ]))
+    nohm
   ];
 
   # Symlink tcl & tk data under a common parent so PyInstaller can find both

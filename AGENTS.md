@@ -29,7 +29,7 @@ Module naming patterns:
 
 - Switch NixOS host: `nh os switch -H pc` (or `laptop`, `server`).
 - Apply Home Manager: `home-manager switch --flake .#ludovic@pc`.
-- Unified switch script: `./scripts/nix-switch.sh <host>`.
+- Unified switch command: `nohm <host>`.
 - Validate: `nix flake check` and `nixos-rebuild dry-run --flake .#pc`.
 - Format: `nix fmt` (or `nixfmt-rfc-style **/*.nix`).
 - Update inputs: `nix flake update` and commit `flake.lock`.

@@ -1,6 +1,6 @@
 #!/bin/bash
-# Unified Nix switch script for both NixOS and standalone Home Manager
-# Usage: ./scripts/nix-switch.sh <hostname> [-- <extra nh os args>]
+# Internal switch implementation for `nohm`
+# Usage: nohm <hostname> [-- <extra nh os args>]
 #
 # On NixOS:     runs home-manager switch, then nh os switch
 # On non-NixOS: runs home-manager switch, then symlinks wayland sessions for GDM
@@ -11,11 +11,11 @@ USERNAME="ludovic"
 FLAKE_DIR="${NH_FLAKE:-$HOME/Code/personal/dotfiles}"
 
 if [ $# -lt 1 ]; then
-    echo "Usage: nix-switch <hostname> [-- <extra nh os args>]" >&2
+    echo "Usage: nohm <hostname> [-- <extra nh os args>]" >&2
     echo "Examples:" >&2
-    echo "  nix-switch pc" >&2
-    echo "  nix-switch laptop" >&2
-    echo "  nix-switch hm-only" >&2
+    echo "  nohm pc" >&2
+    echo "  nohm laptop" >&2
+    echo "  nohm hm-only" >&2
     exit 1
 fi
 
@@ -73,7 +73,7 @@ resolve_nix_config() {
         max_jobs=1
     fi
 
-    printf 'max-jobs = %s\ncores = %s\n' "$max_jobs" "$build_cores"
+    printf 'experimental-features = nix-command flakes\nmax-jobs = %s\ncores = %s\n' "$max_jobs" "$build_cores"
 }
 
 NIX_WRAPPER_CONFIG="$(resolve_nix_config)"

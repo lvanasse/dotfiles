@@ -63,9 +63,13 @@
             esac
           fi
 
-          # Unified nix-switch for both NixOS and standalone Home Manager
-          nix-switch() {
+          # Single switch entrypoint for local HM+NixOS and standalone Home Manager.
+          nohm() {
             local flake_dir="''${NH_FLAKE:-$HOME/Code/personal/dotfiles}"
+            if [ "$#" -ge 1 ] && [ "$1" = "auth" ]; then
+              bash "$flake_dir/scripts/setup-sway-auth.sh"
+              return $?
+            fi
             bash "$flake_dir/scripts/nix-switch.sh" "$@"
           }
         '';

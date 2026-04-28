@@ -10,7 +10,7 @@ in
         set -euo pipefail
 
         if [ $# -lt 1 ]; then
-          echo "Usage: nohm <host> [--target-host <user@ip>] [-- <extra nh os args>]" >&2
+          echo "Usage: nohm <host>|auth [--target-host <user@ip>] [-- <extra nh os args>]" >&2
           exit 1
         fi
 
@@ -47,6 +47,11 @@ in
           flake_dir="''${NH_FLAKE}"
         fi
         nix_switch_script="''${flake_dir}/scripts/nix-switch.sh"
+        setup_sway_auth_script="''${flake_dir}/scripts/setup-sway-auth.sh"
+
+        if [ "''${host}" = "auth" ]; then
+          exec bash "''${setup_sway_auth_script}"
+        fi
 
         nh_bin="${pkgs.nh}/bin/nh"
         hm_bin="${pkgs.home-manager}/bin/home-manager"
@@ -95,7 +100,7 @@ in
         # hm-only is a Home Manager-only target; delegate to nix-switch helper.
         if [ "''${host}" = "hm-only" ]; then
           if [ -n "''${target_host}" ]; then
-            echo "nohm: --target-host is not supported for hm-only; run nix-switch on that machine." >&2
+            echo "nohm: --target-host is not supported for hm-only; run nohm on that machine." >&2
             exit 1
           fi
           exec bash "''${nix_switch_script}" "''${host}"

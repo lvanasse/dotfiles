@@ -182,25 +182,23 @@
             description = "Navigate to dotfiles directory";
           };
 
-          # Unified nix-switch for both NixOS and standalone Home Manager
-          nix-switch = {
+          # Single switch entrypoint for local HM+NixOS and remote target-host flows.
+          nohm = {
             description = "Switch NixOS/Home Manager configuration";
             body = ''
+              if test (count $argv) -lt 1
+                echo "Usage: nohm <host>|auth [--target-host user@ip] [extra nh args]" >&2
+                return 1
+              end
+
               set -l flake_dir "$HOME/Code/personal/dotfiles"
               if set -q NH_FLAKE
                 set flake_dir "$NH_FLAKE"
               end
-              bash "$flake_dir/scripts/nix-switch.sh" $argv
-            '';
-          };
 
-          # Wrapper for local HM+NixOS switch or remote target-host switch
-          nohm = {
-            description = "Run nh-os-with-home locally or nh os switch for remote targets";
-            body = ''
-              if test (count $argv) -lt 1
-                echo "Usage: nohm <host> [--target-host user@ip] [extra nh args]" >&2
-                return 1
+              if test "$argv[1]" = "auth"
+                bash "$flake_dir/scripts/setup-sway-auth.sh"
+                return $status
               end
 
               set -l host $argv[1]
@@ -209,10 +207,10 @@
 
               if test "$host" = "hm-only"
                 if contains -- --target-host $argv
-                  echo "nohm: --target-host is not supported for hm-only; run nix-switch on that machine." >&2
+                  echo "nohm: --target-host is not supported for hm-only; run nohm on that machine." >&2
                   return 1
                 end
-                nix-switch $argv
+                bash "$flake_dir/scripts/nix-switch.sh" $argv
                 return $status
               end
 
@@ -221,8 +219,8 @@
               else if contains -- --target-host $argv
                 command nh os switch -H $host $rest
               else
-                echo "nohm: nh-os-with-home is unavailable on this host." >&2
-                return 127
+                bash "$flake_dir/scripts/nix-switch.sh" $argv
+                return $status
               end
             '';
           };

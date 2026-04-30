@@ -26,6 +26,7 @@
           ms-vscode.cpptools
           ms-vscode.cmake-tools
           ms-vscode.makefile-tools
+          ms-python.python
           streetsidesoftware.code-spell-checker
           xaver.clang-format
           foxundermoon.shell-format
@@ -46,6 +47,7 @@
           james-yu.latex-workshop
           mermaidchart.vscode-mermaid-chart
           ms-vscode-remote.remote-containers
+          mads-hartmann.bash-ide-vscode
           yocto-project.yocto-bitbake
         ];
         profiles.default.userSettings = {

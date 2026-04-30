@@ -149,6 +149,7 @@ in
   fonts.fontconfig.enable = true;
   home.packages = with pkgs; [
     nerd-fonts.fira-code
+    nerd-fonts.jetbrains-mono
     nixgl.nixGLIntel # For wrapping GL applications
     fd
     ripgrep

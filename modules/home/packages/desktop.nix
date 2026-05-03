@@ -19,6 +19,11 @@
         hash = "sha256-YCUKOtvmtP13uoBO/MRH/SG+4kkTHDfOcHEg7cBgGC8=";
       };
 
+      koreaderAnnotationSyncPlugin = pkgs.fetchzip {
+        url = "https://github.com/dani84bs/AnnotationSync.koplugin/archive/refs/tags/v1.0.zip";
+        hash = "sha256-gpI8EJRga2Z6HVWCDMAzGqLAHrqhRf4Q2iI43scoHAE=";
+      };
+
       koreaderDictDir = "${config.home.homeDirectory}/.config/koreader/data/dict";
     in
     {
@@ -39,6 +44,7 @@
           # Media
           vlc
           spotify
+          unstable.spotatui
           kooha
           simplescreenrecorder
 
@@ -138,6 +144,11 @@
 
       home.file.".config/koreader/plugins/cwasync.koplugin" = {
         source = koreaderCwaSyncPlugin;
+        recursive = true;
+      };
+
+      home.file.".config/koreader/plugins/AnnotationSync.koplugin" = {
+        source = koreaderAnnotationSyncPlugin;
         recursive = true;
       };
     };

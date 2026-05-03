@@ -146,6 +146,10 @@ in
               always = false;
             }
             {
+              command = "${config.home.homeDirectory}/.local/bin/emacs-mu4e-frame";
+              always = false;
+            }
+            {
               command = "swaymsg workspace 1";
               always = true;
             }
@@ -380,6 +384,9 @@ in
           # Firefox: no compositor border
           for_window [app_id="firefox"] border pixel 0
           for_window [class="Firefox"] border pixel 0
+
+          # Mail: dedicated mu4e frame on workspace 12
+          assign [title="^mu4e-mail$"] 12
         '';
       };
     };

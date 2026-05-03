@@ -7,18 +7,18 @@
         enable = true;
         # Enforce default search engine at the browser level for all profiles
         policies = {
-          DefaultSearchEngine = "SearXNG";
-          DefaultSearchEnginePrivate = "SearXNG";
+          DefaultSearchEngine = "Qwant";
+          DefaultSearchEnginePrivate = "Qwant";
           SearchSuggestEnabled = false;
           SearchEngines = {
             Add = [
               {
-                Name = "SearXNG";
-                URLTemplate = "https://search.rhscz.eu/search?q={searchTerms}";
-                IconURL = "https://search.rhscz.eu/favicon.ico";
+                Name = "Qwant";
+                URLTemplate = "https://www.qwant.com/?q={searchTerms}&t=all";
+                IconURL = "https://www.qwant.com/favicon.ico";
                 Aliases = [
-                  "@sx"
-                  "@searx"
+                  "@q"
+                  "@qwant"
                 ];
               }
             ];
@@ -27,24 +27,34 @@
         profiles = {
           default = {
             isDefault = true;
-            # Force a privacy-friendly, libre meta-search engine by default (SearXNG)
+            # Use Firefox's built-in Qwant engine id for the managed profile.
             search = {
-              default = "SearXNG";
+              default = "qwant";
+              privateDefault = "qwant";
               force = true;
+              order = [ "qwant" ];
               engines = {
-                "SearXNG" = {
-                  urls = [
-                    {
-                      # Use explicit query template; params sometimes misbehave across versions
-                      template = "https://search.rhscz.eu/search?q={searchTerms}";
-                    }
-                  ];
-                  searchForm = "https://search.rhscz.eu/";
-                  icon = "https://search.rhscz.eu/favicon.ico";
-                  definedAliases = [
-                    "@sx"
-                    "@searx"
-                  ];
+                qwant = {
+                  name = "Qwant";
+                  metaData.alias = "@q";
+                };
+                google = {
+                  metaData.hidden = true;
+                };
+                bing = {
+                  metaData.hidden = true;
+                };
+                duckduckgo = {
+                  metaData.hidden = true;
+                };
+                ebay = {
+                  metaData.hidden = true;
+                };
+                wikipedia = {
+                  metaData.hidden = true;
+                };
+                perplexity = {
+                  metaData.hidden = true;
                 };
               };
             };
@@ -53,7 +63,8 @@
               # Minimal privacy-friendly defaults
               "browser.search.suggest.enabled" = false;
               "browser.search.openintab" = true;
-              "browser.startup.page" = 3; # restore previous session
+              "browser.startup.page" = 1;
+              "browser.startup.homepage" = "http://server.tail7e8d6c.ts.net:8082";
             };
           };
         };

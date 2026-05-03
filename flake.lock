@@ -860,11 +860,11 @@
     },
     "nixpkgs-unstable": {
       "locked": {
-        "lastModified": 1776949667,
-        "narHash": "sha256-GMSVw35Q+294GlrTUKlx087E31z7KurReQ1YHSKp5iw=",
+        "lastModified": 1777548390,
+        "narHash": "sha256-WacE23EbHTsBKvr8cu+1DFNbP6Rh1brHUH5SDUI0NQI=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "01fbdeef22b76df85ea168fbfe1bfd9e63681b30",
+        "rev": "7aaa00e7cc9be6c316cb5f6617bd740dd435c59d",
         "type": "github"
       },
       "original": {
@@ -968,11 +968,11 @@
     },
     "nixpkgs_7": {
       "locked": {
-        "lastModified": 1775305101,
-        "narHash": "sha256-/74n1oQPtKG52Yw41cbToxspxHbYz6O3vi+XEw16Qe8=",
+        "lastModified": 1777428379,
+        "narHash": "sha256-ypxFOeDz+CqADEQNL72haqGjvZQdBR5Vc7pyx2JDttI=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "36a601196c4ebf49e035270e10b2d103fe39076b",
+        "rev": "755f5aa91337890c432639c60b6064bb7fe67769",
         "type": "github"
       },
       "original": {
@@ -1080,11 +1080,11 @@
     "secrets": {
       "flake": false,
       "locked": {
-        "lastModified": 1777225423,
-        "narHash": "sha256-TCnbIuv3fZihXFe9PFX6cZ7zRT2KihBc4c9AHhXIlPU=",
+        "lastModified": 1777836528,
+        "narHash": "sha256-nUZs+Tw8CLGlo52aYPmYJTSB+9cF3WoUxIh5lpvzJ1I=",
         "ref": "main",
-        "rev": "bf5c9be0ebcd02f47880354b4621675fd3e90320",
-        "revCount": 26,
+        "rev": "d61e6ed1e34002ee5ddc0b9a45eee8c7818f630c",
+        "revCount": 30,
         "type": "git",
         "url": "ssh://git@codeberg.org/lvanasse/secrets.git"
       },

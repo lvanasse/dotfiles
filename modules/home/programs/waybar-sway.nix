@@ -8,6 +8,25 @@
         date_utc=$(date -u +%H:%M:%S)
         printf "%s | %s" "$date_local" "$date_utc"
       '';
+      mailScript = pkgs.writeShellScript "waybar-mail-unread" ''
+        set -euo pipefail
+        mu_bin="${pkgs.mu}/bin/mu"
+        if [ ! -x "$mu_bin" ]; then
+          exit 0
+        fi
+        if [ ! -d "$HOME/.cache/mu" ]; then
+          printf '{"text":"","class":"hidden","tooltip":"mu database not initialized"}'
+          exit 0
+        fi
+        query='flag:unread AND NOT flag:trashed AND (maildir:/ludovic/Index OR maildir:/ludovic/Promotions OR maildir:/ludovic/SocialNetworks)'
+        count="$("$mu_bin" find --nocolor --format=plain "$query" 2>/dev/null | wc -l)"
+        count="$(printf '%s' "$count" | tr -d '[:space:]')"
+        if [ -z "$count" ] || [ "$count" = "0" ]; then
+          printf '{"text":"󰇯 0","class":"idle","tooltip":"No unread mail in Inbox, Promotions, or Social Networks"}'
+        else
+          printf '{"text":"󰇮 %s","class":"attention","tooltip":"%s unread mail in Inbox, Promotions, or Social Networks"}' "$count" "$count"
+        fi
+      '';
       modeScript = pkgs.writeShellScript "waybar-sway-mode" ''
         set -euo pipefail
         mode="$(${pkgs.sway}/bin/swaymsg -t get_binding_modes -r | ${pkgs.jq}/bin/jq -r '.[0]')"
@@ -29,6 +48,7 @@
         "modules-center" = [ ];
         "modules-right" = [
           "custom/power"
+          "custom/mail"
           "battery"
           "custom/weather"
           "custom/datetime"
@@ -52,6 +72,14 @@
           exec = "${datetimeScript}";
           format = "{}";
           tooltip = false;
+        };
+
+        "custom/mail" = {
+          interval = 30;
+          exec = "${mailScript}";
+          return-type = "json";
+          format = "{}";
+          "on-click" = "emacsclient -n -c --eval '(progn (require (quote mu4e)) (mu4e))'";
         };
 
         network = {
@@ -118,8 +146,10 @@
           background: transparent;
         }
         #workspaces button.active, #workspaces button.focused { color: ${config.theme.waybar.workspaceActiveFg}; background: ${config.theme.palette.dark1}; box-shadow: inset 0 -2px ${config.theme.palette.bright_orange}; font-weight: 600; }
-        #battery, #tray, #custom-weather, #custom-datetime, #custom-power, #custom-mode { padding: 0 10px; }
+        #battery, #tray, #custom-weather, #custom-datetime, #custom-power, #custom-mode, #custom-mail { padding: 0 10px; }
         #custom-mode { background: ${config.theme.palette.dark1}; color: ${config.theme.palette.bright_orange}; font-weight: 600; }
+        #custom-mail.attention { color: ${config.theme.palette.bright_orange}; font-weight: 700; }
+        #custom-mail.idle { color: ${config.theme.waybar.foreground}; }
         /* Add spacing between individual tray icons */
         #tray > .passive, #tray > .active, #tray > .needs-attention { padding: 0 5px; }
       '';

@@ -140,8 +140,12 @@
   homeDir = config.home.homeDirectory;
   jiraCfgAge = "${inputs.secrets}/jira/config.yml.age";
   jiraTokenAge = "${inputs.secrets}/jira/api_token.age";
+  infomaniakMailAge = "${inputs.secrets}/email/mail@ludovicvanasse.com-infomaniak.age";
+  infomaniakCaldavAge = "${inputs.secrets}/calendar/infomaniak-caldav-password.age";
   hasJiraCfg = builtins.pathExists jiraCfgAge;
   hasJiraToken = builtins.pathExists jiraTokenAge;
+  hasInfomaniakMail = builtins.pathExists infomaniakMailAge;
+  hasInfomaniakCaldav = builtins.pathExists infomaniakCaldavAge;
 in
 {
   # Host-specific overrides for the Home Manager-only configuration go here.
@@ -167,8 +171,8 @@ in
   home.file.".local/share/tcltk/lib/${pkgs.tk.libPrefix}".source = "${pkgs.tk}/lib/${pkgs.tk.libPrefix}";
 
   home.sessionVariables = {
-    EDITOR = "vim";
-    VISUAL = "vim";
+    EDITOR = lib.mkDefault "vim";
+    VISUAL = lib.mkDefault "vim";
     POETRY_VIRTUALENVS_OPTIONS_SYSTEM_SITE_PACKAGES = "true";
     TCL_LIBRARY = "${homeDir}/.local/share/tcltk/lib/${pkgs.tcl.libPrefix}";
     TK_LIBRARY = "${homeDir}/.local/share/tcltk/lib/${pkgs.tk.libPrefix}";
@@ -196,6 +200,20 @@ in
       "jira-api-token" = {
         file = jiraTokenAge;
         path = "${homeDir}/.config/.jira/JIRA_API_TOKEN";
+        mode = "0600";
+      };
+    })
+    // (lib.optionalAttrs hasInfomaniakMail {
+      "infomaniak-mail-password" = {
+        file = infomaniakMailAge;
+        path = "${homeDir}/.config/mail/infomaniak-password";
+        mode = "0600";
+      };
+    })
+    // (lib.optionalAttrs hasInfomaniakCaldav {
+      "infomaniak-caldav-password" = {
+        file = infomaniakCaldavAge;
+        path = "${homeDir}/.config/calendar/infomaniak-caldav-password";
         mode = "0600";
       };
     });

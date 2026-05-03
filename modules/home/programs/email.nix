@@ -1,4 +1,4 @@
-{ ... }:
+{ inputs, ... }:
 {
   flake.modules.homeManager."programs.email" =
     {
@@ -8,56 +8,64 @@
       ...
     }:
     let
-      # Toggle to activate account once server details are provided
       enableAccount = true;
+      homeDir = config.home.homeDirectory;
+      infomaniakPasswordAge = "${inputs.secrets}/email/mail@ludovicvanasse.com-infomaniak.age";
+      hasInfomaniakPassword = builtins.pathExists infomaniakPasswordAge;
+      infomaniakPasswordPath = "${homeDir}/.config/mail/infomaniak-password";
     in
     {
-      # Install mu/mu4e and helpers
       programs.mu.enable = true;
+      programs.mbsync.enable = true;
+      programs.msmtp.enable = true;
 
-      # Maildir base path under home
       accounts.email.maildirBasePath = "mail";
 
-      # Primary email account (fill in IMAP/SMTP details)
-      accounts.email.accounts.ludovic = {
-        address = "mail@ludovicvanasse.com";
-        userName = "mail@ludovicvanasse.com";
-        realName = "Ludovic Vanasse";
-        primary = true;
+      accounts.email.accounts.ludovic =
+        {
+          address = "mail@ludovicvanasse.com";
+          userName = "mail@ludovicvanasse.com";
+          realName = "Ludovic Vanasse";
+          primary = true;
 
-        imap = {
-          host = "imap.infomaniak.com";
-          port = 993;
-          tls.enable = true;
-        };
-        smtp = {
-          host = "smtp.infomaniak.com";
-          port = 465;
-          tls = {
-            enable = true;
-            useStartTls = false;
+          imap = {
+            host = "mail.infomaniak.com";
+            port = 993;
+            tls.enable = true;
           };
+          smtp = {
+            host = "mail.infomaniak.com";
+            port = 587;
+            tls = {
+              enable = true;
+              useStartTls = true;
+            };
+          };
+
+          folders = {
+            inbox = "Index";
+            sent = "Sent messages";
+            drafts = "Drafts";
+            trash = "Trash";
+          };
+
+          mbsync = {
+            enable = true;
+            create = "maildir";
+            expunge = "both";
+          };
+          msmtp.enable = true;
+          mu.enable = true;
+        }
+        // lib.optionalAttrs hasInfomaniakPassword {
+          passwordCommand = "cat ${infomaniakPasswordPath}";
         };
 
-        # Generate mbsync (isync) + msmtp configs; do not auto-run sync yet
-        mbsync = {
-          enable = true;
-          create = "maildir";
-          expunge = "both";
-        };
-        msmtp.enable = true;
-        mu.enable = true;
-
-        # Password retrieval: expects a command printing the password to stdout.
-        passwordCommand = "cat /run/agenix/infomaniak-password";
-      };
-
-      # Optionally enable periodic mailbox sync via systemd user timer
-      # Activate after confirming credentials and servers.
       services.mbsync = lib.mkIf enableAccount {
-        enable = false; # set to true once creds are configured
+        enable = true;
         frequency = "*:0/10"; # every 10 minutes
       };
+
       home.activation.mu-init = lib.hm.dag.entryAfter [ "mbsync" ] ''
         MU_STORE="${config.xdg.cacheHome}/mu"
         if [ ! -d "$MU_STORE" ]; then

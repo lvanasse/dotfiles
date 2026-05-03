@@ -75,6 +75,7 @@
         interfaces.enp1s0.allowedTCPPorts = lib.mkForce [
           22
           6767
+          8082
           8083
           8084
           13378

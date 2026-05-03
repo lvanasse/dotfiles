@@ -1,47 +1,37 @@
-{ ... }:
+{ inputs, ... }:
 {
   flake.modules.homeManager."programs.calendar" =
-    { config, lib, ... }:
+    {
+      config,
+      lib,
+      ...
+    }:
     let
-      # Toggle to enable once server URL and credentials are known
-      enableCalDAV = false;
+      homeDir = config.home.homeDirectory;
+      caldavPasswordAge = "${inputs.secrets}/calendar/infomaniak-caldav-password.age";
+      hasCaldavPassword = builtins.pathExists caldavPasswordAge;
+      caldavPasswordPath = "${homeDir}/.config/calendar/infomaniak-caldav-password";
     in
     {
-      # vdirsyncer for CalDAV/CardDAV sync (disabled until configured)
-      services.vdirsyncer = lib.mkIf enableCalDAV {
-        enable = true;
-        frequency = "hourly";
-        # You can manage config via xdg.configFile if you prefer.
-      };
+      home.activation.ensureOrgCalendarDir = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        mkdir -p "${homeDir}/org"
+      '';
 
-      # khal terminal calendar (optional)
-      programs.khal = lib.mkIf enableCalDAV {
-        enable = true;
-      };
+      xdg.configFile."calendar/README".text = ''
+        Infomaniak CalDAV for Spacemacs/org-caldav
 
-      # Example vdirsyncer config (fill and then set enableCalDAV = true above)
-      xdg.configFile."vdirsyncer/config" = lib.mkIf enableCalDAV {
-        text = ''
-          [general]
-          status_path = "${config.home.homeDirectory}/.vdirsyncer/status/"
+        Secret file expected by the config:
+        ${caldavPasswordPath}
 
-          [pair cal]
-          a = "cal_remote"
-          b = "cal_local"
-          collections = ["from a", "from b"]
+        CalDAV URL:
+        https://sync.infomaniak.com/calendars/LV04107/
 
-          [storage cal_remote]
-          type = "caldav"
-          url = "https://caldav.example.com/remote.php/dav/calendars/USERNAME/"
-          username = "mail@ludovicvanasse.com"
-          password = ""  # Use 'password_command' with secret-tool/pass for security
-          # password_command = ["secret-tool", "lookup", "calendar", "ludovic"]
+        Calendar ID:
+        a0fe5b9b-1a59-4cbe-8b13-bd262bf0738b
+      '';
 
-          [storage cal_local]
-          type = "filesystem"
-          path = "${config.home.homeDirectory}/.calendars/"
-          fileext = ".ics"
-        '';
+      home.sessionVariables = {
+        ORG_CALDAV_PASSWORD_FILE = caldavPasswordPath;
       };
     };
 }

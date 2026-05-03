@@ -196,6 +196,12 @@ in
   flake.modules.nixos."services.arr-sync" =
     { pkgs, ... }:
     {
+      system.activationScripts.arrSecretsPathCleanup.text = ''
+        if [ -d /run/agenix/arr-secrets.yml ]; then
+          rm -rf /run/agenix/arr-secrets.yml
+        fi
+      '';
+
       age.secrets = lib.mkIf hasAgeSecrets {
         "arr-secrets" = {
           file = arrSecretsAge;

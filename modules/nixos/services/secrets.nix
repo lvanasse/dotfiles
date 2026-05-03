@@ -4,6 +4,8 @@ let
   # Paths inside the private secrets repo input
   jiraCfgAge = "${inputs.secrets}/jira/config.yml.age";
   jiraTokenAge = "${inputs.secrets}/jira/api_token.age";
+  infomaniakMailPassword = "${inputs.secrets}/email/mail@ludovicvanasse.com-infomaniak.age";
+  infomaniakCaldavPassword = "${inputs.secrets}/calendar/infomaniak-caldav-password.age";
   codexOpenAI = "${inputs.secrets}/codex/openai_api_key.age";
   codexTavily = "${inputs.secrets}/codex/tavily_api_key.age";
   codexBing = "${inputs.secrets}/codex/bing_search_v7_key.age";
@@ -43,6 +45,40 @@ in
                 file = jiraTokenAge;
                 # Keep token alongside jira config directory
                 path = "/home/${username}/.config/.jira/JIRA_API_TOKEN";
+                mode = "0600";
+                owner = username;
+                group = "users";
+              };
+            }
+          else
+            { }
+        )
+        // (
+          let
+            hasMail = builtins.pathExists infomaniakMailPassword;
+          in
+          if hasMail then
+            {
+              "infomaniak-mail-password" = {
+                file = infomaniakMailPassword;
+                path = "/home/${username}/.config/mail/infomaniak-password";
+                mode = "0600";
+                owner = username;
+                group = "users";
+              };
+            }
+          else
+            { }
+        )
+        // (
+          let
+            hasCal = builtins.pathExists infomaniakCaldavPassword;
+          in
+          if hasCal then
+            {
+              "infomaniak-caldav-password" = {
+                file = infomaniakCaldavPassword;
+                path = "/home/${username}/.config/calendar/infomaniak-caldav-password";
                 mode = "0600";
                 owner = username;
                 group = "users";

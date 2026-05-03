@@ -10,6 +10,19 @@
         config.flake.modules.homeManager."terminal.wezterm"
         config.flake.modules.homeManager."terminal.foot"
       ];
+
+      home.file.".local/bin/term-emacs" = {
+        executable = true;
+        text = ''
+          #!/bin/sh
+          exec emacsclient -t -a "" "$@"
+        '';
+      };
+
+      home.sessionVariables = {
+        EDITOR = "$HOME/.local/bin/term-emacs";
+        VISUAL = "$HOME/.local/bin/term-emacs";
+      };
     };
 
   flake.modules.homeManager.terminalBash = config.flake.modules.homeManager."terminal.bash";

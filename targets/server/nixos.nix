@@ -19,9 +19,12 @@
     flakeModules.nixos."services.vikunja"
     flakeModules.nixos."services.linkwarden"
     flakeModules.nixos."services.ebooks"
+    flakeModules.nixos."services.annotationsync"
     flakeModules.nixos."services.shelfmark"
     flakeModules.nixos."services.actual"
     flakeModules.nixos."services.dockhand"
+    flakeModules.nixos."services.mousehole"
+    flakeModules.nixos."services.homepage-dashboard"
     flakeModules.nixos."target.config.server"
   ];
 }

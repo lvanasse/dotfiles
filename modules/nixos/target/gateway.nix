@@ -57,7 +57,7 @@ in
           allowedUDPPorts = lib.mkForce [ ];
 
           interfaces.${lanIf} = {
-            allowedTCPPorts = [ 22 53 3000 ];
+            allowedTCPPorts = [ 22 53 3000 8082 ];
             allowedUDPPorts = [ 53 67 ];
           };
         };

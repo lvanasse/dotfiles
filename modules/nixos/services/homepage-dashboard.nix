@@ -420,11 +420,11 @@
           .information-widget img,
           .logo-container img,
           .logo img {
-            width: 90px !important;
-            height: 90px !important;
+            width: 120px !important;
+            height: 120px !important;
             object-fit: cover !important;
             object-position: center center !important;
-            border-radius: 10px !important;
+            border-radius: 5px !important;
           }
 
           h1, h2, h3, h4, .group-title {

@@ -66,6 +66,10 @@
         frequency = "*:0/10"; # every 10 minutes
       };
 
+      systemd.user.services.mbsync.Service.ExecStopPost = lib.mkIf enableAccount [
+        "${pkgs.mu}/bin/mu index"
+      ];
+
       home.activation.mu-init = lib.hm.dag.entryAfter [ "mbsync" ] ''
         MU_STORE="${config.xdg.cacheHome}/mu"
         if [ ! -d "$MU_STORE" ]; then

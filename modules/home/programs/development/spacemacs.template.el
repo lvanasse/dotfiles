@@ -184,9 +184,10 @@
 
   (with-eval-after-load 'org
     (setq org-directory "~/org")
-    (let ((calendar-file (expand-file-name "calendar.org" org-directory)))
-      (unless (member calendar-file org-agenda-files)
-        (add-to-list 'org-agenda-files calendar-file)))
+    (dolist (agenda-file '("calendar.org" "reminders.org"))
+      (let ((path (expand-file-name agenda-file org-directory)))
+        (unless (member path org-agenda-files)
+          (add-to-list 'org-agenda-files path))))
     (setq appt-message-warning-time 15
           appt-display-interval 5
           appt-display-mode-line t)
@@ -284,45 +285,6 @@
                      (cons `("Authorization" . ,auth) extra-headers)
                    extra-headers)))))
 
-  (defun my/org-caldav-keep-repeater-p (date)
-    "Keep RRULE-derived repeaters only for current-year-or-newer events."
-    (let* ((parts (mapcar #'string-to-number (split-string date)))
-           (year (nth 2 parts))
-           (current-year (string-to-number (format-time-string "%Y"))))
-      (>= year current-year)))
-
-  (defun my/org-caldav-strip-old-repeaters ()
-    "Remove Org repeaters from imported calendar entries older than the current year."
-    (interactive)
-    (let* ((calendar-file (expand-file-name "~/org/calendar.org"))
-           (current-year (string-to-number (format-time-string "%Y")))
-           (changed 0))
-      (when (file-readable-p calendar-file)
-        (with-current-buffer (find-file-noselect calendar-file)
-          (save-excursion
-            (goto-char (point-min))
-            (while (not (eobp))
-              (let ((line (buffer-substring-no-properties
-                           (line-beginning-position)
-                           (line-end-position))))
-                (when (and (string-match "^<\\([0-9]\\{4\\}\\)-" line)
-                           (< (string-to-number (match-string 1 line)) current-year)
-                           (string-match " \\(?:\\.\\+\\|\\+\\+\\|\\+\\)[0-9]+[hdwmy]>" line))
-                  (setq line
-                        (replace-regexp-in-string
-                         " \\(?:\\.\\+\\|\\+\\+\\|\\+\\)[0-9]+[hdwmy]>"
-                         ">"
-                         line))
-                  (delete-region (line-beginning-position) (line-end-position))
-                  (insert line)
-                  (setq changed (1+ changed))))
-              (forward-line 1)))
-          (when (> changed 0)
-            (save-buffer))))
-      (when (called-interactively-p 'interactive)
-        (message "Removed %s old calendar repeaters." changed))
-      changed))
-
   (use-package org-caldav
     :after org
     :commands (org-caldav-sync my/org-caldav-sync my/org-caldav-reset-state)
@@ -356,16 +318,6 @@
   )
   (advice-add 'org-caldav-url-retrieve-synchronously :around
               #'my/org-caldav-inject-basic-auth)
-  (advice-add 'org-caldav-convert-to-org-time :around
-              (lambda (orig-fn date &optional time rrule-props)
-                (if (and rrule-props (not (my/org-caldav-keep-repeater-p date)))
-                    (funcall orig-fn date time nil)
-                  (funcall orig-fn date time rrule-props))))
-  (advice-add 'org-caldav-sync :after
-              (lambda (&rest _)
-                (my/org-caldav-strip-old-repeaters)
-                (when (fboundp 'my/org-agenda-to-appt)
-                  (my/org-agenda-to-appt))))
   (add-hook 'after-init-hook #'my/org-caldav-start-auto-sync)
   (spacemacs/set-leader-keys
     "ac" 'my/org-caldav-sync

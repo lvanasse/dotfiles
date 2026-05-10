@@ -14,6 +14,7 @@
     flakeModules.nixos."services.nextcloud"
     flakeModules.nixos."services.mariadb"
     flakeModules.nixos."services.vaultwarden"
+    flakeModules.nixos."services.vaultwarden-backup"
     flakeModules.nixos."services.cloudflared"
     flakeModules.nixos."services.fail2ban"
     flakeModules.nixos."services.vikunja"

@@ -201,6 +201,7 @@ in
           rm -rf /run/agenix/arr-secrets.yml
         fi
       '';
+      system.activationScripts.agenixInstall.deps = lib.mkAfter [ "arrSecretsPathCleanup" ];
 
       age.secrets = lib.mkIf hasAgeSecrets {
         "arr-secrets" = {

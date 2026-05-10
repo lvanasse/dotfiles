@@ -40,6 +40,7 @@
         allowedHosts = lib.concatStringsSep "," [
           "localhost:8082"
           "127.0.0.1:8082"
+          "127.0.0.1:8091"
           "${host}:8082"
           "${localLanAddress}:8082"
           "${localTailscaleHost}:8082"
@@ -182,11 +183,38 @@
                     };
                   }
                   {
+                    Bazarr = {
+                      href = "http://${serverTailscaleHost}:6767";
+                      description = "Subtitle automation";
+                      server = "local";
+                      container = "bazarr";
+                      showStats = true;
+                    };
+                  }
+                  {
+                    Lidarr = {
+                      href = "http://${serverTailscaleHost}:8686";
+                      description = "Music automation";
+                      server = "local";
+                      container = "lidarr";
+                      showStats = true;
+                    };
+                  }
+                  {
                     Prowlarr = {
                       href = "http://${serverTailscaleHost}:9696";
                       description = "Indexer manager";
                       server = "local";
                       container = "prowlarr";
+                      showStats = true;
+                    };
+                  }
+                  {
+                    Jellyseerr = {
+                      href = "http://${serverTailscaleHost}:5055";
+                      description = "Media requests";
+                      server = "local";
+                      container = "jellyseerr";
                       showStats = true;
                     };
                   }
@@ -226,10 +254,50 @@
                       showStats = true;
                     };
                   }
+                  {
+                    Calibre = {
+                      href = "http://${serverTailscaleHost}:8780";
+                      description = "Desktop calibre server";
+                      server = "local";
+                      container = "calibre";
+                      showStats = true;
+                    };
+                  }
+                ];
+              }
+              {
+                Downloads = [
+                  {
+                    qBittorrent = {
+                      href = "http://${serverTailscaleHost}:8081";
+                      description = "Torrent client";
+                      server = "local";
+                      container = "qbittorrent";
+                      showStats = true;
+                    };
+                  }
+                  {
+                    Flaresolverr = {
+                      href = "http://${serverTailscaleHost}:8191";
+                      description = "Cloudflare bypass API";
+                      server = "local";
+                      container = "flaresolverr";
+                      showStats = true;
+                    };
+                  }
                 ];
               }
               {
                 Productivity = [
+                  {
+                    Nextcloud = {
+                      href = "http://${serverTailscaleHost}:444";
+                      description = "Files and collaboration";
+                      server = "local";
+                      container = "nextcloud";
+                      showStats = true;
+                    };
+                  }
                   {
                     Vikunja = {
                       href = "http://${serverTailscaleHost}:3456";
@@ -271,20 +339,40 @@
               {
                 Infra = [
                   {
+                    VaultwardenBackup = {
+                      href = "http://${serverTailscaleHost}:4743";
+                      description = "Nightly Restic backup to kDrive";
+                      widget = {
+                        type = "customapi";
+                        url = "http://127.0.0.1:8091/status.json";
+                        refreshInterval = 30000;
+                        mappings = [
+                          {
+                            field = "backup.status";
+                            label = "Backup";
+                          }
+                          {
+                            field = "backup.finishedAt";
+                            label = "Last backup";
+                          }
+                          {
+                            field = "restoreTest.status";
+                            label = "Restore";
+                          }
+                          {
+                            field = "restoreTest.finishedAt";
+                            label = "Last restore";
+                          }
+                        ];
+                      };
+                    };
+                  }
+                  {
                     Dockhand = {
                       href = "http://${serverTailscaleHost}:3001";
                       description = "Docker compose dashboard";
                       server = "local";
                       container = "dockhand";
-                      showStats = true;
-                    };
-                  }
-                  {
-                    Nextcloud = {
-                      href = "http://${serverTailscaleHost}:444";
-                      description = "Files and collaboration";
-                      server = "local";
-                      container = "nextcloud";
                       showStats = true;
                     };
                   }
@@ -295,6 +383,12 @@
                       server = "local";
                       container = "mousehole";
                       showStats = true;
+                    };
+                  }
+                  {
+                    AnnotationSync = {
+                      href = "http://${serverTailscaleHost}:8085";
+                      description = "KOReader annotation WebDAV";
                     };
                   }
                 ];
@@ -349,15 +443,19 @@
           layout = {
             Media = {
               style = "row";
-              columns = 5;
+              columns = 4;
+            };
+            Downloads = {
+              style = "row";
+              columns = 3;
             };
             Productivity = {
               style = "row";
-              columns = 4;
+              columns = 3;
             };
             Infra = {
               style = "row";
-              columns = 4;
+              columns = 3;
             };
             Network = {
               style = "row";
@@ -409,12 +507,30 @@
           .information-widgets,
           .services,
           .bookmarks {
-            gap: 0.5rem !important;
+            gap: 0.8rem !important;
           }
 
           .service, .bookmark, .information-widget, .card, .service-card {
-            padding: 0.55rem 0.7rem !important;
-            border-radius: 8px !important;
+            padding: 1rem 1.05rem !important;
+            border-radius: 12px !important;
+            border-width: 2px !important;
+          }
+
+          .service, .service-card {
+            min-height: 160px !important;
+          }
+
+          .service .title,
+          .service-card .title {
+            font-size: 1.02rem !important;
+            font-weight: 700 !important;
+            line-height: 1.25 !important;
+          }
+
+          .service .description,
+          .service-card .description {
+            font-size: 0.92rem !important;
+            line-height: 1.4 !important;
           }
 
           .information-widget img,

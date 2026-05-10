@@ -9,10 +9,26 @@ let
 in
 {
   flake.modules.homeManager."programs.ssh" =
-    { ... }:
+    { pkgs, ... }:
     {
-      home.file = lib.optionalAttrs hasPersonalPub {
-        ".ssh/id_ed25519_personal.pub".source = personalPub;
+      home.file =
+        (lib.optionalAttrs hasPersonalPub {
+          ".ssh/id_ed25519_personal.pub".source = personalPub;
+        })
+        // {
+          ".local/bin/wake-pc" = {
+            executable = true;
+            text = ''
+              #!${pkgs.bash}/bin/bash
+              set -euo pipefail
+
+              if command -v wake-pc-lan >/dev/null 2>&1; then
+                exec wake-pc-lan "$@"
+              fi
+
+              exec ${pkgs.openssh}/bin/ssh server-ts wake-pc-lan "$@"
+            '';
+          };
       };
 
       # SSH configuration for different keys

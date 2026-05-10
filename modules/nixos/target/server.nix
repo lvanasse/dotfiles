@@ -2,6 +2,17 @@
 {
   flake.modules.nixos."target.config.server" =
     { inputs, username, pkgs, ... }:
+    let
+      wakePcLan = pkgs.writeShellApplication {
+        name = "wake-pc-lan";
+        runtimeInputs = [ pkgs.wakeonlan ];
+        text = ''
+          set -euo pipefail
+
+          exec wakeonlan -i 192.168.0.255 f0:2f:74:da:87:01
+        '';
+      };
+    in
     {
       imports = [
         inputs.disko.nixosModules.disko
@@ -60,6 +71,8 @@
         curl
         wget
         rsync
+        wakePcLan
+        wakeonlan
         pkgs.llm-agents.codex
       ];
 

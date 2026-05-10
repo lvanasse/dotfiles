@@ -6,7 +6,11 @@
     flakeModules.nixos."services.ssh-keys"
     flakeModules.nixos."services.fail2ban"
     flakeModules.nixos."services.tailscale"
-    flakeModules.nixos."services.homepage-dashboard"
     flakeModules.nixos."target.config.gateway"
+  ];
+
+  networking.nameservers = [
+    "1.1.1.1"
+    "9.9.9.9"
   ];
 }

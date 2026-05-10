@@ -63,6 +63,8 @@
               # Minimal privacy-friendly defaults
               "browser.search.suggest.enabled" = false;
               "browser.search.openintab" = true;
+              "browser.urlbar.placeholderName" = "Qwant";
+              "browser.urlbar.placeholderName.private" = "Qwant";
               "browser.startup.page" = 1;
               "browser.startup.homepage" = "http://server.tail7e8d6c.ts.net:8082";
             };

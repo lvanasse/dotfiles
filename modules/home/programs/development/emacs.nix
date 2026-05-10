@@ -37,9 +37,20 @@
             gruvbox-theme
             vterm
             clipetty
+            alert
+            centaur-tabs
+            copilot
             mu4e
             mu4e-alert
             copilot-chat
+            emoji-cheat-sheet-plus
+            flycheck
+            flycheck-pos-tip
+            flyspell-correct
+            flyspell-correct-ivy
+            mcp
+            pdf-tools
+            slack
             aidermacs
             bitbake-ts-mode
             nix-mode
@@ -77,6 +88,136 @@
             --eval "(progn (require 'mu4e) (mu4e) nil)"
         '';
       };
+
+      xdg.configFile."rcirc/README".text = ''
+        rcirc / Libera Chat setup
+
+        Native Spacemacs entrypoint:
+        - `SPC a c i r` opens rcirc using the managed Libera defaults.
+
+        Current direct IRC target:
+        - server: `irc.libera.chat`
+        - port: `6697`
+        - transport: TLS
+
+        If you want NickServ auth, put your credential in `~/.authinfo.gpg`.
+        Example entry:
+
+        machine irc.libera.chat port nickserv user YOUR_LIBERA_NICK password YOUR_LIBERA_PASSWORD
+
+        The nick and default channels are configured in `.spacemacs`.
+        Once connected, `/nick NEWNICK` is the native rcirc way to change nicks.
+      '';
+
+      xdg.configFile."slack/README".text = ''
+        Slack in Emacs
+
+        Native Spacemacs entrypoints:
+        - `SPC a c s s` starts or reconnects Slack.
+        - `SPC a c s j` joins a channel.
+        - `SPC a c s d` opens a direct message.
+        - `SPC a c s u` shows unread rooms.
+        - `SPC a c s a` shows the activity feed.
+
+        Private configuration:
+        - Put your `slack-register-team` forms in
+          `${config.home.homeDirectory}/.config/slack/private.el`
+        - That file is loaded automatically if present.
+        - Keep client ID, client secret, and token there, not in the repo.
+
+        Minimal example:
+
+        (slack-register-team
+          :name "work"
+          :default t
+          :client-id "..."
+          :client-secret "..."
+          :token "xoxp-..."
+          :subscribed-channels '(general))
+      '';
+
+      xdg.configFile."copilot-chat/README".text = ''
+        Copilot Chat in Emacs
+
+        Spacemacs entrypoints:
+        - `SPC $ c` opens the native GitHub Copilot chat transient.
+        - `SPC $ m` opens `*Mcp-Hub*` for MCP servers if you configure them later.
+        - In a Copilot prompt buffer, `C-c C-c` sends and `C-c C-k` kills the chat.
+        - In normal state inside chat, `,,` sends and `,k` kills the chat.
+
+        Native Copilot completion bindings:
+        - `C-M-<return>` accepts the current completion.
+        - `C-M-S-<return>` accepts one word.
+        - `C-M-<tab>` and `C-M-<iso-lefttab>` cycle suggestions.
+
+        Native Spacemacs mail entrypoints:
+        - `SPC a e m` opens mu4e.
+        - `SPC a e c` composes a new message.
+        - `SPC a e u` updates mail and index.
+
+        Native Org/Calendar entrypoints:
+        - `SPC a o a` opens the agenda.
+        - `SPC a o c` captures a new Org item.
+        - `SPC a o S` runs the managed CalDAV sync command.
+
+        Authentication:
+        1. For inline completion, run `SPC SPC copilot-install-server` once if needed.
+        2. Run `SPC SPC copilot-login` for the completion side if prompted.
+        3. Open chat with `SPC $ c` and choose the chat action from the transient.
+        4. Send a prompt.
+        5. Follow the device-flow instructions shown by `copilot-chat`.
+        6. In the browser, sign into the GitHub account that has the Copilot license.
+        7. If your work org uses SAML SSO, authorize it there too.
+
+        Managed storage paths:
+        - token: `${config.home.homeDirectory}/.config/copilot-chat/github-token`
+        - cache: `${config.home.homeDirectory}/.local/state/copilot-chat/token-cache`
+        - saved chats: `${config.home.homeDirectory}/.local/state/copilot-chat/chats/`
+
+        Runtime expectations:
+        - `curl` must be available (managed by this config).
+        - `node` and `npm` must be in `PATH` for the Copilot language server.
+        - A browser is needed for the first interactive device-flow login.
+        - `python3` is only needed later if you add MCP servers that require it.
+        - `gh auth status` is optional if you want to verify which GitHub account
+          is active outside Emacs.
+
+        Model behavior:
+        - The managed default is `gpt-4.1`.
+        - Use the native Copilot chat transient to change model for the current chat.
+      '';
+
+      xdg.configFile."spell-checking/README".text = ''
+        Spell checking in Emacs
+
+        Native Spacemacs entrypoints:
+        - `SPC t S` toggles flyspell in the current buffer.
+        - `SPC S b` checks the whole buffer.
+        - `SPC S s` corrects the word at point.
+        - `SPC S d` changes dictionary.
+
+        Managed backend:
+        - `aspell` is installed declaratively.
+        - Default dictionary is `en`.
+        - Switch to French with `SPC S d` when needed.
+      '';
+
+      xdg.configFile."tabs/README".text = ''
+        Tabs in Emacs
+
+        Native Spacemacs entrypoints:
+        - `g t` moves to the next tab.
+        - `g T` moves to the previous tab.
+        - `g C-t` moves the current tab right.
+        - `g C-S-t` moves the current tab left.
+        - `C-c t s` switches tab groups.
+        - `C-c t p` groups tabs by project.
+      '';
+
+      home.activation.ensureEmacsStateDirs = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        mkdir -p \
+          "${config.home.homeDirectory}/.local/state/copilot-chat/chats"
+      '';
 
       home.activation.removeXDGInit = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         XDG_INIT="${config.home.homeDirectory}/.config/emacs/init.el"

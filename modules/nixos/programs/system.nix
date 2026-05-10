@@ -97,6 +97,13 @@ in
         fi
         echo "[cfg] Nix: leaving ''${reserve_cores} machine core(s) free; build cores=''${build_cores}; max-jobs=''${max_jobs}" >&2
 
+        should_validate_spacemacs() {
+          case "''${host}" in
+            pc|laptop|hm-only) return 0 ;;
+            *) return 1 ;;
+          esac
+        }
+
         # hm-only is a Home Manager-only target; delegate to nix-switch helper.
         if [ "''${host}" = "hm-only" ]; then
           if [ -n "''${target_host}" ]; then
@@ -127,6 +134,11 @@ in
         else
           echo "[1/2] Home Manager: home-manager switch --flake ''${flake_dir}#${username}@''${host} -b ''${bext}" >&2
           NIX_CONFIG="''${nix_config}" "$hm_bin" switch --flake "''${flake_dir}#${username}@''${host}" -b "''${bext}"
+        fi
+
+        if should_validate_spacemacs && [ -x "''${flake_dir}/scripts/validate-spacemacs.sh" ]; then
+          echo "[1.5/2] Spacemacs: validating deployed config" >&2
+          "''${flake_dir}/scripts/validate-spacemacs.sh" "$HOME/.spacemacs" "$HOME/.emacs.d"
         fi
 
         echo "[2/2] NixOS: nh os switch -H ''${host} ''${pass_args[*]}" >&2

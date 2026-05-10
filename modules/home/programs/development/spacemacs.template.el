@@ -10,20 +10,35 @@
      better-defaults
      git
      org
+     (tabs :variables tabs-icons nil)
      (auto-completion :variables auto-completion-enable-snippets-in-popup t)
+     spell-checking
      syntax-checking
      ivy
      lsp
      (treemacs :variables treemacs-use-follow-mode t)
      c-c++
+     claude-code
      cmake
+     docker
+     github-copilot
+     (mu4e :variables
+            mu4e-installation-path "__MU_SITE_LISP_MU4E__"
+            mu4e-enable-notifications t
+            mu4e-enable-mode-line t)
      markdown
+     nixos
+     pdf
      python
      yaml
+     (rcirc :variables rcirc-enable-authinfo-support t)
+     rust
+     slack
+     spotify
      (shell :variables shell-default-shell 'vterm)
      shell-scripts
    )
-   dotspacemacs-additional-packages '(gruvbox-theme vterm clipetty copilot-chat aidermacs bitbake-ts-mode nix-mode org-caldav)
+   dotspacemacs-additional-packages '(gruvbox-theme vterm clipetty aidermacs bitbake-ts-mode nix-mode json-mode org-caldav)
    dotspacemacs-excluded-packages '(forge)))
 
 (defun dotspacemacs/init ()
@@ -71,29 +86,21 @@
 
   (setq select-enable-clipboard t
         save-interprogram-paste-before-kill t)
+
+  ;; The native github-copilot layer binds keys on this map in its :config,
+  ;; but the installed copilot-chat package only defines it after loading the
+  ;; prompt-mode file. Seed it early so the layer config does not explode.
+  (defvar copilot-chat-prompt-mode-map (make-sparse-keymap))
+
+  (setq user-full-name "Ludovic Vanasse"
+        user-mail-address "mail@ludovicvanasse.com")
+
+  (setq ispell-program-name "aspell"
+        ispell-dictionary "en")
+
   (when (and (not (display-graphic-p))
              (require 'clipetty nil t))
     (global-clipetty-mode 1))
-
-  ;; Load mu4e from the Nix store so Spacemacs can use the Home Manager
-  ;; mail stack without relying on ELPA packaging.
-  (dolist (mu4e-path
-           (delete-dups
-            (append
-             (file-expand-wildcards "/nix/store/*-mu-*/share/emacs/site-lisp/mu4e")
-             (file-expand-wildcards "/nix/store/*-mu-*/share/emacs/site-lisp/mu")
-             (file-expand-wildcards "/nix/store/*-mu-*/share/emacs/site-lisp")
-             '("__MU_SITE_LISP_MU4E__"
-               "__MU_SITE_LISP_MU__"
-               "__MU_SITE_LISP__"))))
-    (when (file-directory-p mu4e-path)
-      (add-to-list 'load-path mu4e-path)))
-
-  (defun my/mu4e ()
-    (interactive)
-    (unless (require 'mu4e nil t)
-      (user-error "mu4e is not available; run Home Manager switch and restart Emacs"))
-    (call-interactively #'mu4e))
 
   (defun my/mu4e-compose-new ()
     (interactive)
@@ -117,6 +124,9 @@
             vterm-shell fish
             multi-term-program fish)
       (setenv "SHELL" fish)))
+
+  (spacemacs/set-leader-keys
+    "'" 'spacemacs/default-pop-shell)
 
   (add-hook 'before-save-hook #'delete-trailing-whitespace)
 
@@ -181,6 +191,40 @@
     (with-eval-after-load 'eglot
       (add-to-list 'eglot-server-programs
                    `(nix-mode . ,#'my/nixd-contact))))
+
+  (defvar my/rcirc-server "irc.libera.chat"
+    "Primary IRC server for the native rcirc layer.")
+
+  (defvar my/rcirc-port "6697"
+    "TLS port for the native rcirc layer.")
+
+  (defvar my/rcirc-nick (or (getenv "RCIRC_NICK") "lvanasse")
+    "IRC nick used by rcirc.")
+
+  (defvar my/rcirc-user-name my/rcirc-nick
+    "IRC user name used by rcirc.")
+
+  (defvar my/rcirc-full-name user-full-name
+    "Full name announced by rcirc.")
+
+  (defvar my/rcirc-channels '("#emacs" "#yocto")
+    "Channels to autojoin on Libera Chat.")
+
+  (setq rcirc-default-nick my/rcirc-nick
+        rcirc-default-user-name my/rcirc-user-name
+        rcirc-default-full-name my/rcirc-full-name
+        rcirc-server-alist
+        `((,my/rcirc-server
+           :encryption tls
+           :port ,my/rcirc-port
+           :nick ,my/rcirc-nick
+           :user-name ,my/rcirc-user-name
+           :full-name ,my/rcirc-full-name
+           :channels ,my/rcirc-channels)))
+
+  (let ((slack-private-config (expand-file-name "~/.config/slack/private.el")))
+    (when (file-readable-p slack-private-config)
+      (load slack-private-config nil 'nomessage)))
 
   (with-eval-after-load 'org
     (setq org-directory "~/org")
@@ -320,9 +364,9 @@
               #'my/org-caldav-inject-basic-auth)
   (add-hook 'after-init-hook #'my/org-caldav-start-auto-sync)
   (spacemacs/set-leader-keys
-    "ac" 'my/org-caldav-sync
-    "am" 'my/mu4e
-    "aM" 'my/mu4e-compose-new)
+    "aoS" 'my/org-caldav-sync
+    "aec" 'my/mu4e-compose-new
+    "aeu" 'mu4e-update-mail-and-index)
 
   ;; Reuse the existing Maildir + mbsync/msmtp setup from Home Manager.
   (use-package mu4e
@@ -333,7 +377,7 @@
           read-mail-command #'mu4e
           mu4e-maildir "~/mail"
           mu4e-drafts-folder "/ludovic/Drafts"
-          mu4e-sent-folder "/ludovic/Sent messages"
+          mu4e-sent-folder "/ludovic/Sent"
           mu4e-trash-folder "/ludovic/Trash"
           mu4e-refile-folder "/ludovic/Archives"
           mu4e-get-mail-command "__ISYNC_BIN__ -a"
@@ -350,7 +394,7 @@
             (:maildir "/ludovic/Promotions" :key ?p :name "Promotions")
             (:maildir "/ludovic/SocialNetworks" :key ?n :name "Social Networks")
             (:maildir "/ludovic/Drafts" :key ?d :name "Drafts")
-            (:maildir "/ludovic/Sent messages" :key ?s :name "Sent messages")
+            (:maildir "/ludovic/Sent" :key ?s :name "Sent")
             (:maildir "/ludovic/Spam" :key ?x :name "Spam")
             (:maildir "/ludovic/Trash" :key ?t :name "Trash")
             (:maildir "/ludovic/Archives" :key ?a :name "Archives"))
@@ -358,7 +402,7 @@
           '((:name "Unread messages" :query "flag:unread AND NOT flag:trashed" :key ?u)
             (:name "Today's messages" :query "date:today..now" :key ?t)
             (:name "Last 7 days" :query "date:7d..now" :key ?w)
-            (:name "Sent mail" :query "maildir:/ludovic/Sent messages" :key ?s)))
+            (:name "Sent mail" :query "maildir:/ludovic/Sent" :key ?s)))
     :config
     (global-set-key (kbd "C-x m") #'mu4e-compose-new))
 
@@ -370,6 +414,33 @@
           mu4e-alert-style 'notifications)
     (mu4e-alert-enable-notifications)
     (mu4e-alert-enable-mode-line-display))
+
+  ;; Use the native Spacemacs GitHub Copilot layer for chat and completions.
+  (setq github-copilot-enable-commit-messages nil)
+
+  (spacemacs|use-package-add-hook copilot-chat
+    :pre-config
+    (require 'copilot-chat nil t))
+
+  (with-eval-after-load 'copilot
+    (setq copilot-indent-offset-warning-disable t))
+
+  (with-eval-after-load 'copilot-chat
+    (let ((copilot-chat-config-dir (expand-file-name "~/.config/copilot-chat/"))
+          (copilot-chat-state-dir (expand-file-name "~/.local/state/copilot-chat/")))
+      (setq copilot-chat-backend 'curl
+            copilot-chat-curl-program "__CURL_BIN__"
+            copilot-chat-frontend 'markdown
+            copilot-chat-follow t
+            copilot-chat-default-model "gpt-4.1"
+            copilot-chat-github-token-file
+            (expand-file-name "github-token" copilot-chat-config-dir)
+            copilot-chat-token-cache
+            (expand-file-name "token-cache" copilot-chat-state-dir)
+            copilot-chat-models-cache-file
+            (expand-file-name "models.json" copilot-chat-state-dir)
+            copilot-chat-default-save-dir
+            (expand-file-name "chats/" copilot-chat-state-dir))))
 
   ;; LSP tuning for work languages.
   (with-eval-after-load 'lsp-mode
@@ -421,34 +492,4 @@
       (spacemacs/set-leader-keys-for-major-mode mode
         "aa" 'aidermacs-transient-menu
         "af" 'aidermacs-add-current-file)))
-
-  (use-package copilot-chat
-    :commands
-    (copilot-chat-add-current-buffer
-     copilot-chat-custom-prompt-mini-buffer
-     copilot-chat-custom-prompt-selection
-     copilot-chat-del-current-buffer
-     copilot-chat-display
-     copilot-chat-explain
-     copilot-chat-list
-     copilot-chat-review
-     copilot-chat-review-whole-buffer)
-    :init
-    (setq copilot-chat-backend 'curl
-          copilot-chat-curl-program "__CURL_BIN__"
-          copilot-chat-frontend 'org
-          copilot-chat-follow t)
-    :config
-    (spacemacs/set-leader-keys
-      "acc" 'copilot-chat-display
-      "acp" 'copilot-chat-custom-prompt-mini-buffer
-      "acl" 'copilot-chat-list)
-    (dolist (mode '(nix-mode python-mode c-mode c++-mode cmake-mode yaml-mode sh-mode))
-      (spacemacs/set-leader-keys-for-major-mode mode
-        "cc" 'copilot-chat-display
-        "ca" 'copilot-chat-add-current-buffer
-        "cd" 'copilot-chat-del-current-buffer
-        "ce" 'copilot-chat-explain
-        "cp" 'copilot-chat-custom-prompt-selection
-        "cr" 'copilot-chat-review
-        "cR" 'copilot-chat-review-whole-buffer))))
+  )

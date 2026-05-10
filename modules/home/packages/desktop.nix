@@ -93,6 +93,12 @@
           feh
           nitrogen
 
+          # Text helpers
+          (aspellWithDicts (dicts: with dicts; [
+            en
+            fr
+          ]))
+
           # System tools
           wget
           libnotify # provides notify-send

@@ -13,6 +13,13 @@
       infomaniakPasswordAge = "${inputs.secrets}/email/mail@ludovicvanasse.com-infomaniak.age";
       hasInfomaniakPassword = builtins.pathExists infomaniakPasswordAge;
       infomaniakPasswordPath = "${homeDir}/.config/mail/infomaniak-password";
+      muIndexIfIdle = pkgs.writeShellScript "mu-index-if-idle" ''
+        if ${pkgs.procps}/bin/pgrep -u ${config.home.username} -f "/mu server$" >/dev/null; then
+          echo "Skipping mu index because mu server is running"
+          exit 0
+        fi
+        exec ${pkgs.mu}/bin/mu index
+      '';
     in
     {
       programs.mu.enable = true;
@@ -44,7 +51,7 @@
 
           folders = {
             inbox = "Index";
-            sent = "Sent messages";
+            sent = "Sent";
             drafts = "Drafts";
             trash = "Trash";
           };
@@ -67,7 +74,7 @@
       };
 
       systemd.user.services.mbsync.Service.ExecStopPost = lib.mkIf enableAccount [
-        "${pkgs.mu}/bin/mu index"
+        "${muIndexIfIdle}"
       ];
 
       home.activation.mu-init = lib.hm.dag.entryAfter [ "mbsync" ] ''

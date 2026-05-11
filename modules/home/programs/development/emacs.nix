@@ -14,6 +14,7 @@
           "__MU_SITE_LISP_MU4E__"
           "__MU_SITE_LISP_MU__"
           "__MU_SITE_LISP__"
+          "__MU_BIN__"
           "__ISYNC_BIN__"
           "__MSMTP_BIN__"
           "__CURL_BIN__"
@@ -22,6 +23,7 @@
           "${pkgs.mu}/share/emacs/site-lisp/mu4e"
           "${pkgs.mu}/share/emacs/site-lisp/mu"
           "${pkgs.mu}/share/emacs/site-lisp"
+          "${pkgs.mu}/bin/mu"
           "${pkgs.isync}/bin/mbsync"
           "${pkgs.msmtp}/bin/msmtp"
           "${pkgs.curl}/bin/curl"
@@ -38,17 +40,20 @@
             vterm
             clipetty
             alert
+            all-the-icons
             centaur-tabs
             copilot
             mu4e
             mu4e-alert
             copilot-chat
+            counsel-spotify
             emoji-cheat-sheet-plus
             flycheck
             flycheck-pos-tip
             flyspell-correct
             flyspell-correct-ivy
             mcp
+            nerd-icons
             pdf-tools
             slack
             aidermacs
@@ -124,8 +129,20 @@
           `${config.home.homeDirectory}/.config/slack/private.el`
         - That file is loaded automatically if present.
         - Keep client ID, client secret, and token there, not in the repo.
+        - Use a user token (`xoxp-...`) for the workspace you want Emacs to join.
 
-        Minimal example:
+        Setup flow:
+        1. In the Slack API dashboard, create an app for the target workspace:
+           https://api.slack.com/apps
+        2. Under `OAuth & Permissions`, add the user scopes you need for chat.
+        3. Install the app to the workspace and copy:
+           - client ID
+           - client secret
+           - user OAuth token (`xoxp-...`)
+        4. Save them in `${config.home.homeDirectory}/.config/slack/private.el`
+        5. Restart Emacs or reload the file, then run `SPC a c s s`.
+
+        Example:
 
         (slack-register-team
           :name "work"
@@ -134,6 +151,31 @@
           :client-secret "..."
           :token "xoxp-..."
           :subscribed-channels '(general))
+      '';
+
+      xdg.configFile."spotify/README".text = ''
+        Spotify in Emacs
+
+        Native Spacemacs entrypoints:
+        - `SPC a m s p` toggles play/pause.
+        - The native Spotify layer playback controls use DBus and work without API credentials.
+
+        Optional search setup:
+        - Put API credentials in `${config.home.homeDirectory}/.config/spotify/private.el`
+        - That file is only loaded when present.
+        - Keep only `counsel-spotify-client-id` and `counsel-spotify-client-secret` there.
+        - Search features stay disabled until that file exists.
+
+        Setup flow:
+        1. Create an app at https://developer.spotify.com/dashboard
+        2. Copy the client ID and client secret
+        3. Save them in `${config.home.homeDirectory}/.config/spotify/private.el`
+        4. Restart Emacs and run a `counsel-spotify` search command if desired
+
+        Example:
+
+        (setq counsel-spotify-client-id "..."
+              counsel-spotify-client-secret "...")
       '';
 
       xdg.configFile."copilot-chat/README".text = ''
@@ -181,6 +223,19 @@
         - `python3` is only needed later if you add MCP servers that require it.
         - `gh auth status` is optional if you want to verify which GitHub account
           is active outside Emacs.
+
+        Debug checklist:
+        - Confirm auth files exist:
+          - `${config.home.homeDirectory}/.config/copilot-chat/github-token`
+          - `${config.home.homeDirectory}/.local/state/copilot-chat/token-cache` (after first login)
+        - Confirm `node`, `npm`, and `curl` are visible from the shell that launches Emacs:
+          - `command -v node npm curl`
+        - Run the repo smoke test:
+          - `bash ${config.home.homeDirectory}/Code/personal/dotfiles/scripts/smoke-test-spacemacs-runtime.sh`
+        - In Emacs, verify the commands resolve:
+          - `SPC SPC copilot-login`
+          - `SPC $ c`
+        - When auth fails, inspect `*Messages*` and the Copilot chat buffer first.
 
         Model behavior:
         - The managed default is `gpt-4.1`.

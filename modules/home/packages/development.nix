@@ -39,6 +39,8 @@
           bash-language-server
           yaml-language-server
           cmake-language-server
+          dockerfile-language-server
+          marksman
           actionlint
           shellcheck
           shfmt

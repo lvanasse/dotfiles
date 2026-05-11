@@ -10,7 +10,7 @@
      better-defaults
      git
      org
-     (tabs :variables tabs-icons nil)
+     (tabs :variables tabs-icons t)
      (auto-completion :variables auto-completion-enable-snippets-in-popup t)
      spell-checking
      syntax-checking
@@ -38,7 +38,7 @@
      (shell :variables shell-default-shell 'vterm)
      shell-scripts
    )
-   dotspacemacs-additional-packages '(gruvbox-theme vterm clipetty aidermacs bitbake-ts-mode nix-mode json-mode org-caldav)
+   dotspacemacs-additional-packages '(gruvbox-theme vterm clipetty aidermacs all-the-icons nerd-icons counsel-spotify bitbake-ts-mode nix-mode json-mode org-caldav)
    dotspacemacs-excluded-packages '(forge)))
 
 (defun dotspacemacs/init ()
@@ -71,6 +71,23 @@
   (setq-default
    whitespace-style '(face trailing tabs tab-mark)
    whitespace-line-column 100)
+
+  (defun my/load-private-elisp (path)
+    (when (file-readable-p path)
+      (load path nil 'nomessage)))
+
+  (defun my/copilot-chat-open ()
+    (interactive)
+    ;; Prefer an explicit load path over the stale autoload that can linger in
+    ;; ~/.emacs.d/elpa after upstream function renames.
+    (let ((shim (symbol-function 'copilot-chat-transient)))
+      (when (eq shim #'my/copilot-chat-open)
+        (fmakunbound 'copilot-chat-transient)))
+    (require 'copilot-chat nil t)
+    (unless (fboundp 'copilot-chat-transient)
+      (user-error "copilot-chat-transient is unavailable; run Home Manager switch and restart Emacs"))
+    (call-interactively #'copilot-chat-transient))
+  (defalias 'copilot-chat-transient #'my/copilot-chat-open)
 
   ;; Keep GC modest again after startup.
   (add-hook 'emacs-startup-hook
@@ -222,9 +239,36 @@
            :full-name ,my/rcirc-full-name
            :channels ,my/rcirc-channels)))
 
-  (let ((slack-private-config (expand-file-name "~/.config/slack/private.el")))
-    (when (file-readable-p slack-private-config)
-      (load slack-private-config nil 'nomessage)))
+  (defconst my/slack-private-config
+    (expand-file-name "~/.config/slack/private.el")
+    "Local Slack secrets and team registration forms kept out of the repo.")
+
+  (defconst my/spotify-private-config
+    (expand-file-name "~/.config/spotify/private.el")
+    "Optional local Spotify API credentials kept out of the repo.")
+
+  (defun my/spotify-session-service-name ()
+    "Return the current MPRIS service suffix for spotifyd or Spotify.
+
+Prefer the live spotifyd session name because it changes per instance
+(`rs.spotifyd.instance...`). Fall back to the official client name."
+    (when (featurep 'dbusbind)
+      (let* ((names (dbus-list-names :session))
+             (spotifyd
+              (seq-find
+               (lambda (name)
+                 (string-prefix-p "rs.spotifyd.instance" name))
+               names)))
+        (cond
+         (spotifyd spotifyd)
+         ((member "org.mpris.MediaPlayer2.spotify" names) "spotify")
+         (t nil)))))
+
+  (defun my/refresh-spotify-service-name (&rest _args)
+    (let ((service (my/spotify-session-service-name)))
+      (when service
+        (setq spotify-service-name service
+              counsel-spotify-service-name service))))
 
   (with-eval-after-load 'org
     (setq org-directory "~/org")
@@ -375,6 +419,7 @@
     :init
     (setq mail-user-agent 'mu4e-user-agent
           read-mail-command #'mu4e
+          mu4e-mu-binary "__MU_BIN__"
           mu4e-maildir "~/mail"
           mu4e-drafts-folder "/ludovic/Drafts"
           mu4e-sent-folder "/ludovic/Sent"
@@ -423,7 +468,11 @@
     (require 'copilot-chat nil t))
 
   (with-eval-after-load 'copilot
-    (setq copilot-indent-offset-warning-disable t))
+    ;; Newer Copilot language-server builds choke on a null configuration
+    ;; payload during workspace/didChangeConfiguration, so always send a real
+    ;; object for the GitHub Copilot section.
+    (setq copilot-lsp-settings '(:github (:copilot ()))
+          copilot-indent-offset-warning-disable t))
 
   (with-eval-after-load 'copilot-chat
     (let ((copilot-chat-config-dir (expand-file-name "~/.config/copilot-chat/"))
@@ -441,6 +490,20 @@
             (expand-file-name "models.json" copilot-chat-state-dir)
             copilot-chat-default-save-dir
             (expand-file-name "chats/" copilot-chat-state-dir))))
+
+  (with-eval-after-load 'slack
+    (my/load-private-elisp my/slack-private-config))
+
+  (with-eval-after-load 'spotify
+    (my/refresh-spotify-service-name)
+    (advice-add 'spotify-dbus-call :before #'my/refresh-spotify-service-name)
+    (when (file-readable-p my/spotify-private-config)
+      (require 'counsel-spotify nil t)
+      (my/load-private-elisp my/spotify-private-config)))
+
+  (with-eval-after-load 'counsel-spotify
+    (my/refresh-spotify-service-name)
+    (advice-add 'counsel-spotify-call-spotify-via-dbus :before #'my/refresh-spotify-service-name))
 
   ;; LSP tuning for work languages.
   (with-eval-after-load 'lsp-mode
@@ -474,6 +537,15 @@
     (treemacs-follow-mode t)
     (treemacs-filewatch-mode t)
     (treemacs-project-follow-mode t))
+
+  ;; Tabs stay enabled all the time, but prefer Nerd Font icons when the
+  ;; installed centaur-tabs snapshot knows about that backend.
+  (with-eval-after-load 'centaur-tabs
+    (setq centaur-tabs-set-icons t)
+    (when (boundp 'centaur-tabs-icon-type)
+      (setq centaur-tabs-icon-type 'nerd-icons))
+    (global-set-key (kbd "C-x t o") #'centaur-tabs-forward)
+    (global-set-key (kbd "C-x t O") #'centaur-tabs-backward))
 
   ;; Chat tooling stays opt-in and leader-key driven.
   (use-package aidermacs

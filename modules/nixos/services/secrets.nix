@@ -6,6 +6,8 @@ let
   jiraTokenAge = "${inputs.secrets}/jira/api_token.age";
   infomaniakMailPassword = "${inputs.secrets}/email/mail@ludovicvanasse.com-infomaniak.age";
   infomaniakCaldavPassword = "${inputs.secrets}/calendar/infomaniak-caldav-password.age";
+  slackPrivateEl = "${inputs.secrets}/emacs/slack-private.el.age";
+  spotifyPrivateEl = "${inputs.secrets}/emacs/spotify-private.el.age";
   codexOpenAI = "${inputs.secrets}/codex/openai_api_key.age";
   codexTavily = "${inputs.secrets}/codex/tavily_api_key.age";
   codexBing = "${inputs.secrets}/codex/bing_search_v7_key.age";
@@ -79,6 +81,40 @@ in
               "infomaniak-caldav-password" = {
                 file = infomaniakCaldavPassword;
                 path = "/home/${username}/.config/calendar/infomaniak-caldav-password";
+                mode = "0600";
+                owner = username;
+                group = "users";
+              };
+            }
+          else
+            { }
+        )
+        // (
+          let
+            hasSlack = builtins.pathExists slackPrivateEl;
+          in
+          if hasSlack then
+            {
+              "emacs-slack-private-el" = {
+                file = slackPrivateEl;
+                path = "/home/${username}/.config/slack/private.el";
+                mode = "0600";
+                owner = username;
+                group = "users";
+              };
+            }
+          else
+            { }
+        )
+        // (
+          let
+            hasSpotify = builtins.pathExists spotifyPrivateEl;
+          in
+          if hasSpotify then
+            {
+              "emacs-spotify-private-el" = {
+                file = spotifyPrivateEl;
+                path = "/home/${username}/.config/spotify/private.el";
                 mode = "0600";
                 owner = username;
                 group = "users";

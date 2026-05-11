@@ -7,7 +7,22 @@
       pkgs,
       ...
     }:
+    let
+      spotifydToml = pkgs.formats.toml { };
+      spotifydConfig = spotifydToml.generate "spotifyd.conf" {
+        global = {
+          backend = "pulseaudio";
+          bitrate = 320;
+          device_name = "pc";
+          device_type = "computer";
+          use_mpris = true;
+          zeroconf_port = 57621;
+        };
+      };
+    in
 {
+  xdg.configFile."spotifyd/spotifyd.conf".source = spotifydConfig;
+
   # PC-specific Sway output layout (host-only)
   wayland.windowManager.sway.extraConfig = lib.mkAfter ''
         # Displays/workspaces (from nwg-displays)
@@ -82,5 +97,26 @@
         ExecStart = "${setYeti}/bin/set-yeti-mic-volume";
       };
     };
+
+  systemd.user.services.spotifyd = {
+    Unit = {
+      Description = "spotifyd, a Spotify Connect background daemon";
+      After = [
+        "pipewire.service"
+        "pipewire-pulse.service"
+        "graphical-session.target"
+      ];
+      PartOf = [ "graphical-session.target" ];
+    };
+    Install.WantedBy = [
+      "graphical-session.target"
+      "default.target"
+    ];
+    Service = {
+      ExecStart = "${pkgs.spotifyd}/bin/spotifyd --no-daemon --cache-path %h/.cache/spotifyd --config-path %h/.config/spotifyd/spotifyd.conf";
+      Restart = "always";
+      RestartSec = 12;
+    };
+  };
     };
 }

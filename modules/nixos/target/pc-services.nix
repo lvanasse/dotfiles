@@ -55,6 +55,13 @@
               };
             };
           };
+
+        spotifyd.enable = lib.mkForce false;
+      };
+
+      networking.firewall = {
+        allowedTCPPorts = [ 57621 ];
+        allowedUDPPorts = [ 5353 ];
       };
     };
 }

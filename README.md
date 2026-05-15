@@ -1,44 +1,52 @@
-# Personal NixOS Dotfiles
+# Personal Dotfiles
 
-Flake-based NixOS + Home Manager configuration for desktop (`pc`), laptop (`laptop`), and Home Manager-only (`hm-only`).
+Flake-based NixOS and Home Manager configuration for a small set of machines and user-only targets.
 
-## Quick Start
+## Targets
+
+- NixOS: `pc`, `laptop`, `server`, `gateway`
+- Home Manager only: `hm-only`, `work-laptop`, `steamdeck`
+
+The target matrix lives in [targets/default.nix](targets/default.nix). Each target registers one NixOS entrypoint, one Home Manager entrypoint, or both.
+
+## Common Commands
 
 ```bash
-# Switch system configuration (NixOS hosts only)
-nh os switch -H pc
-nh os switch -H laptop
+# Unified host switch
+nohm pc
+nohm laptop
+nohm server
+nohm gateway
 
-# Apply user environment
+# Plain NixOS switch
+nh os switch -H pc
+
+# Plain Home Manager switch
 home-manager switch --flake .#ludovic@pc
-home-manager switch --flake .#ludovic@laptop
-home-manager switch --flake .#ludovic@hm-only
 
 # Validate
 nix flake check
 nixos-rebuild dry-run --flake .#pc
-nixos-rebuild dry-run --flake .#laptop
-# For hm-only (Home Manager only), test with:
-nix eval .#homeConfigurations.ludovic@hm-only.config.home.stateVersion
 
 # Format
 nix fmt
 ```
 
-## Documentation
+## Structure
 
-- `docs/README.md` – structure + commands
-- `docs/setup-ssh-keys.md` – SSH + secrets workflow
+- `flake.nix`: inputs and top-level outputs wiring
+- `targets/`: target registration plus per-target `nixos.nix` and `hm.nix` entrypoints
+- `modules/nixos/`: shared NixOS modules
+- `modules/home/`: shared Home Manager modules
+- `modules/flake/`: overlays, helpers, checks, formatter, custom package wiring
+- `overrides/`: local runtime/config override files used by services
+- `wallpapers/`: desktop assets
 
-## Layout
+## Conventions
 
-- `flake.nix` – flake entrypoint
-- `modules/` – shared module tree (flake outputs, NixOS, Home Manager, host matrix)
-- `modules/hosts/` – host matrix declaring which module sets each machine uses
-- `nixos/` – per-host NixOS entrypoints and hardware bits (e.g., `nixos/pc/pc.nix`)
-- `wallpapers/` – desktop assets
+- Reusable modules live under `modules/`
+- Target-specific composition lives under `targets/`
+- NixOS modules are exposed as `flake.modules.nixos.*`
+- Home Manager modules are exposed as `flake.modules.homeManager.*`
 
-Why both `modules/hosts` and `nixos/`?
-
-- `modules/hosts/default.nix` is the matrix that maps host names to module sets for both NixOS and Home Manager.
-- `nixos/<host>/<host>.nix` is the system entrypoint that pulls in hardware and per-machine files.
+This repository is meant to be edited in small, target-scoped changes and validated on the machine that will actually consume them.

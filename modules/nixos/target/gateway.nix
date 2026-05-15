@@ -117,6 +117,7 @@ in
         nftables
         tcpdump
         traceroute
+        wakeonlan
       ];
 
       systemd.network.wait-online.ignoredInterfaces = lib.mkIf staged [ wanIf ];

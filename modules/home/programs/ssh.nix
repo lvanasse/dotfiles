@@ -10,6 +10,25 @@ in
 {
   flake.modules.homeManager."programs.ssh" =
     { pkgs, ... }:
+    let
+      wakeWorkLaptop = pkgs.writeShellScriptBin "wake-work-laptop" ''
+        set -euo pipefail
+
+        mac="''${WORK_LAPTOP_WOL_MAC:-}"
+        if [ -z "$mac" ]; then
+          echo "wake-work-laptop: set WORK_LAPTOP_WOL_MAC to the work laptop NIC MAC address" >&2
+          exit 1
+        fi
+
+        gateway_host="''${WORK_LAPTOP_WOL_GATEWAY:-gateway-ts}"
+        broadcast="''${WORK_LAPTOP_WOL_BROADCAST:-192.168.0.255}"
+        port="''${WORK_LAPTOP_WOL_PORT:-9}"
+
+        # Tailscale gets us to the relay host; the relay host emits the LAN magic packet.
+        exec ${pkgs.openssh}/bin/ssh "$gateway_host" \
+          "/run/current-system/sw/bin/wakeonlan -i '$broadcast' -p '$port' '$mac'"
+      '';
+    in
     {
       home.file =
         (lib.optionalAttrs hasPersonalPub {
@@ -81,6 +100,14 @@ in
 
           "server-ts" = {
             hostname = "server.tail7e8d6c.ts.net";
+            user = "ludovic";
+            identityFile = "~/.ssh/id_ed25519_personal";
+            identitiesOnly = true;
+            identityAgent = "none";
+          };
+
+          "gateway-ts" = {
+            hostname = "gateway.tail7e8d6c.ts.net";
             user = "ludovic";
             identityFile = "~/.ssh/id_ed25519_personal";
             identitiesOnly = true;
@@ -162,5 +189,7 @@ in
           };
         };
       };
+
+      home.packages = [ wakeWorkLaptop ];
     };
 }

@@ -26,7 +26,7 @@ maven.buildMavenPackage rec {
   };
 
   mvnJdk = jdk17;
-  mvnHash = "sha256-Fk6JPMmzz7YnPWOdWKOXQ8z6bdYuXSgQdWBOaIlpd4A=";
+  mvnHash = "sha256-WM5g8GPYHDcKOW4/qhWTsTReaC8kY8FjWjhVR3OADxA=";
 
   # Disables failing tests which either need network access or are flaky.
   mvnParameters = lib.escapeShellArgs [
@@ -92,8 +92,6 @@ maven.buildMavenPackage rec {
 
         NEW_MVN_HASH=$(grep "got:" ${pname}-stderr.log | awk '{print ''$2}')
         rm ${pname}-stderr.log
-        # escaping double quotes looks ugly but is needed for variable substitution
-        # use # instead of / as separator because the sha256 might contain the / character
         sed -i "0,/mvnHash *= *\"[^\"]*\"/{s#mvnHash = \"[^\"]*\"#mvnHash = \"$NEW_MVN_HASH\"#}" ${pkgFile}
       '';
     });

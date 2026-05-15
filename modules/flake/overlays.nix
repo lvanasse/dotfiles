@@ -21,7 +21,6 @@ let
       qbittorrent = pkgs2505.qbittorrent;
     };
 
-  # Fix broken upstream hash for sonarlint-ls fetched Maven deps
   sonarlintHashFix = _final: prev: {
     sonarlint-ls = prev.callPackage ../../overrides/sonarlint-ls/package.nix { };
   };

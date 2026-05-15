@@ -10,24 +10,11 @@
           DefaultSearchEngine = "Qwant";
           DefaultSearchEnginePrivate = "Qwant";
           SearchSuggestEnabled = false;
-          SearchEngines = {
-            Add = [
-              {
-                Name = "Qwant";
-                URLTemplate = "https://www.qwant.com/?q={searchTerms}&t=all";
-                IconURL = "https://www.qwant.com/favicon.ico";
-                Aliases = [
-                  "@q"
-                  "@qwant"
-                ];
-              }
-            ];
-          };
         };
         profiles = {
           default = {
             isDefault = true;
-            # Use Firefox's built-in Qwant engine id for the managed profile.
+            # Define Qwant explicitly; the built-in engine is locale-dependent.
             search = {
               default = "qwant";
               privateDefault = "qwant";
@@ -36,7 +23,26 @@
               engines = {
                 qwant = {
                   name = "Qwant";
-                  metaData.alias = "@q";
+                  urls = [
+                    {
+                      template = "https://www.qwant.com/";
+                      params = [
+                        {
+                          name = "q";
+                          value = "{searchTerms}";
+                        }
+                        {
+                          name = "t";
+                          value = "all";
+                        }
+                      ];
+                    }
+                  ];
+                  iconMapObj."16" = "https://www.qwant.com/favicon.ico";
+                  definedAliases = [
+                    "@q"
+                    "@qwant"
+                  ];
                 };
                 google = {
                   metaData.hidden = true;

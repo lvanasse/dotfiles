@@ -95,6 +95,9 @@
 
           pyenv
           pre-commit
+
+          # Networking
+          wireshark
         ])
         ++ [
           tex # TeX toolchain for LaTeX preview/build

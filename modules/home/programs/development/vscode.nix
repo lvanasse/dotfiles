@@ -20,7 +20,6 @@
           llvm-vs-code-extensions.vscode-clangd
           rust-lang.rust-analyzer
           github.vscode-github-actions
-          github.copilot
           pkgs.vscode-marketplace-release.github.copilot-chat
           ms-vscode.cpptools-extension-pack
           ms-vscode.cpptools
@@ -49,6 +48,8 @@
           ms-vscode-remote.remote-containers
           mads-hartmann.bash-ide-vscode
           yocto-project.yocto-bitbake
+          eamodio.gitlens
+          github.vscode-pull-request-github
         ];
         profiles.default.userSettings = {
           "github.copilot.enable"."*" = false;
@@ -74,6 +75,7 @@
             "https://*" = true;
             "http://*" = true;
           };
+          "chat.viewSessions.orientation" = "stacked";
 
           # LaTeX Workshop: in-editor PDF preview and tidy build dir
           "latex-workshop.view.pdf.viewer" = "tab";

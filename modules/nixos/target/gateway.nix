@@ -120,6 +120,12 @@ in
         wakeonlan
       ];
 
+      systemd.network.networks."40-${lanIf}" = {
+        matchConfig.Name = lanIf;
+        networkConfig.ConfigureWithoutCarrier = true;
+        linkConfig.RequiredForOnline = false;
+      };
+
       systemd.network.wait-online.ignoredInterfaces = lib.mkIf staged [ wanIf ];
 
       warnings = [

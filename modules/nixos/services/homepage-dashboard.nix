@@ -41,6 +41,8 @@
           "localhost:8082"
           "127.0.0.1:8082"
           "127.0.0.1:8091"
+          "127.0.0.1:8092"
+          "127.0.0.1:8093"
           "${host}:8082"
           "${localLanAddress}:8082"
           "${localTailscaleHost}:8082"
@@ -263,6 +265,12 @@
                       showStats = true;
                     };
                   }
+                  {
+                    AnnotationSync = {
+                      href = "http://${serverTailscaleHost}:8085";
+                      description = "KOReader annotation WebDAV";
+                    };
+                  }
                 ];
               }
               {
@@ -368,6 +376,72 @@
                     };
                   }
                   {
+                    DiskHealth = {
+                      href = "http://${serverTailscaleHost}:8082";
+                      description = "SMART and mount health";
+                      widget = {
+                        type = "customapi";
+                        url = "http://127.0.0.1:8093/status.json";
+                        refreshInterval = 30000;
+                        mappings = [
+                          {
+                            field = "overall.status";
+                            label = "Overall";
+                          }
+                          {
+                            field = "checkedAt";
+                            label = "Checked";
+                          }
+                          {
+                            field = "data1.smart";
+                            label = "Data1";
+                          }
+                          {
+                            field = "data2.smart";
+                            label = "Data2";
+                          }
+                          {
+                            field = "data3.smart";
+                            label = "Data3";
+                          }
+                          {
+                            field = "parity1.smart";
+                            label = "Parity";
+                          }
+                        ];
+                      };
+                    };
+                  }
+                  {
+                    SnapRAID = {
+                      href = "http://${serverTailscaleHost}:8082";
+                      description = "Array sync and scrub health";
+                      widget = {
+                        type = "customapi";
+                        url = "http://127.0.0.1:8092/status.json";
+                        refreshInterval = 30000;
+                        mappings = [
+                          {
+                            field = "scrub.status";
+                            label = "Scrub";
+                          }
+                          {
+                            field = "scrub.finishedAt";
+                            label = "Last scrub";
+                          }
+                          {
+                            field = "sync.status";
+                            label = "Sync";
+                          }
+                          {
+                            field = "sync.finishedAt";
+                            label = "Last sync";
+                          }
+                        ];
+                      };
+                    };
+                  }
+                  {
                     Dockhand = {
                       href = "http://${serverTailscaleHost}:3001";
                       description = "Docker compose dashboard";
@@ -383,12 +457,6 @@
                       server = "local";
                       container = "mousehole";
                       showStats = true;
-                    };
-                  }
-                  {
-                    AnnotationSync = {
-                      href = "http://${serverTailscaleHost}:8085";
-                      description = "KOReader annotation WebDAV";
                     };
                   }
                 ];
@@ -485,14 +553,28 @@
             color: var(--gb-fg1) !important;
           }
 
-          .service, .bookmark, .information-widget, .widget, .card, .group, .service-card {
+          .bookmark, .information-widget, .widget, .card, .service-card {
             background: var(--gb-bg0) !important;
             border-color: var(--gb-bg2) !important;
             color: var(--gb-fg1) !important;
             box-shadow: none !important;
           }
 
-          .service:hover, .bookmark:hover, .information-widget:hover, .card:hover, .service-card:hover {
+          .service {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+          }
+
+          .group {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+          }
+
+          .bookmark:hover, .information-widget:hover, .card:hover, .service-card:hover {
             background: var(--gb-bg1) !important;
           }
 
@@ -510,13 +592,13 @@
             gap: 0.8rem !important;
           }
 
-          .service, .bookmark, .information-widget, .card, .service-card {
+          .bookmark, .information-widget, .card, .service-card {
             padding: 1rem 1.05rem !important;
             border-radius: 12px !important;
             border-width: 2px !important;
           }
 
-          .service, .service-card {
+          .service-card {
             min-height: 160px !important;
           }
 

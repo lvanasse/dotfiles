@@ -41,7 +41,6 @@
             clipetty
             alert
             all-the-icons
-            centaur-tabs
             copilot
             mu4e
             mu4e-alert

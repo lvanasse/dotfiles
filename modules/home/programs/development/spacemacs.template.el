@@ -10,7 +10,6 @@
      better-defaults
      git
      org
-     (tabs :variables tabs-icons t)
      (auto-completion :variables auto-completion-enable-snippets-in-popup t)
      spell-checking
      syntax-checking
@@ -60,6 +59,16 @@
         idle-update-delay 1.0
         fast-but-imprecise-scrolling t
         redisplay-skip-fontification-on-input t)
+  (menu-bar-mode -1)
+  (tool-bar-mode -1)
+  (scroll-bar-mode -1)
+  (blink-cursor-mode -1)
+  (when (fboundp 'tooltip-mode)
+    (tooltip-mode -1))
+  (when (fboundp 'set-fringe-mode)
+    (set-fringe-mode 6))
+  (when (fboundp 'tab-bar-mode)
+    (tab-bar-mode -1))
   (when (boundp 'native-comp-async-report-warnings-errors)
     (setq native-comp-async-report-warnings-errors 'silent))
   (when (boundp 'comp-async-report-warnings-errors)
@@ -537,15 +546,6 @@ Prefer the live spotifyd session name because it changes per instance
     (treemacs-follow-mode t)
     (treemacs-filewatch-mode t)
     (treemacs-project-follow-mode t))
-
-  ;; Tabs stay enabled all the time, but prefer Nerd Font icons when the
-  ;; installed centaur-tabs snapshot knows about that backend.
-  (with-eval-after-load 'centaur-tabs
-    (setq centaur-tabs-set-icons t)
-    (when (boundp 'centaur-tabs-icon-type)
-      (setq centaur-tabs-icon-type 'nerd-icons))
-    (global-set-key (kbd "C-x t o") #'centaur-tabs-forward)
-    (global-set-key (kbd "C-x t O") #'centaur-tabs-backward))
 
   ;; Chat tooling stays opt-in and leader-key driven.
   (use-package aidermacs

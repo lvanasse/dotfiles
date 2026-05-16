@@ -8,11 +8,9 @@ let
   username = config.flake.lib.username;
 
   personalPub = "${inputs.secrets}/keys/id_ed25519_personal.pub";
-  workPub = "${inputs.secrets}/keys/id_ed25519_work.pub";
   personalKeyAge = "${inputs.secrets}/ssh/id_ed25519_personal.age";
 
   hasPersonalPub = builtins.pathExists personalPub;
-  hasWorkPub = builtins.pathExists workPub;
   hasPersonalKeyAge = builtins.pathExists personalKeyAge;
 in
 {
@@ -28,10 +26,10 @@ in
       # gnome-keyring already starts gcr-ssh-agent; disable the legacy ssh-agent to avoid conflicts.
       programs.ssh.startAgent = lib.mkForce false;
 
-      # Passwordless auth using the same public keys across hosts (when present).
-      users.users.${username}.openssh.authorizedKeys.keys =
-        (lib.optionals hasPersonalPub [ (builtins.readFile personalPub) ])
-        ++ (lib.optionals hasWorkPub [ (builtins.readFile workPub) ]);
+      # Passwordless auth uses the shared personal admin key on every target.
+      users.users.${username}.openssh.authorizedKeys.keys = lib.optionals hasPersonalPub [
+        (builtins.readFile personalPub)
+      ];
 
       systemd.tmpfiles.rules = lib.optionals receivesClientKey [
         "d /home/${username}/.ssh 0700 ${username} users -"

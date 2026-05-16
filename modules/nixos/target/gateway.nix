@@ -118,6 +118,7 @@ in
         tcpdump
         traceroute
         wakeonlan
+<<<<<<< Updated upstream
       ];
 
       systemd.network.networks."40-${lanIf}" = {
@@ -130,6 +131,8 @@ in
 
       warnings = [
         "Gateway target is in staged mode: ${lanIf} serves ${lanCidr} and NAT egress uses ${activeUplinkIf}. Set `staged = false` in modules/nixos/target/gateway.nix for final cutover to ${finalLanAddress}/24 on ${lanIf} via ${wanIf}."
+=======
+>>>>>>> Stashed changes
       ];
     };
 }

@@ -76,6 +76,8 @@
             "http://*" = true;
           };
           "chat.viewSessions.orientation" = "stacked";
+          "clangd.detectExtensionConflicts" = false;
+          "editor.renderWhitespace" = "all";
 
           # LaTeX Workshop: in-editor PDF preview and tidy build dir
           "latex-workshop.view.pdf.viewer" = "tab";

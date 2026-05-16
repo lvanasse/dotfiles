@@ -31,5 +31,8 @@
         substituters = https://cache.nixos.org/ https://cache.numtide.com
         trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g=
       '';
+
+      # Keep the existing local public key file to avoid clobbering the bootstrap key path.
+      home.file.".ssh/id_ed25519_personal.pub".enable = lib.mkForce false;
     };
 }

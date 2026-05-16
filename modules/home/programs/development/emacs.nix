@@ -29,6 +29,37 @@
           "${pkgs.curl}/bin/curl"
         ]
         spacemacsTemplate;
+      emacsServicePreStart = pkgs.writeShellScript "emacs-service-pre-start" ''
+        set -eu
+
+        emacsclient_bin="${config.programs.emacs.finalPackage}/bin/emacsclient"
+        ps_bin="${pkgs.procps}/bin/ps"
+        sleep_bin="${pkgs.coreutils}/bin/sleep"
+
+        if "$emacsclient_bin" --eval '(daemonp)' >/dev/null 2>&1; then
+          daemon_pid="$("$emacsclient_bin" --eval '(emacs-pid)' | tr -d '[:space:]')"
+          daemon_ppid="$("$ps_bin" -o ppid= -p "$daemon_pid" 2>/dev/null | tr -d '[:space:]' || true)"
+
+          if [ "$daemon_ppid" = "1" ]; then
+            echo "Stopping existing Emacs daemon pid $daemon_pid before systemd startup"
+            "$emacsclient_bin" --eval '(kill-emacs)' >/dev/null 2>&1 || kill "$daemon_pid" >/dev/null 2>&1 || true
+
+            for _ in $(seq 1 50); do
+              if ! kill -0 "$daemon_pid" 2>/dev/null; then
+                exit 0
+              fi
+              "$sleep_bin" 0.2
+            done
+
+            echo "Existing Emacs daemon pid $daemon_pid did not exit after SIGTERM; sending SIGKILL"
+            kill -KILL "$daemon_pid" >/dev/null 2>&1 || true
+            exit 0
+          fi
+
+          echo "Refusing to replace Emacs server owned by non-daemon pid $daemon_pid (ppid=$daemon_ppid)" >&2
+          exit 1
+        fi
+      '';
     in
     {
       programs.emacs = {
@@ -68,10 +99,16 @@
         startWithUserSession = "graphical";
       };
 
-      systemd.user.services.emacs.Service.ExecStart = lib.mkForce [
-        ""
-        "${config.programs.emacs.finalPackage}/bin/emacs --fg-daemon"
-      ];
+      systemd.user.services.emacs.Service = {
+        ExecStartPre = lib.mkForce [
+          ""
+          "${emacsServicePreStart}"
+        ];
+        ExecStart = lib.mkForce [
+          ""
+          "${config.programs.emacs.finalPackage}/bin/emacs --fg-daemon"
+        ];
+      };
 
       home.file.".spacemacs".text = spacemacsConfig;
 

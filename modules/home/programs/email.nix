@@ -13,12 +13,50 @@
       infomaniakPasswordAge = "${inputs.secrets}/email/mail@ludovicvanasse.com-infomaniak.age";
       hasInfomaniakPassword = builtins.pathExists infomaniakPasswordAge;
       infomaniakPasswordPath = "${homeDir}/.config/mail/infomaniak-password";
-      muIndexIfIdle = pkgs.writeShellScript "mu-index-if-idle" ''
-        if ${pkgs.procps}/bin/pgrep -u ${config.home.username} -f "/mu server$" >/dev/null; then
-          echo "Skipping mu index because mu server is running"
-          exit 0
+      muIndexAfterMbsync = pkgs.writeShellScript "mu-index-after-mbsync" ''
+        set -eu
+
+        emacsclient_bin="${config.programs.emacs.finalPackage}/bin/emacsclient"
+        mu_bin="${pkgs.mu}/bin/mu"
+        emacs_index_elisp='
+          (progn
+            (require (quote mu4e))
+            (unless (mu4e-running-p)
+              (mu4e (quote background)))
+            (let ((deadline (+ (float-time) ${toString 300}))
+                  (completed nil)
+                  (status nil)
+                  (wait-step 0.1))
+              (while (and mu4e--server-indexing (< (float-time) deadline))
+                (sleep-for wait-step))
+              (when mu4e--server-indexing
+                (error "Timed out waiting for an existing mu4e index run to finish"))
+              (let ((hook (lambda ()
+                            (setq completed t)
+                            (setq status mu4e-index-update-status))))
+                (unwind-protect
+                    (progn
+                      (add-hook (quote mu4e-index-updated-hook) hook)
+                      (mu4e-update-index)
+                      (while (and (not completed) (< (float-time) deadline))
+                        (sleep-for wait-step))
+                      (unless completed
+                        (error "Timed out waiting for mu4e-update-index to finish"))
+                      (princ
+                       (format
+                        "mu4e index completed: checked=%s updated=%s cleaned-up=%s"
+                        (plist-get status :checked)
+                        (plist-get status :updated)
+                        (plist-get status :cleaned-up))))
+                  (remove-hook (quote mu4e-index-updated-hook) hook)))))'
+
+        if "$emacsclient_bin" --eval t >/dev/null 2>&1; then
+          echo "Running mu index via Emacs daemon (mu4e-update-index)"
+          exec "$emacsclient_bin" --eval "$emacs_index_elisp"
         fi
-        exec ${pkgs.mu}/bin/mu index
+
+        echo "Emacs daemon unavailable; falling back to mu index"
+        exec "$mu_bin" index
       '';
     in
     {
@@ -74,7 +112,7 @@
       };
 
       systemd.user.services.mbsync.Service.ExecStopPost = lib.mkIf enableAccount [
-        "${muIndexIfIdle}"
+        "${muIndexAfterMbsync}"
       ];
 
       home.activation.mu-init = lib.hm.dag.entryAfter [ "mbsync" ] ''

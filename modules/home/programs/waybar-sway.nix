@@ -11,20 +11,41 @@
       mailScript = pkgs.writeShellScript "waybar-mail-unread" ''
         set -euo pipefail
         mu_bin="${pkgs.mu}/bin/mu"
+        jq_bin="${pkgs.jq}/bin/jq"
+        print_state() {
+          "$jq_bin" -cn \
+            --arg text "$1" \
+            --arg class "$2" \
+            --arg tooltip "$3" \
+            '{text:$text,class:$class,tooltip:$tooltip}'
+        }
         if [ ! -x "$mu_bin" ]; then
+          print_state "󰍹 !" "error" "mu binary not available"
           exit 0
         fi
         if [ ! -d "$HOME/.cache/mu" ]; then
-          printf '{"text":"","class":"hidden","tooltip":"mu database not initialized"}'
+          print_state "󰍹 !" "error" "mu database not initialized"
           exit 0
         fi
         query='flag:unread AND NOT flag:trashed AND (maildir:/ludovic/Index OR maildir:/ludovic/Promotions OR maildir:/ludovic/SocialNetworks)'
-        count="$("$mu_bin" find --nocolor --format=plain "$query" 2>/dev/null | wc -l)"
+        set +e
+        find_output="$("$mu_bin" find --nocolor --format=plain "$query" 2>&1)"
+        find_status=$?
+        set -e
+        if [ "$find_status" -ne 0 ]; then
+          error_text="$(printf '%s' "$find_output" | head -n 1)"
+          if [ -z "$error_text" ]; then
+            error_text="mu find failed with exit code $find_status"
+          fi
+          print_state "󰍹 !" "error" "$error_text"
+          exit 0
+        fi
+        count="$(printf '%s\n' "$find_output" | sed '/^$/d' | wc -l)"
         count="$(printf '%s' "$count" | tr -d '[:space:]')"
         if [ -z "$count" ] || [ "$count" = "0" ]; then
-          printf '{"text":"󰇯 0","class":"idle","tooltip":"No unread mail in Inbox, Promotions, or Social Networks"}'
+          print_state "󰇯 0" "idle" "No unread mail in Inbox, Promotions, or Social Networks"
         else
-          printf '{"text":"󰇮 %s","class":"attention","tooltip":"%s unread mail in Inbox, Promotions, or Social Networks"}' "$count" "$count"
+          print_state "󰇮 $count" "attention" "$count unread mail in Inbox, Promotions, or Social Networks"
         fi
       '';
       modeScript = pkgs.writeShellScript "waybar-sway-mode" ''
@@ -79,7 +100,7 @@
           exec = "${mailScript}";
           return-type = "json";
           format = "{}";
-          "on-click" = "emacsclient -n -c --eval '(progn (require (quote mu4e)) (mu4e))'";
+          "on-click" = "${config.home.homeDirectory}/.local/bin/emacs-mu4e-frame";
         };
 
         network = {
@@ -150,6 +171,7 @@
         #custom-mode { background: ${config.theme.palette.dark1}; color: ${config.theme.palette.bright_orange}; font-weight: 600; }
         #custom-mail.attention { color: ${config.theme.palette.bright_orange}; font-weight: 700; }
         #custom-mail.idle { color: ${config.theme.waybar.foreground}; }
+        #custom-mail.error { color: ${config.theme.palette.bright_red}; font-weight: 700; }
         /* Add spacing between individual tray icons */
         #tray > .passive, #tray > .active, #tray > .needs-attention { padding: 0 5px; }
       '';

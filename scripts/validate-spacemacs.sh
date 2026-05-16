@@ -51,9 +51,15 @@ echo "[2/4] Checking expected native layer bindings"
 run_elisp "(progn
   ${run_user_config}
   (require 'core-keybindings)
-  (dolist (entry '((\"SPC $ c\" . copilot-chat-transient)
+  (dolist (entry '((\"SPC $ c\" . my/copilot-chat-open)
                    (\"SPC $ m\" . mcp-hub)
                    (\"SPC $ d y\" . claude-code-ide-menu)
+                   (\"SPC a a c\" . my/copilot-chat-open)
+                   (\"SPC a a r\" . my/copilot-chat-send-selection-or-buffer)
+                   (\"SPC a a f\" . my/copilot-chat-add-current-file)
+                   (\"SPC a a d\" . my/copilot-chat-add-workspace)
+                   (\"SPC a a m\" . copilot-chat-set-model)
+                   (\"SPC a a b\" . copilot-chat-switch-to-buffer)
                    (\"SPC '\" . spacemacs/default-pop-shell)
                    (\"SPC a e m\" . mu4e)
                    (\"SPC a e c\" . my/mu4e-compose-new)
@@ -73,16 +79,37 @@ run_elisp "(progn
       (unless (eq actual expected)
         (kill-emacs 1)))))"
 
-echo "[3/4] Checking expected tab bindings"
+echo "[3/4] Checking tab navigation bindings"
 run_elisp "(progn
   ${run_user_config}
-  (dolist (entry '((\"g t\" . spacemacs/tabs-forward)
-                   (\"g T\" . spacemacs/tabs-backward)))
-    (let* ((key (car entry))
-           (expected (cdr entry))
-           (actual (lookup-key evil-normal-state-map (kbd key))))
-      (princ (format \"%s => %S\\n\" key actual))
-      (unless (eq actual expected)
-        (kill-emacs 1)))))"
+  (let* ((legacy-tabs
+          '((\"g t\" evil-normal-state-map
+             (spacemacs/tabs-forward centaur-tabs-forward tab-next))
+            (\"g T\" evil-normal-state-map
+             (spacemacs/tabs-backward centaur-tabs-backward tab-previous))))
+         (current-tabs
+          '((\"C-x t o\" global-map
+             (spacemacs/tabs-forward centaur-tabs-forward tab-next))
+            (\"C-x t O\" global-map
+             (spacemacs/tabs-backward centaur-tabs-backward tab-previous))))
+         (matched nil))
+    (dolist (entry legacy-tabs)
+      (let* ((key (nth 0 entry))
+             (map (symbol-value (nth 1 entry)))
+             (acceptable (nth 2 entry))
+             (actual (lookup-key map (kbd key))))
+        (princ (format \"%s => %S\\n\" key actual))
+        (when (memq actual acceptable)
+          (setq matched t))))
+    (dolist (entry current-tabs)
+      (let* ((key (nth 0 entry))
+             (map (symbol-value (nth 1 entry)))
+             (acceptable (nth 2 entry))
+             (actual (lookup-key map (kbd key))))
+        (princ (format \"%s => %S\\n\" key actual))
+        (when (memq actual acceptable)
+          (setq matched t))))
+    (unless matched
+      (kill-emacs 1))))"
 
 echo "Spacemacs validation passed."

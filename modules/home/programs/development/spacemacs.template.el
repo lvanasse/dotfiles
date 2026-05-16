@@ -87,16 +87,43 @@
 
   (defun my/copilot-chat-open ()
     (interactive)
-    ;; Prefer an explicit load path over the stale autoload that can linger in
-    ;; ~/.emacs.d/elpa after upstream function renames.
-    (let ((shim (symbol-function 'copilot-chat-transient)))
-      (when (eq shim #'my/copilot-chat-open)
-        (fmakunbound 'copilot-chat-transient)))
     (require 'copilot-chat nil t)
-    (unless (fboundp 'copilot-chat-transient)
-      (user-error "copilot-chat-transient is unavailable; run Home Manager switch and restart Emacs"))
-    (call-interactively #'copilot-chat-transient))
-  (defalias 'copilot-chat-transient #'my/copilot-chat-open)
+    (unless (commandp 'copilot-chat)
+      (user-error "copilot-chat is unavailable; run Home Manager switch and restart Emacs"))
+    (call-interactively #'copilot-chat)
+    (when (fboundp 'copilot-chat-goto-input)
+      (copilot-chat-goto-input)))
+
+  (defconst my/copilot-chat-buffer-regexp "^\\*Copilot Chat\\( \\[.*\\]\\)?\\*$"
+    "Match Copilot Chat buffers so they always open in a right-side panel.")
+
+  (defun my/copilot-chat-add-current-file ()
+    (interactive)
+    (require 'copilot-chat nil t)
+    (unless buffer-file-name
+      (user-error "Current buffer is not visiting a file"))
+    (copilot-chat-add-current-buffer)
+    (my/copilot-chat-open)
+    (message "Added current file to Copilot Chat context"))
+
+  (defun my/copilot-chat-add-file ()
+    (interactive)
+    (require 'copilot-chat nil t)
+    (call-interactively #'copilot-chat-add-file)
+    (my/copilot-chat-open))
+
+  (defun my/copilot-chat-add-workspace ()
+    (interactive)
+    (require 'copilot-chat nil t)
+    (copilot-chat-add-workspace)
+    (my/copilot-chat-open)
+    (message "Adding workspace files to Copilot Chat context"))
+
+  (defun my/copilot-chat-send-selection-or-buffer ()
+    (interactive)
+    (require 'copilot-chat nil t)
+    (call-interactively #'copilot-chat-custom-prompt-selection)
+    (my/copilot-chat-open))
 
   ;; Keep GC modest again after startup.
   (add-hook 'emacs-startup-hook
@@ -153,6 +180,18 @@
 
   (spacemacs/set-leader-keys
     "'" 'spacemacs/default-pop-shell)
+
+  (spacemacs/declare-prefix "a a" "ai")
+  (spacemacs/set-leader-keys
+    "a a c" #'my/copilot-chat-open
+    "a a r" #'my/copilot-chat-send-selection-or-buffer
+    "a a f" #'my/copilot-chat-add-current-file
+    "a a F" #'my/copilot-chat-add-file
+    "a a d" #'my/copilot-chat-add-workspace
+    "a a m" #'copilot-chat-set-model
+    "a a b" #'copilot-chat-switch-to-buffer
+    "a a l" #'copilot-chat-list
+    "a a k" #'copilot-chat-kill-instance)
 
   (add-hook 'before-save-hook #'delete-trailing-whitespace)
 
@@ -471,12 +510,16 @@ Prefer the live spotifyd session name because it changes per instance
 
   ;; Use the native Spacemacs GitHub Copilot layer for chat and completions.
   (setq github-copilot-enable-commit-messages nil)
+  (spacemacs/set-leader-keys "$c" #'my/copilot-chat-open)
 
   (spacemacs|use-package-add-hook copilot-chat
     :pre-config
     (require 'copilot-chat nil t))
 
   (with-eval-after-load 'copilot
+    ;; Keep Copilot Chat available, but do not auto-enable inline ghost text in
+    ;; every programming buffer.
+    (remove-hook 'prog-mode-hook #'copilot-mode)
     ;; Newer Copilot language-server builds choke on a null configuration
     ;; payload during workspace/didChangeConfiguration, so always send a real
     ;; object for the GitHub Copilot section.
@@ -486,6 +529,15 @@ Prefer the live spotifyd session name because it changes per instance
   (with-eval-after-load 'copilot-chat
     (let ((copilot-chat-config-dir (expand-file-name "~/.config/copilot-chat/"))
           (copilot-chat-state-dir (expand-file-name "~/.local/state/copilot-chat/")))
+      (add-to-list
+       'display-buffer-alist
+       `(,my/copilot-chat-buffer-regexp
+         (display-buffer-in-side-window)
+         (side . right)
+         (slot . 1)
+         (window-width . 0.33)
+         (preserve-size . (t . nil))
+         (window-parameters . ((no-delete-other-windows . t)))))
       (setq copilot-chat-backend 'curl
             copilot-chat-curl-program "__CURL_BIN__"
             copilot-chat-frontend 'markdown

@@ -14,6 +14,7 @@
         resolved = {
           enable = true;
           dnssec = "false";
+          domains = [ "home.arpa" ];
           fallbackDns = [
             "1.1.1.1"
             "9.9.9.9"

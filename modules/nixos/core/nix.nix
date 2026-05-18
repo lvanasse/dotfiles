@@ -27,6 +27,13 @@
         ];
       };
 
+      system.activationScripts.agenixRuntimePathCleanup.text = ''
+        if [ -d /run/agenix ] && [ ! -L /run/agenix ]; then
+          rm -rf /run/agenix
+        fi
+      '';
+      system.activationScripts.agenixInstall.deps = lib.mkAfter [ "agenixRuntimePathCleanup" ];
+
       # Automatic garbage collection
       nix.gc = {
         automatic = true;

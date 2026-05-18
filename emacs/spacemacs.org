@@ -84,7 +84,7 @@ Git forge dependencies.
      (shell :variables shell-default-shell 'vterm)
      shell-scripts
    )
-   dotspacemacs-additional-packages '(gruvbox-theme vterm clipetty all-the-icons nerd-icons counsel-spotify bitbake-ts-mode nix-mode json-mode org-caldav gcmh flyspell-lazy)
+   dotspacemacs-additional-packages '(gruvbox-theme vterm clipetty all-the-icons nerd-icons counsel-spotify bitbake-ts-mode nix-mode json-mode org-caldav gcmh flyspell-lazy copilot-chat)
    dotspacemacs-excluded-packages '(forge)))
 #+end_src
 
@@ -509,6 +509,39 @@ the frame width.  The =no-delete-other-windows= parameter prevents
      (window-width . 0.45)
      (preserve-size . (t . nil))
      (window-parameters . ((no-delete-other-windows . t)))))
+#+end_src
+
+** Copilot Chat (native Emacs buffer)
+
+=copilot-chat= provides a fully scrollable Copilot chat interface
+inside a native Emacs org-mode buffer.  Unlike the vterm-based CLI
+(which uses the terminal alternate screen), this buffer supports
+normal Emacs scrolling, search, and yank.
+
+- =SPC a a h= opens the chat buffer (mnemonic: "h" for help/chat).
+- =SPC a a e= explain selected region.
+- =SPC a a r= review selected region.
+- =SPC a a f= fix selected region.
+- =SPC a a t= generate tests for selected region.
+
+The vterm CLI (=SPC a a C=) remains available for agentic tasks.
+
+#+begin_src emacs-lisp
+  (with-eval-after-load 'copilot-chat
+    (setq copilot-chat-frontend 'org
+          copilot-chat-backend 'curl))
+
+  (spacemacs/set-leader-keys
+    "a a h" 'copilot-chat-display
+    "a a e" 'copilot-chat-explain
+    "a a r" 'copilot-chat-review
+    "a a f" 'copilot-chat-fix
+    "a a t" 'copilot-chat-test
+    "a a o" 'copilot-chat-optimize
+    "a a d" 'copilot-chat-doc
+    "a a b" 'copilot-chat-add-current-buffer
+    "a a B" 'copilot-chat-del-current-buffer
+    "a a R" 'copilot-chat-reset)
 #+end_src
 
 ** Keybindings — core

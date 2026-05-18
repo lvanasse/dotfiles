@@ -100,6 +100,7 @@
             flyspell-correct
             flyspell-correct-ivy
             flyspell-lazy
+            copilot-chat
             mcp
             nerd-icons
             pdf-tools

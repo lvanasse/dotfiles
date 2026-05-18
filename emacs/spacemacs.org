@@ -63,7 +63,8 @@ Git forge dependencies.
      (mu4e :variables
             mu4e-installation-path "__MU_SITE_LISP_MU4E__"
             mu4e-enable-notifications t
-            mu4e-enable-mode-line t)
+            mu4e-enable-mode-line t
+            mu4e-autorun-background-at-startup t)
      markdown
      nixos
      pdf
@@ -1437,18 +1438,15 @@ Folder structure:
 
 Desktop notifications and mode-line display for unread mail.  Uses the
 filtered query defined earlier to only count relevant folders.
+The mu4e layer starts the server in the background at startup
+(=mu4e-autorun-background-at-startup t=) and enables mode-line display
+(=mu4e-enable-mode-line t=).  We only need to override the query and
+formatter.
 
 #+begin_src emacs-lisp
-  ;; Force-load mu4e after 5 seconds so the Spacemacs mu4e layer's
-  ;; `with-eval-after-load 'mu4e` triggers and enables mode-line display.
-  ;; Also set our custom formatter and query.
-  (run-with-timer 5 nil
-    (lambda ()
-      (when (locate-library "mu4e")
-        (require 'mu4e nil t)
-        (with-eval-after-load 'mu4e-alert
-          (setq mu4e-alert-interesting-mail-query my/mu4e-alert-query
-                mu4e-alert-modeline-formatter #'my/mu4e-alert-mode-line-formatter)))))
+  (with-eval-after-load 'mu4e-alert
+    (setq mu4e-alert-interesting-mail-query my/mu4e-alert-query
+          mu4e-alert-modeline-formatter #'my/mu4e-alert-mode-line-formatter))
 #+end_src
 
 ** Slack (after-load)

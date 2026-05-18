@@ -9,6 +9,17 @@ set -euo pipefail
 
 USERNAME="ludovic"
 FLAKE_DIR="${NH_FLAKE:-$HOME/Code/personal/dotfiles}"
+NOHM_VERBOSE="${NOHM_VERBOSE:-0}"
+
+log_verbose() {
+    [ "$NOHM_VERBOSE" = "1" ] && echo "$@"
+}
+
+log_cmd() {
+    local label="$1"
+    shift
+    printf '%s %s\n' "$label" "$*"
+}
 
 if [ $# -lt 1 ]; then
     echo "Usage: nohm <hostname> [-- <extra nh os args>]" >&2
@@ -92,41 +103,40 @@ fi
 WRAPPER_MAX_JOBS="$(printf '%s' "$NIX_WRAPPER_CONFIG" | awk -F' = ' '/^max-jobs = / { print $2; exit }')"
 WRAPPER_BUILD_CORES="$(printf '%s' "$NIX_WRAPPER_CONFIG" | awk -F' = ' '/^cores = / { print $2; exit }')"
 WRAPPER_RESERVED_CORES="${MACHINE_RESERVED_CORES:-${NOHM_RESERVED_CORES:-2}}"
-echo "==> Nix limits: leave ${WRAPPER_RESERVED_CORES} machine core(s) free, build cores ${WRAPPER_BUILD_CORES}, max-jobs ${WRAPPER_MAX_JOBS}"
+log_verbose "[cfg] Nix: leaving ${WRAPPER_RESERVED_CORES} machine core(s) free; build cores=${WRAPPER_BUILD_CORES}; max-jobs=${WRAPPER_MAX_JOBS}"
 
 # Pre-switch: remove conflicting files that Home Manager will manage
-echo "==> Removing conflicting files..."
 rm -f "$HOME/.config/Code/User/settings.json" 2>/dev/null || true
 rm -rf "$HOME/.vscode/extensions" 2>/dev/null || true
 rm -f "$HOME/.local/share/applications/mimeapps.list" 2>/dev/null || true
 
 # Step 1: Home Manager switch (always)
 BEXT="${HM_BACKUP_EXT:-hm-$(date +%Y%m%d-%H%M%S)}"
-echo "==> [1/2] Home Manager: home-manager switch --flake ${FLAKE_DIR}#${USERNAME}@${HOST} -b ${BEXT}"
+log_cmd "[1/2]" "home-manager switch --flake ${FLAKE_DIR}#${USERNAME}@${HOST} -b ${BEXT}"
 NIX_CONFIG="${NIX_WRAPPER_CONFIG}" home-manager switch --flake "${FLAKE_DIR}#${USERNAME}@${HOST}" -b "${BEXT}"
 
 if should_validate_spacemacs && [ -x "$FLAKE_DIR/scripts/validate-spacemacs.sh" ]; then
-    echo "==> [1.5/2] Validating Spacemacs config..."
+    log_cmd "[1.5/2]" "$FLAKE_DIR/scripts/validate-spacemacs.sh $HOME/.spacemacs $HOME/.emacs.d"
     "$FLAKE_DIR/scripts/validate-spacemacs.sh" "$HOME/.spacemacs" "$HOME/.emacs.d"
 fi
 
 # Step 2: NixOS or post-switch tasks
 if is_nixos && [ "$HOST" != "hm-only" ]; then
-    echo "==> [2/2] NixOS: nh os switch -H ${HOST} ${EXTRA_ARGS}"
+    log_cmd "[2/2]" "nh os switch -H ${HOST}${EXTRA_ARGS:+ ${EXTRA_ARGS}}"
     # shellcheck disable=SC2086
     NH_FLAKE="${FLAKE_DIR}" NIX_CONFIG="${NIX_WRAPPER_CONFIG}" nh os switch -H "${HOST}" $EXTRA_ARGS
 elif is_nixos && [ "$HOST" = "hm-only" ]; then
-    echo "==> [2/2] hm-only target detected; skipping NixOS switch"
+    log_verbose "[2/2] hm-only target detected; skipping NixOS switch"
 else
     # Non-NixOS: symlink Wayland session files for GDM visibility
     # Use ~/.local/share (home-manager managed) which has the wrapped sway path
     WAYLAND_SESSIONS_SRC="$HOME/.local/share/wayland-sessions"
     WAYLAND_SESSIONS_DST="/usr/share/wayland-sessions"
-    echo "==> [2/2] Ensuring swaylock authentication support..."
+    log_cmd "[2/2]" "bash $FLAKE_DIR/scripts/setup-sway-auth.sh"
     bash "$FLAKE_DIR/scripts/setup-sway-auth.sh"
 
     if [ -d "$WAYLAND_SESSIONS_SRC" ]; then
-        echo "==> [2/2] Symlinking Wayland session files for GDM..."
+        log_verbose "[2/2] Symlinking Wayland session files for GDM"
         for session in "$WAYLAND_SESSIONS_SRC"/*.desktop; do
             [ -f "$session" ] || continue
             name=$(basename "$session")
@@ -135,14 +145,10 @@ else
             target="$WAYLAND_SESSIONS_DST/$name"
             if [ ! -L "$target" ] || [ "$(readlink "$target")" != "$resolved" ]; then
                 sudo ln -sf "$resolved" "$target"
-                echo "    Linked: $name -> $resolved"
+                log_verbose "  linked: $name -> $resolved"
             else
-                echo "    Already linked: $name"
+                log_verbose "  already linked: $name"
             fi
         done
-    else
-        echo "==> [2/2] No Wayland sessions to link (skipped)"
     fi
 fi
-
-echo "==> Done!"

@@ -147,8 +147,12 @@ in
 
       systemd.services.restic-backups-vaultwarden-kdrive = lib.mkIf hasVaultwardenBackupEnv {
         environment.RCLONE_CONFIG = rcloneConfigPath;
-        requires = [ "mnt-data3.mount" ];
-        after = [ "mnt-data3.mount" ];
+        requires = [
+          "mnt-data3.mount"
+        ];
+        after = [
+          "mnt-data3.mount"
+        ];
         postStop = lib.mkAfter (updateStatusScript "backup");
         path = with pkgs; [
           bash
@@ -166,7 +170,9 @@ in
           "mnt-data3.mount"
           "network-online.target"
         ];
-        requires = [ "mnt-data3.mount" ];
+        requires = [
+          "mnt-data3.mount"
+        ];
         wants = [ "network-online.target" ];
         path = with pkgs; [
           bash

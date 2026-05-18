@@ -31,27 +31,15 @@
         "time4.google.com"
       ];
       networking = {
-        nameservers = [ "1.1.1.1" ];
-
-        # Server network is managed by systemd-networkd with static LAN address.
+        # Server network is managed by systemd-networkd via a gateway DHCP reservation.
         useNetworkd = true;
         networkmanager.enable = lib.mkForce false;
         useDHCP = false;
 
         interfaces.enp1s0 = {
-          useDHCP = false;
-          ipv4.addresses = [
-            {
-              address = "192.168.0.50";
-              prefixLength = 24;
-            }
-          ];
+          useDHCP = true;
         };
-
-        defaultGateway = {
-          address = "192.168.0.1";
-          interface = "enp1s0";
-        };
+        nameservers = [ "1.1.1.1" "9.9.9.9" ];
       };
 
       # Headless server settings

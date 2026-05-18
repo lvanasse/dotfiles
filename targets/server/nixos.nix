@@ -24,6 +24,7 @@
     flakeModules.nixos."services.shelfmark"
     flakeModules.nixos."services.actual"
     flakeModules.nixos."services.dockhand"
+    flakeModules.nixos."services.docker-health"
     flakeModules.nixos."services.mousehole"
     flakeModules.nixos."services.homepage-dashboard"
     flakeModules.nixos."target.config.server"

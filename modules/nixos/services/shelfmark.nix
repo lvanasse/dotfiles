@@ -6,13 +6,13 @@ let
 in
 {
   flake.modules.nixos."services.shelfmark" =
-    { pkgs, ... }:
+    { config, pkgs, ... }:
     let
       hasAgeSecrets = builtins.pathExists arrSecretsAge;
       hasPlainSecretsOverride = builtins.pathExists arrSecretsPlainOverride;
       arrSecretsPath =
         if hasAgeSecrets then
-          "/run/agenix/arr-secrets.yml"
+          config.age.secrets."arr-secrets".path
         else if hasPlainSecretsOverride then
           toString arrSecretsPlainOverride
         else

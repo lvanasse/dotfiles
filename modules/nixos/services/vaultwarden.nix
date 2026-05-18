@@ -50,8 +50,12 @@ in
       ];
 
       systemd.services.docker-vaultwarden = {
-        requires = [ "mnt-data3.mount" ];
-        after = [ "mnt-data3.mount" ];
+        requires = [
+          "mnt-data3.mount"
+        ];
+        after = [
+          "mnt-data3.mount"
+        ];
       };
 
       networking.firewall.allowedTCPPorts = [ 4743 ];

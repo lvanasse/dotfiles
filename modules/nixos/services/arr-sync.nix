@@ -8,11 +8,6 @@ let
   hasPlainSecretsOverride = builtins.pathExists arrSecretsPlainOverride;
   hasPlainSecrets = hasPlainSecretsRepo || hasPlainSecretsOverride;
   hasArrSecrets = hasAgeSecrets || hasPlainSecrets;
-  secretsPath =
-    if hasAgeSecrets then
-      "/run/agenix/arr-secrets.yml"
-    else
-      "/etc/arr-secrets.yml";
 
   recyclarrConfig = ''
     sonarr:
@@ -194,7 +189,14 @@ let
 in
 {
   flake.modules.nixos."services.arr-sync" =
-    { pkgs, ... }:
+    { config, pkgs, ... }:
+    let
+      secretsPath =
+        if hasAgeSecrets then
+          config.age.secrets."arr-secrets".path
+        else
+          "/etc/arr-secrets.yml";
+    in
     {
       system.activationScripts.arrSecretsPathCleanup.text = ''
         if [ -d /run/agenix/arr-secrets.yml ]; then
@@ -206,7 +208,6 @@ in
       age.secrets = lib.mkIf hasAgeSecrets {
         "arr-secrets" = {
           file = arrSecretsAge;
-          path = "/run/agenix/arr-secrets.yml";
           owner = "root";
           group = "root";
           mode = "0400";
@@ -236,8 +237,12 @@ in
 
       systemd.services.recyclarr-sync = lib.mkIf hasArrSecrets {
         description = "Sync Arr settings with Recyclarr";
-        after = [ "docker.service" ];
-        requires = [ "docker.service" ];
+        after = [
+          "docker.service"
+        ];
+        requires = [
+          "docker.service"
+        ];
         serviceConfig = {
           Type = "oneshot";
           ExecStart = ''

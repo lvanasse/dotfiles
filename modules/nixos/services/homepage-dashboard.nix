@@ -12,16 +12,17 @@
       isGateway = host == "gateway";
 
       serverAddress = "192.168.0.50";
-      gatewayAddress = "192.168.10.1";
+      gatewayAddress = "192.168.0.1";
+      gatewayStatusUrl = "http://${gatewayAddress}:8094/status.json";
       serverTailscaleHost = "server.tail7e8d6c.ts.net";
       gatewayTailscaleHost = "gateway.tail7e8d6c.ts.net";
-      localLanAddress =
+      localLanAddresses =
         if isServer then
-          serverAddress
+          [ serverAddress ]
         else if isGateway then
-          gatewayAddress
+          [ gatewayAddress ]
         else
-          "127.0.0.1";
+          [ "127.0.0.1" ];
       localTailscaleHost =
         if isServer then
           serverTailscaleHost
@@ -37,16 +38,20 @@
         enable = true;
         openFirewall = false;
         listenPort = 8082;
-        allowedHosts = lib.concatStringsSep "," [
-          "localhost:8082"
-          "127.0.0.1:8082"
-          "127.0.0.1:8091"
-          "127.0.0.1:8092"
-          "127.0.0.1:8093"
-          "${host}:8082"
-          "${localLanAddress}:8082"
-          "${localTailscaleHost}:8082"
-        ];
+        allowedHosts = lib.concatStringsSep "," (
+          [
+            "localhost:8082"
+            "127.0.0.1:8082"
+            "127.0.0.1:8091"
+            "127.0.0.1:8092"
+            "127.0.0.1:8093"
+            "127.0.0.1:8095"
+            "${gatewayAddress}:8094"
+            "${host}:8082"
+            "${localTailscaleHost}:8082"
+          ]
+          ++ map (address: "${address}:8082") localLanAddresses
+        );
 
         docker = lib.mkIf isServer {
           local = {
@@ -347,6 +352,35 @@
               {
                 Infra = [
                   {
+                    DockerHealth = {
+                      href = "http://${serverTailscaleHost}:3001";
+                      description = "Dynamic container health";
+                      widget = {
+                        type = "customapi";
+                        url = "http://127.0.0.1:8095/status.json";
+                        refreshInterval = 30000;
+                        mappings = [
+                          {
+                            field = "overall.status";
+                            label = "Overall";
+                          }
+                          {
+                            field = "summary.failed";
+                            label = "Failed";
+                          }
+                          {
+                            field = "failed.names";
+                            label = "Down";
+                          }
+                          {
+                            field = "summary.total";
+                            label = "Total";
+                          }
+                        ];
+                      };
+                    };
+                  }
+                  {
                     VaultwardenBackup = {
                       href = "http://${serverTailscaleHost}:4743";
                       description = "Nightly Restic backup to kDrive";
@@ -442,6 +476,76 @@
                     };
                   }
                   {
+                    GatewayHealth = {
+                      href = "http://${gatewayTailscaleHost}:8082";
+                      description = "Gateway runtime health";
+                      widget = {
+                        type = "customapi";
+                        url = gatewayStatusUrl;
+                        refreshInterval = 30000;
+                        mappings = [
+                          {
+                            field = "overall.status";
+                            label = "Overall";
+                          }
+                          {
+                            field = "checkedAt";
+                            label = "Checked";
+                          }
+                          {
+                            field = "pppoe.status";
+                            label = "PPPoE";
+                          }
+                          {
+                            field = "dnsmasq.status";
+                            label = "DHCP/DNS";
+                          }
+                          {
+                            field = "tailscale.status";
+                            label = "Tailscale";
+                          }
+                          {
+                            field = "uptime";
+                            label = "Uptime";
+                          }
+                        ];
+                      };
+                    };
+                  }
+                  {
+                    GatewaySecurity = {
+                      href = "http://${gatewayTailscaleHost}:8082";
+                      description = "Gateway SSH and exposure summary";
+                      widget = {
+                        type = "customapi";
+                        url = gatewayStatusUrl;
+                        refreshInterval = 30000;
+                        mappings = [
+                          {
+                            field = "ssh.passwordAuthentication";
+                            label = "SSH Passwords";
+                          }
+                          {
+                            field = "fail2ban.sshd.banned";
+                            label = "Banned";
+                          }
+                          {
+                            field = "fail2ban.sshd.failed";
+                            label = "Failed";
+                          }
+                          {
+                            field = "exposure.wanOpenTcp";
+                            label = "WAN TCP";
+                          }
+                          {
+                            field = "exposure.listenTcp";
+                            label = "Listen TCP";
+                          }
+                        ];
+                      };
+                    };
+                  }
+                  {
                     Dockhand = {
                       href = "http://${serverTailscaleHost}:3001";
                       description = "Docker compose dashboard";
@@ -505,29 +609,29 @@
           target = "_blank";
           color = "stone";
           fullWidth = true;
-          maxGroupColumns = 8;
+          maxGroupColumns = 10;
           useEqualHeights = true;
           iconStyle = "theme";
           layout = {
             Media = {
               style = "row";
-              columns = 4;
+              columns = 5;
             };
             Downloads = {
               style = "row";
-              columns = 3;
+              columns = 4;
             };
             Productivity = {
               style = "row";
-              columns = 3;
+              columns = 4;
             };
             Infra = {
               style = "row";
-              columns = 3;
+              columns = 4;
             };
             Network = {
               style = "row";
-              columns = 4;
+              columns = 5;
             };
           };
         };
@@ -589,37 +693,75 @@
           .information-widgets,
           .services,
           .bookmarks {
-            gap: 0.8rem !important;
+            gap: 0.55rem !important;
           }
 
           .bookmark, .information-widget, .card, .service-card {
-            padding: 1rem 1.05rem !important;
-            border-radius: 12px !important;
+            padding: 0.7rem 0.8rem !important;
+            border-radius: 10px !important;
             border-width: 2px !important;
           }
 
           .service-card {
-            min-height: 160px !important;
+            min-height: 132px !important;
           }
 
           .service .title,
           .service-card .title {
-            font-size: 1.02rem !important;
+            font-size: 0.95rem !important;
             font-weight: 700 !important;
-            line-height: 1.25 !important;
+            line-height: 1.18 !important;
           }
 
           .service .description,
           .service-card .description {
-            font-size: 0.92rem !important;
-            line-height: 1.4 !important;
+            font-size: 0.84rem !important;
+            line-height: 1.3 !important;
+          }
+
+          .service-stats {
+            margin-top: 0.15rem !important;
+          }
+
+          .service-stats .service-block {
+            margin: 0.12rem !important;
+            padding: 0.15rem 0.3rem !important;
+            border-radius: 6px !important;
+          }
+
+          .service-stats .service-block > div:first-child {
+            font-size: 0.68rem !important;
+            line-height: 1.05 !important;
+          }
+
+          .service-stats .service-block > div:last-child {
+            font-size: 0.52rem !important;
+            line-height: 1.05 !important;
+            letter-spacing: 0.02em !important;
+          }
+
+          .service:has(.service-container-stats) .service-stats .service-container > .service-block:nth-last-child(-n+2) {
+            display: none !important;
+          }
+
+          .service .icon,
+          .service-card .icon {
+            width: 2.3rem !important;
+            height: 2.3rem !important;
+          }
+
+          .services-group h2,
+          .service-group h2,
+          .group-title {
+            margin-bottom: 0.45rem !important;
+            font-size: 1rem !important;
           }
 
           .information-widget img,
           .logo-container img,
           .logo img {
-            width: 120px !important;
-            height: 120px !important;
+            width: 92px !important;
+            height: 92px !important;
             object-fit: cover !important;
             object-position: center center !important;
             border-radius: 5px !important;

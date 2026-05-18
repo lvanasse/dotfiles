@@ -62,6 +62,17 @@ in
         ports = [ "46495:46495" ];
       };
 
+      systemd.services.docker-cloudflared = {
+        requires = [
+          "docker.service"
+          "mnt-data3.mount"
+        ];
+        after = [
+          "docker.service"
+          "mnt-data3.mount"
+        ];
+      };
+
       networking.firewall.allowedTCPPorts = [ 46495 ];
     };
 }

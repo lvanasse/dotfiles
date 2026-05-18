@@ -16,7 +16,6 @@ in
         flakeConfig.flake.modules.homeManager.terminal
         flakeConfig.flake.modules.homeManager."programs.nix"
         flakeConfig.flake.modules.homeManager."programs.ssh"
-        flakeConfig.flake.modules.homeManager."programs.aider"
         flakeConfig.flake.modules.homeManager."programs.development"
         flakeConfig.flake.modules.homeManager."programs.slack"
         flakeConfig.flake.modules.homeManager."programs.vesktop"

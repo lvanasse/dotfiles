@@ -91,8 +91,7 @@
           alias gc "git commit"
           alias gp "git push"
           alias gl "git log --oneline"
-          alias vim "$HOME/.local/bin/term-emacs"
-          alias vi "$HOME/.local/bin/term-emacs"
+          alias vem "$HOME/.local/bin/term-emacs"
           alias screenshot "screenshot-annotate"
 
         '';

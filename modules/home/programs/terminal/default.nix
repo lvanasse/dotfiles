@@ -18,11 +18,6 @@
           exec emacsclient -t -a "" "$@"
         '';
       };
-
-      home.sessionVariables = {
-        EDITOR = "$HOME/.local/bin/term-emacs";
-        VISUAL = "$HOME/.local/bin/term-emacs";
-      };
     };
 
   flake.modules.homeManager.terminalBash = config.flake.modules.homeManager."terminal.bash";

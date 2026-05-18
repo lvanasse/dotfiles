@@ -20,8 +20,7 @@
           gc = "git commit";
           gp = "git push";
           gl = "git log --oneline";
-          vim = "$HOME/.local/bin/term-emacs";
-          vi = "$HOME/.local/bin/term-emacs";
+          vem = "$HOME/.local/bin/term-emacs";
         };
 
         initExtra = ''

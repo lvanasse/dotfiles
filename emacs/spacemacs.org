@@ -1,0 +1,1599 @@
+#+TITLE: Spacemacs Configuration
+#+AUTHOR: Ludovic Vanasse
+#+PROPERTY: header-args:emacs-lisp :tangle yes :comments no
+#+STARTUP: overview
+
+This is the literate Spacemacs configuration for my NixOS dotfiles.  Each
+section documents *why* a piece of configuration exists so that the intent
+stays clear over time.
+
+The Org file is tangled at Nix build time (=emacs --batch= with
+=org-babel-tangle-file=) to produce the =.spacemacs= that Spacemacs loads.
+Nix path substitution placeholders (=__MU_BIN__=, etc.) are replaced after
+tangling, just as before.
+
+* Preamble
+
+A comment header so that the generated file identifies its origin.
+
+#+begin_src emacs-lisp
+;; Template rendered by modules/home/programs/development/emacs.nix.
+#+end_src
+
+* Layers
+
+The =dotspacemacs/layers= function declares which Spacemacs layers to load,
+additional packages that aren't part of any layer, and packages to exclude.
+
+The layers are organized as:
+
+- *Core*: =better-defaults=, =git=, =org= — standard productivity
+- *Completion*: =auto-completion= (with snippets), =spell-checking=,
+  =syntax-checking=, =ivy=, =lsp=, =treemacs=
+- *Languages*: C/C++ (clangd), Claude Code, CMake, Docker, Markdown, Nix,
+  PDF, Python (pyright), YAML, ERC (IRC), Rust, Shell
+- *Communication*: =mu4e= (email), =erc= (IRC), =slack=, =spotify=
+- *Tools*: =tabs= (centaur-tabs), =shell= (vterm), =shell-scripts=
+
+Additional packages (=gruvbox-theme=, =vterm=, =clipetty=, etc.) are
+installed outside layers.  =forge= is excluded to avoid pulling in heavy
+Git forge dependencies.
+
+#+begin_src emacs-lisp
+(defun dotspacemacs/layers ()
+  (setq-default
+   dotspacemacs-distribution 'spacemacs
+   dotspacemacs-enable-lazy-installation 'unused
+   dotspacemacs-ask-for-lazy-installation t
+   dotspacemacs-install-packages 'used-only
+   dotspacemacs-configuration-layers '(
+     better-defaults
+     git
+     org
+     (auto-completion :variables auto-completion-enable-snippets-in-popup t)
+     spell-checking
+     syntax-checking
+     ivy
+     lsp
+     (treemacs :variables treemacs-use-follow-mode t)
+     c-c++
+     claude-code
+     cmake
+     (docker :variables docker-dockerfile-backend 'lsp)
+     (mu4e :variables
+            mu4e-installation-path "__MU_SITE_LISP_MU4E__"
+            mu4e-enable-notifications t
+            mu4e-enable-mode-line nil)
+     markdown
+     nixos
+     pdf
+     (python :variables
+             python-backend 'lsp
+             python-lsp-server 'pyright)
+     yaml
+     (erc :variables
+          erc-enable-sasl-auth t
+          erc-enable-notifications t)
+     rust
+     slack
+     spotify
+     (tabs :variables
+           tabs-icons t
+           tabs-auto-hide nil)
+     (shell :variables shell-default-shell 'vterm)
+     shell-scripts
+   )
+   dotspacemacs-additional-packages '(gruvbox-theme vterm clipetty all-the-icons nerd-icons counsel-spotify bitbake-ts-mode nix-mode json-mode org-caldav gcmh)
+   dotspacemacs-excluded-packages '(forge)))
+#+end_src
+
+* Init
+
+Core Spacemacs settings applied before any layer loads.  These control the
+editing style, theme, startup banner, and other framework-level options.
+
+- *Editing style*: Vim (evil-mode)
+- *Theme*: Gruvbox Dark Hard — a warm, high-contrast dark theme
+- *Startup banner*: a custom image (path injected by Nix)
+- *Startup lists*: disabled for a minimal home buffer
+
+#+begin_src emacs-lisp
+(defun dotspacemacs/init ()
+  (setq-default
+   dotspacemacs-editing-style 'vim
+   dotspacemacs-elpa-https t
+   dotspacemacs-verify-spacelpa-archives nil
+   dotspacemacs-themes '(gruvbox-dark-hard)
+   dotspacemacs-colorize-cursor-according-to-state t
+   dotspacemacs-mode-line-theme '(spacemacs :separator utf-8 :separator-scale 1.0)
+   dotspacemacs-display-default-layout nil
+   dotspacemacs-default-layout-name "main"
+   dotspacemacs-scratch-mode 'text-mode
+   dotspacemacs-startup-banner "__SPACEMACS_STARTUP_BANNER__"
+   dotspacemacs-startup-banner-scale 'auto
+   dotspacemacs-startup-buffer-show-version nil
+   dotspacemacs-startup-lists nil))
+#+end_src
+
+* User Init
+
+Runs early, before layers are loaded.  Used for performance tuning and
+disabling UI chrome that would otherwise flash on startup.
+
+** Performance tuning
+
+Raise the GC threshold to maximum and disable =file-name-handler-alist=
+during startup so that package initialization doesn't trigger excessive
+garbage collection or regex matching.  After startup, =gcmh= takes over
+GC management (collecting only during idle time).
+=fast-but-imprecise-scrolling=, =redisplay-skip-fontification-on-input=,
+and =jit-lock-defer-time= improve interactive responsiveness.
+=inhibit-compacting-font-caches= prevents GC stalls from font cache
+compaction in GUI frames.  Bidi scanning is disabled (LTR-only) and
+=scroll-conservatively= avoids jarring recentering jumps.
+=lsp-use-plists= enables plist-based LSP deserialization which is
+significantly faster than the default hash-table mode.
+
+** UI chrome removal
+
+Disable menu bar, toolbar, scrollbar, blinking cursor, tooltips, fringes,
+and tab-bar so the editor starts with a clean, distraction-free look.
+
+** Native compilation warnings
+
+Silence native-compilation async warnings that would otherwise pop up
+buffers during normal editing after a fresh rebuild.
+
+** Frame defaults
+
+Remove the internal border so that tiling window managers (Sway) get a
+seamless appearance.
+
+#+begin_src emacs-lisp
+(defun dotspacemacs/user-init ()
+  ;; Bypass file-name-handler-alist during startup (restored after init).
+  (defvar my/file-name-handler-alist-backup file-name-handler-alist)
+  (setq file-name-handler-alist nil)
+  (add-hook 'emacs-startup-hook
+            (lambda ()
+              (setq file-name-handler-alist my/file-name-handler-alist-backup)))
+
+  ;; Use plist deserialization for lsp-mode (faster than hash-tables).
+  (setenv "LSP_USE_PLISTS" "true")
+  (setq lsp-use-plists t)
+
+  ;; Startup and LSP defaults tuned for interactive work rather than cold-start demos.
+  (setq gc-cons-threshold most-positive-fixnum
+        gc-cons-percentage 0.6
+        read-process-output-max (* 4 1024 1024)
+        idle-update-delay 1.0
+        fast-but-imprecise-scrolling t
+        redisplay-skip-fontification-on-input t
+        inhibit-compacting-font-caches t
+        site-run-file nil
+        jit-lock-defer-time 0.05)
+
+  ;; Avoid expensive bidi reordering scans (only LTR text in this setup).
+  (setq-default bidi-display-reordering 'left-to-right
+                bidi-paragraph-direction 'left-to-right)
+  (setq bidi-inhibit-bpa t)
+
+  ;; Smooth scrolling without recentering jumps.
+  (setq scroll-conservatively 101
+        scroll-margin 2
+        auto-window-vscroll nil)
+  (setq-default cursor-type '(hbar . 3)
+                line-spacing 2)
+  (menu-bar-mode -1)
+  (tool-bar-mode -1)
+  (scroll-bar-mode -1)
+  (blink-cursor-mode -1)
+  (when (fboundp 'tooltip-mode)
+    (tooltip-mode -1))
+  (when (fboundp 'set-fringe-mode)
+    (set-fringe-mode 4))
+  (when (fboundp 'tab-bar-mode)
+    (tab-bar-mode -1))
+  (when (boundp 'native-comp-async-report-warnings-errors)
+    (setq native-comp-async-report-warnings-errors 'silent))
+  (when (boundp 'comp-async-report-warnings-errors)
+    (setq comp-async-report-warnings-errors 'silent))
+  (when (boundp 'warning-suppress-types)
+    (add-to-list 'warning-suppress-types '(native-compiler)))
+  (add-to-list 'default-frame-alist '(internal-border-width . 0)))
+#+end_src
+
+* User Config
+
+The main configuration function, called after layers are loaded.  This is
+where most of the custom behaviour lives.  Each subsection below maps to a
+logical feature area.
+
+** General settings
+
+Whitespace display (trailing whitespace and tab marks) and frame-title
+suppression for a cleaner tiling WM experience.
+
+#+begin_src emacs-lisp
+(defun dotspacemacs/user-config ()
+  (setq-default
+   whitespace-style '(face trailing tabs tab-mark)
+   whitespace-line-column 100)
+
+  (setq frame-title-format nil
+        indicate-buffer-boundaries nil
+        indicate-empty-lines nil)
+
+  ;; Pixel-precise smooth scrolling (Emacs 29+).
+  (when (fboundp 'pixel-scroll-precision-mode)
+    (pixel-scroll-precision-mode 1))
+
+  ;; Protect against accidentally opening huge/minified files.
+  (when (fboundp 'global-so-long-mode)
+    (global-so-long-mode 1))
+#+end_src
+
+** Theme and faces
+
+Set the fringe background to match the Gruvbox dark-hard background so
+there's no visible seam between buffer content and window edges.
+
+#+begin_src emacs-lisp
+  (set-face-attribute 'fringe nil :background "#1d2021")
+#+end_src
+
+** Startup buffer customization
+
+Strip the Spacemacs home buffer down to just the banner image by
+no-op'ing the buttons, notes, footer, and summary functions.  This gives
+a minimal, aesthetic startup experience.
+
+#+begin_src emacs-lisp
+  (with-eval-after-load 'core-spacemacs-buffer
+    ;; Keep the startup page almost image-only.
+    (defun spacemacs-buffer//insert-buttons ())
+    (defun spacemacs-buffer/display-startup-note ())
+    (defun spacemacs-buffer//notes-insert-quickhelp ())
+    (defun spacemacs-buffer//notes-insert-release-note ())
+    (defun spacemacs-buffer/toggle-note (&optional _type)
+      (setq spacemacs-buffer--current-note-type nil
+            spacemacs-buffer--note-widgets nil))
+    (defun spacemacs-buffer//notes-redisplay-current-note ())
+    (defun spacemacs-buffer//insert-footer ()))
+
+  (with-eval-after-load 'core-configuration-layer
+    (defun configuration-layer/display-summary ()))
+#+end_src
+
+** Private elisp loader
+
+A helper to load optional private configuration files (Slack tokens,
+Spotify secrets, etc.) only when they exist on disk.
+
+#+begin_src emacs-lisp
+  (defun my/load-private-elisp (path)
+    (when (file-readable-p path)
+      (load path nil 'nomessage)))
+#+end_src
+
+** Copilot CLI
+
+The GitHub Copilot CLI integration.  Opens a dedicated vterm panel on the
+right side of the frame.  The buffer name and regexp are used by
+=display-buffer-alist= to control placement.  Invoked with =SPC a a C=.
+
+#+begin_src emacs-lisp
+  (defconst my/copilot-cli-buffer-name "*Copilot CLI*"
+    "Buffer name for the dedicated Copilot CLI panel.")
+
+  (defconst my/copilot-cli-buffer-regexp "^\\*Copilot CLI\\*$"
+    "Match the dedicated Copilot CLI buffer.")
+
+  (defun my/copilot-cli ()
+    (interactive)
+    (let ((copilot-program (executable-find "copilot")))
+      (unless copilot-program
+        (user-error
+         "The `copilot` CLI is not installed in this profile; run Home Manager switch and restart Emacs."))
+      (unless (fboundp 'vterm)
+        (user-error "vterm is unavailable; run Home Manager switch and restart Emacs"))
+      (let* ((default-directory
+               (or (and buffer-file-name (file-name-directory buffer-file-name))
+                   default-directory))
+             (buffer (get-buffer my/copilot-cli-buffer-name))
+             (live-process (and buffer (get-buffer-process buffer))))
+        (if live-process
+            (display-buffer buffer)
+          (vterm my/copilot-cli-buffer-name)
+          (setq buffer (current-buffer))
+          (vterm-send-string copilot-program)
+          (vterm-send-return))
+        (when-let ((window (get-buffer-window buffer t)))
+          (select-window window)))))
+#+end_src
+
+** GC and startup hooks
+
+After startup, =gcmh= manages garbage collection (only collecting during
+idle time with a 64 MB threshold).  Transient buffers (*scratch*,
+*Messages*, *info*) are removed after a short delay to keep the home view
+clean.
+
+#+begin_src emacs-lisp
+  ;; Use gcmh for idle-time-only garbage collection after startup.
+  (use-package gcmh
+    :demand t
+    :config
+    (setq gcmh-idle-delay 'auto
+          gcmh-auto-idle-delay-factor 10
+          gcmh-high-cons-threshold (* 64 1024 1024))
+    (gcmh-mode 1))
+
+  (add-hook 'emacs-startup-hook
+            (lambda ()
+              (run-with-idle-timer 1 nil #'my/remove-startup-buffers)))
+
+  (setq initial-buffer-choice
+        (lambda ()
+          (when (fboundp 'spacemacs-buffer/goto-buffer)
+            (spacemacs-buffer/goto-buffer nil t))
+          (get-buffer "*spacemacs*")))
+#+end_src
+
+** Nix profile PATH
+
+Ensure Home Manager profile bin directories are on =exec-path= and =$PATH=
+so that GUI-launched Emacs can find Nix-installed tools (mu, msmtp,
+language servers, etc.).
+
+#+begin_src emacs-lisp
+  ;; Ensure Home Manager profiles are visible to GUI-launched Emacs.
+  (dolist (path '("~/.nix-profile/bin" "~/.local/state/nix/profile/bin"))
+    (let ((expanded (expand-file-name path)))
+      (when (file-directory-p expanded)
+        (add-to-list 'exec-path expanded)
+        (setenv "PATH" (concat expanded path-separator (getenv "PATH"))))))
+#+end_src
+
+** Clipboard
+
+Enable system clipboard integration and save previous clipboard content
+before killing so you don't lose external clipboard data.
+
+#+begin_src emacs-lisp
+  (setq select-enable-clipboard t
+        save-interprogram-paste-before-kill t)
+#+end_src
+
+** TRAMP / Remote editing
+
+Keep remote editing generic: TRAMP follows the user's SSH aliases and
+ControlMaster settings from =~/.ssh/config= managed by Home Manager.
+
+#+begin_src emacs-lisp
+  ;; Keep remote editing generic: TRAMP should follow the user's SSH aliases
+  ;; and ControlMaster settings from ~/.ssh/config and Home Manager.
+  (setq tramp-default-method "ssh"
+        tramp-use-ssh-controlmaster-options t
+        tramp-verbose 1)
+#+end_src
+
+** Identity
+
+User identity used for email composition and Git commit messages.
+
+#+begin_src emacs-lisp
+  (setq user-full-name "Ludovic Vanasse"
+        user-mail-address "mail@ludovicvanasse.com")
+#+end_src
+
+** Spell checking
+
+Use =aspell= with English as the default dictionary.  Switch to French
+interactively with =SPC S d= when needed.
+
+#+begin_src emacs-lisp
+  (setq ispell-program-name "aspell"
+        ispell-dictionary "en")
+#+end_src
+
+** Clipetty (terminal clipboard)
+
+In non-graphical frames (SSH sessions, tmux), enable =clipetty= for
+OSC-52 clipboard forwarding so that kill-ring operations reach the local
+system clipboard.
+
+#+begin_src emacs-lisp
+  (when (and (not (display-graphic-p))
+             (require 'clipetty nil t))
+    (global-clipetty-mode 1))
+#+end_src
+
+** mu4e compose helper
+
+A wrapper around =mu4e-compose-new= that gives a clear error if mu4e isn't
+available (e.g. before the first Home Manager switch).
+
+#+begin_src emacs-lisp
+  (defun my/mu4e-compose-new ()
+    (interactive)
+    (unless (require 'mu4e nil t)
+      (user-error "mu4e is not available; run Home Manager switch and restart Emacs"))
+    (call-interactively #'mu4e-compose-new))
+#+end_src
+
+** mu4e-alert query and mode-line formatter
+
+The unread-mail query is limited to folders the user actively monitors
+(Inbox, Promotions, Social Networks).  The mode-line formatter shows a
+compact mail icon (nerd-font) with the count.
+
+#+begin_src emacs-lisp
+  (defconst my/mu4e-alert-query
+    "flag:unread AND NOT flag:trashed AND (maildir:/ludovic/Index OR maildir:/ludovic/Promotions OR maildir:/ludovic/SocialNetworks)"
+    "Unread mail query limited to the folders the user cares about.")
+
+  (defun my/mu4e-alert-mode-line-formatter (mail-count)
+    "Render a compact unread-mail indicator for MAIL-COUNT."
+    (when (> mail-count 0)
+      (let ((icon (if (fboundp 'nerd-icons-mdicon)
+                      (nerd-icons-mdicon "nf-md-email")
+                    "✉")))
+        (propertize
+         (format " %s %d " icon mail-count)
+         'help-echo (if (= mail-count 1)
+                         "You have 1 unread mail in Inbox, Promotions, or Social Networks"
+                       (format "You have %d unread mails in Inbox, Promotions, or Social Networks"
+                               mail-count))
+         'mouse-face 'mode-line-highlight
+         'keymap '(mode-line keymap
+                             (mouse-1 . mu4e-alert-view-unread-mails)
+                             (mouse-2 . mu4e-alert-view-unread-mails)
+                             (mouse-3 . mu4e-alert-view-unread-mails))))))
+#+end_src
+
+** Shell / vterm
+
+Detect the Fish shell from several candidate paths (Nix profile, system
+path) and configure vterm, multi-term, and the =$SHELL= environment
+variable.  Also redirect =M-x shell= to vterm so we never get a
+=TERM=dumb= buffer.
+
+#+begin_src emacs-lisp
+  (let* ((fish-candidates (list
+                           (executable-find "fish")
+                           (expand-file-name "~/.nix-profile/bin/fish")
+                           (expand-file-name "~/.local/state/nix/profile/bin/fish")
+                           "/run/current-system/sw/bin/fish"))
+         (fish (seq-find #'file-executable-p fish-candidates)))
+    (when fish
+      (setq shell-file-name fish
+            explicit-shell-file-name fish
+            vterm-shell fish
+            vterm-max-scrollback 10000
+            multi-term-program fish)
+      (setenv "SHELL" fish)))
+
+  ;; Redirect M-x shell to vterm so we never get TERM=dumb.
+  (defalias 'shell 'vterm)
+#+end_src
+
+** Copilot CLI display rules
+
+Place the Copilot CLI buffer in a side window on the right, taking 45% of
+the frame width.  The =no-delete-other-windows= parameter prevents
+=C-x 1= from killing the panel.
+
+#+begin_src emacs-lisp
+  (add-to-list
+   'display-buffer-alist
+   `(,my/copilot-cli-buffer-regexp
+     (display-buffer-in-side-window)
+     (side . right)
+     (slot . 1)
+     (window-width . 0.45)
+     (preserve-size . (t . nil))
+     (window-parameters . ((no-delete-other-windows . t)))))
+#+end_src
+
+** Keybindings — core
+
+Leader-key bindings for shell access, vterm, and prefix declarations for
+AI tools, remote access, and the view prefix.
+
+#+begin_src emacs-lisp
+  (spacemacs/set-leader-keys
+    "'" 'spacemacs/default-pop-shell
+    "bs" 'vterm)
+
+  (spacemacs/declare-prefix "a a" "ai")
+  (spacemacs/declare-prefix "a r" "remote")
+  (define-key spacemacs-default-map (kbd "v") nil)
+  (spacemacs/declare-prefix "v" "view")
+#+end_src
+
+** TRAMP helper and keybindings
+
+A helper command to quickly open remote files via TRAMP with useful
+defaults and tab-completion hints.
+
+#+begin_src emacs-lisp
+  (defconst my/tramp-target-examples
+    '("/ssh:server:/path/to/file"
+      "/ssh:gateway:/etc/nixos"
+      "/ssh:work-alias:/path")
+    "Representative TRAMP targets that match the managed SSH workflow.")
+
+  (defun my/find-remote-file (target)
+    "Open a remote file or directory using a full TRAMP TARGET string.
+
+Examples:
+/ssh:server:/path/to/file
+/ssh:gateway:/etc/nixos
+/ssh:work-alias:/path
+
+Plain `find-file` with TRAMP syntax remains fully supported."
+    (interactive
+     (list
+      (read-string
+       (format "TRAMP target (%s): "
+               (mapconcat #'identity my/tramp-target-examples ", "))
+       "/ssh:"
+       nil
+       "/ssh:")))
+    (find-file target))
+
+  (spacemacs/set-leader-keys
+    "a a C" #'my/copilot-cli
+    "a a c" #'my/copilot-cli
+    "a r f" #'my/find-remote-file
+    "a c i" #'my/irc-dispatch
+    "v n" #'centaur-tabs-forward
+    "v p" #'centaur-tabs-backward)
+#+end_src
+
+** mu4e Inbox helpers
+
+Constants and functions for the managed Inbox entrypoint.  =SPC a e m=
+opens mu4e directly in the Inbox folder.
+
+#+begin_src emacs-lisp
+  (defconst my/mu4e-inbox-query "maildir:/ludovic/Index"
+    "Query used for the direct Inbox mail entrypoint.")
+
+  (defconst my/mail-irc-layout-slot 2
+    "Eyebrowse slot reserved for the managed mail+IRC layout.")
+
+  (defconst my/mail-irc-layout-name "mail+irc"
+    "Name used for the managed mail+IRC layout.")
+
+  (defvar my/mail-irc-bootstrap-done nil
+    "Whether the first GUI-session mail+IRC bootstrap already ran.")
+
+  (defun my/mu4e-focus-inbox ()
+    "Switch the current mu4e view to Inbox."
+    (cond
+     ((fboundp 'mu4e-search)
+      (mu4e-search my/mu4e-inbox-query))
+     ((fboundp 'mu4e-headers-search)
+      (mu4e-headers-search my/mu4e-inbox-query))
+     (t
+      (message "mu4e inbox helper unavailable; staying on the default view"))))
+
+  (defun my/mu4e-open-inbox ()
+    "Open mu4e directly in Inbox."
+    (interactive)
+    (unless (require 'mu4e nil t)
+      (user-error "mu4e is not available; run Home Manager switch and restart Emacs"))
+    (mu4e)
+    (run-at-time 0 nil #'my/mu4e-focus-inbox))
+#+end_src
+
+** Layout system (eyebrowse)
+
+Mode-line helpers showing the active layout as =slot:name= and the window
+number as =wN=.  The layout system uses eyebrowse to manage named window
+configurations.
+
+#+begin_src emacs-lisp
+  (defun my/current-layout-label ()
+    "Return the active layout as `slot:name` for the mode-line."
+    (when (and (fboundp 'safe-persp-name) (fboundp 'get-frame-persp))
+      (let* ((name (safe-persp-name (get-frame-persp)))
+             (names (when (fboundp 'persp-names-current-frame-fast-ordered)
+                      (persp-names-current-frame-fast-ordered)))
+             (pos (when names (cl-position name names :test #'string=)))
+             (slot (when pos (1+ pos))))
+        (when (or slot name)
+          (propertize
+           (cond
+            ((and slot name)
+             (format "%s:%s" slot name))
+            (slot
+             (int-to-string slot))
+            (t
+             name))
+           'face 'bold)))))
+
+  (defun my/current-window-label ()
+    "Return the active window number with an explicit prefix."
+    (let ((num (cond
+                ((bound-and-true-p winum-mode)
+                 (winum-get-number))
+                ((bound-and-true-p window-numbering-mode)
+                 (window-numbering-get-number))
+                (t nil))))
+      (when num
+        (propertize (format "w%s" num) 'face 'bold))))
+#+end_src
+
+** ERC buffer helpers
+
+Utility functions to find existing ERC buffers and live server connections.
+Used by the layout and dispatch system to avoid creating duplicate
+connections.
+
+#+begin_src emacs-lisp
+  (defun my/erc-buffer ()
+    "Return an existing ERC buffer, if any."
+    (seq-find
+     (lambda (buffer)
+       (with-current-buffer buffer
+         (derived-mode-p 'erc-mode)))
+     (buffer-list)))
+
+  (defun my/erc-live-buffer ()
+    "Return a live ERC server buffer, if any."
+    (seq-find
+     (lambda (buffer)
+       (with-current-buffer buffer
+         (and (derived-mode-p 'erc-mode)
+              (fboundp 'erc-server-process-alive)
+              (erc-server-process-alive))))
+     (buffer-list)))
+#+end_src
+
+** Mail+IRC layout setup
+
+The combined mail+IRC layout splits the frame into two panes: mu4e Inbox
+on the left, and ERC (Libera Chat) on the right.  Invoked via
+=SPC a e l= or =SPC a c i D=.
+
+#+begin_src emacs-lisp
+  (defun my/setup-email-layout ()
+    "Populate the current layout with mu4e."
+    (delete-other-windows)
+    (my/mu4e-open-inbox))
+
+  (defun my/erc-open-or-connect ()
+    "Raise an existing ERC session or connect a new managed one."
+    (interactive)
+    (if-let ((buffer (or (my/erc-live-buffer)
+                         (my/erc-buffer))))
+        (switch-to-buffer buffer)
+      (switch-to-buffer (my/connect-irc))))
+
+  (defun my/setup-irc-layout ()
+    "Populate the current layout with IRC."
+    (delete-other-windows)
+    (my/erc-open-or-connect))
+
+  (defun my/setup-mail-irc-layout ()
+    "Populate the current layout with Inbox and IRC in a split view."
+    (delete-other-windows)
+    (my/mu4e-open-inbox)
+    (delete-other-windows)
+    (let ((mail-window (selected-window))
+          (irc-window (split-window-right)))
+      (select-window irc-window)
+      (my/erc-open-or-connect)
+      (select-window mail-window)
+      (balance-windows)))
+
+  (defun my/configure-layout-slot (slot name setup-fn)
+    "Switch to SLOT, rename it to NAME, and run SETUP-FN there."
+    (eyebrowse-switch-to-window-config slot)
+    (eyebrowse-rename-window-config slot name)
+    (funcall setup-fn))
+
+  (defun my/open-mail-irc-layout ()
+    "Open or refresh the managed mail+IRC layout."
+    (interactive)
+    (unless (bound-and-true-p eyebrowse-mode)
+      (user-error "eyebrowse/layout support is not enabled"))
+    (my/configure-layout-slot
+     my/mail-irc-layout-slot
+     my/mail-irc-layout-name
+     #'my/setup-mail-irc-layout)
+    (message "Opened %s layout" my/mail-irc-layout-name))
+
+  (defun my/setup-core-layouts ()
+    "Compatibility wrapper for the managed mail+IRC layout."
+    (interactive)
+    (my/open-mail-irc-layout))
+#+end_src
+
+** Mail+IRC bootstrap on first GUI frame
+
+Automatically open the mail+IRC layout the first time a graphical frame
+appears (whether via daemon or direct launch).  Subsequent frames leave
+the layout alone.
+
+#+begin_src emacs-lisp
+  (defun my/mail-irc-bootstrap-on-frame (frame)
+    "Bootstrap the managed mail+IRC layout once for the first GUI FRAME."
+    (when (and (not my/mail-irc-bootstrap-done)
+               (frame-live-p frame)
+               (display-graphic-p frame))
+      (setq my/mail-irc-bootstrap-done t)
+      (run-with-idle-timer
+       0.75
+       nil
+       (lambda (target-frame)
+         (when (frame-live-p target-frame)
+           (select-frame-set-input-focus target-frame)
+           (with-selected-frame target-frame
+             (my/open-mail-irc-layout))))
+       frame)))
+
+  (defun my/bootstrap-mail-irc-for-current-frame ()
+    "Bootstrap the managed mail+IRC layout for the selected frame when needed."
+    (my/mail-irc-bootstrap-on-frame (selected-frame)))
+#+end_src
+
+** IRC dispatch
+
+The =SPC a c i= dispatcher: opens ERC by default (after a 350ms timeout),
+or accepts a subcommand:
+
+- =D= — open the managed mail+IRC layout
+- =j= — join a favorite channel
+- =E= — start a raw ERC TLS connection
+
+#+begin_src emacs-lisp
+  (defun my/irc-dispatch ()
+    "Open IRC directly, or accept one compatibility subcommand.
+
+`SPC a c i` opens or raises ERC after a short timeout.
+`SPC a c i D` opens the managed mail+IRC layout.
+`SPC a c i j` joins a favorite channel.
+`SPC a c i E` starts a raw ERC TLS connection."
+    (interactive)
+    (let ((event (read-event "IRC: default connect, D layout, j join, E raw ERC" nil 0.35)))
+      (cond
+       ((or (null event) (memq event '(?\r ?\n ?\s)))
+        (my/erc-open-or-connect))
+       ((eq event ?D)
+        (my/open-mail-irc-layout))
+       ((eq event ?j)
+        (call-interactively #'my/erc-join-favorite-channel))
+       ((eq event ?E)
+        (call-interactively #'erc-tls))
+       (t
+        (setq unread-command-events (list event))
+        (my/erc-open-or-connect)))))
+
+  (add-hook 'emacs-startup-hook #'my/bootstrap-mail-irc-for-current-frame)
+  (add-hook 'after-make-frame-functions #'my/mail-irc-bootstrap-on-frame)
+#+end_src
+
+** Mode-line (spaceline)
+
+Custom spaceline segments showing layout label and window number.  The
+mode-line and evil-state faces are themed with the Gruvbox palette for
+visual consistency.
+
+#+begin_src emacs-lisp
+  (defun my/apply-gruvbox-modeline ()
+    "Apply gruvbox-dark-hard faces to spaceline after Spacemacs setup."
+    (when (fboundp 'spaceline-define-segment)
+      (spaceline-define-segment my-layout-label
+        "Display the active layout as `slot:name`."
+        (when active (my/current-layout-label)))
+
+      (spaceline-define-segment my-window-label
+        "Display the active window number as `wN`."
+        (when active (my/current-window-label)))
+
+      ;; Rebuild the spaceline with our segments + global (for mu4e-alert mail).
+      (spaceline--theme
+       '(((my-layout-label my-window-label) :separator " ")
+         :fallback evil-state
+         :face highlight-face
+         :priority 100)
+       '((buffer-modified buffer-size buffer-id remote-host)
+         :priority 98)
+       '(global :when active))
+
+      (setq spaceline-highlight-face-func 'spaceline-highlight-face-evil-state
+            powerline-default-separator 'utf-8)
+      (spaceline-compile)
+
+      ;; Gruvbox mode-line faces.
+      (set-face-attribute 'mode-line nil
+                          :background "#282828" :foreground "#ebdbb2"
+                          :box nil :height 0.95)
+      (set-face-attribute 'mode-line-inactive nil
+                          :background "#1d2021" :foreground "#928374"
+                          :box nil :height 0.95)
+      (set-face-attribute 'header-line nil
+                          :background "#1d2021" :foreground "#a89984"
+                          :box nil :height 0.95)
+      ;; Evil state segment faces (gruvbox palette).
+      (set-face-attribute 'spacemacs-normal-face nil
+                          :background "#a89984" :foreground "#1d2021")
+      (set-face-attribute 'spacemacs-insert-face nil
+                          :background "#b8bb26" :foreground "#1d2021")
+      (set-face-attribute 'spacemacs-visual-face nil
+                          :background "#83a598" :foreground "#1d2021")
+      (set-face-attribute 'spacemacs-replace-face nil
+                          :background "#fb4934" :foreground "#1d2021")
+      (set-face-attribute 'spacemacs-motion-face nil
+                          :background "#d3869b" :foreground "#1d2021")
+      (set-face-attribute 'spacemacs-emacs-face nil
+                          :background "#8ec07c" :foreground "#1d2021")
+      ;; Powerline segment backgrounds.
+      (when (facep 'powerline-active1)
+        (set-face-attribute 'powerline-active1 nil
+                            :background "#3c3836" :foreground "#ebdbb2"))
+      (when (facep 'powerline-active2)
+        (set-face-attribute 'powerline-active2 nil
+                            :background "#504945" :foreground "#ebdbb2"))
+      (when (facep 'powerline-inactive1)
+        (set-face-attribute 'powerline-inactive1 nil
+                            :background "#1d2021" :foreground "#928374"))
+      (when (facep 'powerline-inactive2)
+        (set-face-attribute 'powerline-inactive2 nil
+                            :background "#1d2021" :foreground "#928374"))
+      (force-mode-line-update t)))
+
+  ;; Run AFTER Spacemacs completes its own modeline setup (priority 90 = late).
+  (add-hook 'emacs-startup-hook #'my/apply-gruvbox-modeline 90)
+  ;; Re-apply when switching themes.
+  (when (boundp 'spacemacs-post-theme-change-hook)
+    (add-hook 'spacemacs-post-theme-change-hook #'my/apply-gruvbox-modeline))
+#+end_src
+
+** Programming modes
+
+Enable absolute line numbers in all programming buffers, delete trailing
+whitespace on save, and register file associations for Nix, Makefiles,
+Markdown, and Dockerfiles.
+
+#+begin_src emacs-lisp
+  (add-hook 'before-save-hook #'delete-trailing-whitespace)
+
+  (defun my/prog-mode-line-numbers ()
+    (setq display-line-numbers-type 'absolute)
+    (display-line-numbers-mode 1))
+  (add-hook 'prog-mode-hook #'my/prog-mode-line-numbers)
+
+  ;; Keep Nix detection explicit so scratch `.nix` files do not depend on layer
+  ;; autoload timing.
+  (add-to-list 'auto-mode-alist '("\\.nix\\'" . nix-mode))
+
+  ;; Improve Makefile detection for mixed embedded trees.
+  (add-to-list 'auto-mode-alist '("\\.mk\\'" . makefile-gmake-mode))
+  (add-to-list 'auto-mode-alist '("Makefile\\." . makefile-gmake-mode))
+
+  ;; Add Markdown detection
+  (add-to-list 'auto-mode-alist '("\\.md\\'" . markdown-mode))
+  (add-to-list 'auto-mode-alist '("\\.markdown\\'" . markdown-mode))
+  (add-to-list 'auto-mode-alist '("Dockerfile\\'" . dockerfile-mode))
+  (add-hook 'dockerfile-mode-hook #'lsp-deferred)
+  (add-hook 'dockerfile-mode-hook #'company-mode)
+#+end_src
+
+** BitBake / Yocto
+
+Register BitBake file extensions (=.bb=, =.bbappend=, =.bbclass=, =.inc=,
+and config files) with =bitbake-ts-mode=.  The old Spacemacs layer is not
+present in this snapshot, so we handle this manually.
+
+#+begin_src emacs-lisp
+  ;; Yocto / BitBake files are handled manually because the old Spacemacs layer
+  ;; is not present in this snapshot.
+  (use-package bitbake-ts-mode
+    :mode
+    (("\\.bb\\'" . bitbake-ts-mode)
+     ("\\.bbappend\\'" . bitbake-ts-mode)
+     ("\\.bbclass\\'" . bitbake-ts-mode)
+     ("\\.inc\\'" . bitbake-ts-mode)
+     ("conf/local\\.conf\\'" . bitbake-ts-mode)
+     ("conf/bblayers\\.conf\\'" . bitbake-ts-mode)))
+#+end_src
+
+** Nix editing (nixd + eglot)
+
+Nix editing uses =eglot= with the =nixd= language server.  It provides
+completion for NixOS options, Home Manager options, and flake-parts
+options — all resolved from the current project's flake.
+
+Format-on-save is enabled via =nixfmt=.
+
+#+begin_src emacs-lisp
+  ;; Nix editing stays on eglot+nixd because it is already lightweight and reliable here.
+  (defun my/nixd--nix-system ()
+    (let* ((arch (cond
+                  ((string-match-p "aarch64\\|arm64" system-configuration) "aarch64")
+                  ((string-match-p "i686" system-configuration) "i686")
+                  (t "x86_64")))
+           (os (if (eq system-type 'darwin) "darwin" "linux")))
+      (format "%s-%s" arch os)))
+
+  (defun my/nixd-contact (_interactive _project)
+    (list "nixd"
+          "--nixpkgs-expr"
+          (format "import <nixpkgs> { system = \"%s\"; }"
+                  (my/nixd--nix-system))
+          "--nixos-options-expr" "{}"))
+
+  (defun my/nixd-project-root ()
+    (when-let* ((project (project-current nil)))
+      (expand-file-name (project-root project))))
+
+  (defun my/nixd-flake-expr (root attr)
+    (format "(builtins.getFlake (builtins.toString %s)).%s" root attr))
+
+  (defun my/nix-mode-setup ()
+    (when-let* ((root (my/nixd-project-root)))
+      (setq-local
+       eglot-workspace-configuration
+       `(:nixd
+         (:nixpkgs
+          (:expr ,(format "import <nixpkgs> { system = \"%s\"; }"
+                          (my/nixd--nix-system)))
+         :formatting
+         (:command ["nixfmt"])
+         :options
+         (:nixos
+          (:expr ,(my/nixd-flake-expr root "nixosConfigurations.pc.options"))
+          :home-manager
+          (:expr ,(my/nixd-flake-expr root "homeConfigurations.\"ludovic@pc\".options"))
+          :flake-parts
+          (:expr ,(my/nixd-flake-expr root "debug.options")))))))
+    (when (require 'eglot nil t)
+      (eglot-ensure))
+    (when (fboundp 'company-mode)
+      (company-mode 1))
+    (setq-local company-idle-delay 0.2
+                company-minimum-prefix-length 1)
+    (when (boundp 'company-backends)
+      (setq-local company-backends '(company-capf)))
+    (when (fboundp 'nix-format-before-save)
+      (add-hook 'before-save-hook #'nix-format-before-save nil t)))
+
+  (use-package nix-mode
+    :mode "\\.nix\\'"
+    :config
+    (setq nix-indent-function 'nix-indent-line
+          nix-nixfmt-bin "nixfmt")
+    (add-hook 'nix-mode-hook #'my/nix-mode-setup)
+    (with-eval-after-load 'eglot
+      (add-to-list 'eglot-server-programs
+                   `(nix-mode . ,#'my/nixd-contact))))
+#+end_src
+
+** ERC / IRC (Libera Chat)
+
+Full ERC configuration for Libera Chat:
+
+- *SASL authentication* via =auth-source= (=~/.authinfo= or =.gpg=)
+- *Desktop notifications* for nick mentions and private messages
+- *Favorite channel list* for quick joining with =SPC a c i j=
+- *Auto-connect at startup* (idle timer, 3 seconds after init)
+- *Hide noise* (JOIN/PART/QUIT messages suppressed)
+
+#+begin_src emacs-lisp
+  (defvar my/erc-server "irc.libera.chat"
+    "Primary IRC server for the managed ERC setup.")
+
+  (defvar my/erc-port "6697"
+    "TLS port for the managed ERC setup.")
+
+  (defvar my/erc-nick "lvanasse"
+    "IRC nick used by ERC.")
+
+  (defvar my/erc-user-full-name user-full-name
+    "Full name announced by ERC.")
+
+  (defvar my/erc-favorite-channels
+    '("#emacs"
+      "#emacs-beginners"
+      "#erc"
+      "#org-mode"
+      "#nixos"
+      "#nixos-dev"
+      "#yocto"
+      "#oe"
+      "#linux"
+      "##rust")
+    "Favorite IRC channels offered by the managed join prompt.")
+
+  (defvar my/erc-autojoin-channels nil
+    "Channels to autojoin on Libera Chat.
+
+Keep this nil by default so favorite channels stay manual-only.")
+
+  (defvar my/erc-auth-source-host "Libera.Chat"
+    "Auth-source host used for Libera SASL credentials.")
+
+  (defun my/erc-sasl-password-from-auth-source (&rest plist)
+    "Return the Libera SASL password string from auth-source.
+
+Prefer the `Libera.Chat` host entry first because that is the logical
+account identity for SASL. Fall back to the concrete TLS endpoint entry
+for `irc.libera.chat:6697` so either managed form works."
+    (require 'auth-source)
+    (let ((user (or (plist-get plist :user) my/erc-nick)))
+      (or (auth-source-pick-first-password
+           :host my/erc-auth-source-host
+           :user user)
+          (auth-source-pick-first-password
+           :host my/erc-server
+           :port (string-to-number my/erc-port)
+           :user user))))
+
+  (defun my/erc-notify (title body)
+    "Send a desktop notification for ERC events."
+    (when (require 'notifications nil t)
+      (notifications-notify
+       :title title
+       :body body
+       :app-name "ERC")))
+
+  (defun my/erc-notify-current-nick-match (match-type nickuserhost message)
+    "Notify when MATCH-TYPE indicates a channel message mentions the current nick."
+    (when (and (eq match-type 'current-nick)
+               (not (erc-query-buffer-p))
+               nickuserhost
+               message)
+      (my/erc-notify
+       (format "IRC mention in %s" (or (erc-default-target) (buffer-name)))
+       (format "%s: %s"
+               (erc-extract-nick nickuserhost)
+               (string-trim message)))))
+
+  (defun my/erc-notify-private-message (proc parsed)
+    "Notify when PARSED is a direct private message to the current nick."
+    (ignore proc)
+    (let* ((sender (erc-response.sender parsed))
+           (sender-nick (and sender (erc-extract-nick sender)))
+           (args (erc-response.command-args parsed))
+           (target (cond
+                    ((vectorp args) (aref args 0))
+                    ((consp args) (car args))
+                    (t nil)))
+           (message (erc-response.contents parsed)))
+      (when (and sender-nick
+                 (not (erc-current-nick-p sender-nick))
+                 (stringp target)
+                 (string= target my/erc-nick)
+                 (stringp message)
+                 (not (string-empty-p message)))
+        (my/erc-notify
+         (format "IRC private message from %s" sender-nick)
+         (string-trim message))))
+    nil)
+
+  (defvar my/erc-auto-connect-on-startup t
+    "Whether to connect ERC automatically after Emacs startup.")
+
+  (defun my/apply-erc-connection-defaults ()
+    "Apply managed ERC connection defaults before connecting."
+    (setq erc-nick my/erc-nick
+          erc-user-full-name my/erc-user-full-name
+          erc-server-list
+          `((,my/erc-server
+             :port ,my/erc-port
+             :ssl t
+             :nick ,my/erc-nick))
+          erc-autojoin-channels-alist `((,my/erc-server ,@my/erc-autojoin-channels))
+          erc-prompt-for-password nil
+          erc-prompt-for-nickserv-password nil))
+
+  (my/apply-erc-connection-defaults)
+
+  (defun my/connect-irc ()
+    "Connect to the managed Libera ERC session if needed.
+
+Return the live ERC buffer when already connected, otherwise create a new
+TLS ERC session using the managed defaults and return its server buffer."
+    (interactive)
+    (my/apply-erc-connection-defaults)
+    (or (my/erc-live-buffer)
+        (erc-tls :server my/erc-server
+                 :port (string-to-number my/erc-port)
+                 :nick my/erc-nick
+                 :user my/erc-nick
+                 :full-name my/erc-user-full-name)))
+
+  (defun my/connect-irc-at-startup ()
+    "Establish the managed ERC connection shortly after startup."
+    (when (and my/erc-auto-connect-on-startup
+               (not noninteractive))
+      (run-with-idle-timer 3 nil #'my/connect-irc)))
+
+  (add-hook 'emacs-startup-hook #'my/connect-irc-at-startup)
+
+  (defun my/erc-join-channel (channel)
+    "Connect to IRC if needed, then switch to CHANNEL, joining it when needed."
+    (interactive "sIRC channel: ")
+    (let ((server-buffer (my/connect-irc)))
+      (with-current-buffer server-buffer
+        (if-let ((channel-buffer (erc-get-buffer channel)))
+            (switch-to-buffer channel-buffer)
+          (erc-cmd-JOIN channel)
+          (when-let ((joined-buffer (erc-get-buffer channel)))
+            (switch-to-buffer joined-buffer))))))
+
+  (defun my/erc-join-favorite-channel ()
+    "Prompt for one of the managed IRC favorite channels and join it."
+    (interactive)
+    (unless my/erc-favorite-channels
+      (user-error "No favorite IRC channels are configured"))
+    (my/erc-join-channel
+     (completing-read "IRC favorite channel: " my/erc-favorite-channels nil t)))
+
+  (with-eval-after-load 'erc
+    (require 'erc-join nil t)
+    (require 'erc-sasl nil t)
+    (require 'erc-services nil t)
+    (require 'erc-match nil t)
+    (my/apply-erc-connection-defaults)
+    (remove-hook 'erc-nickserv-identified-hook #'erc-autojoin-after-ident)
+    (add-hook 'erc-text-matched-hook #'my/erc-notify-current-nick-match)
+    (add-hook 'erc-server-PRIVMSG-functions #'my/erc-notify-private-message)
+    (setq erc-hide-list '("JOIN" "PART" "QUIT")
+          erc-fill-column 140
+          erc-track-shorten-start 8
+          erc-track-exclude-types '("JOIN" "NICK" "PART" "QUIT" "MODE"
+                                    "324" "329" "332" "333" "353" "477")
+          erc-track-enable-keybindings t
+          erc-track-position-in-mode-line 'before-modes)
+    (if (featurep 'erc-sasl)
+        (setq erc-sasl-auth-source-function #'my/erc-sasl-password-from-auth-source
+              erc-sasl-user my/erc-nick
+              erc-sasl-password nil)
+      (setq erc-sasl-auth-source-function nil
+            erc-sasl-user nil
+            erc-sasl-password nil)))
+#+end_src
+
+** Slack
+
+Load private team registration forms from =~/.config/slack/private.el=
+when available.  Keep secrets out of the repository.
+
+#+begin_src emacs-lisp
+  (defconst my/slack-private-config
+    (expand-file-name "~/.config/slack/private.el")
+    "Local Slack secrets and team registration forms kept out of the repo.")
+#+end_src
+
+** Spotify
+
+DBus-based Spotify integration with =spotifyd= detection.  The MPRIS
+service name is refreshed dynamically because spotifyd uses
+instance-specific names (=rs.spotifyd.instance10084=).
+
+#+begin_src emacs-lisp
+  (defconst my/spotify-private-config
+    (expand-file-name "~/.config/spotify/private.el")
+    "Optional local Spotify API credentials kept out of the repo.")
+
+  (defun my/spotify-session-service-name ()
+    "Return the current MPRIS service suffix for spotifyd or Spotify.
+
+Prefer the live spotifyd session name because it changes per instance
+(`rs.spotifyd.instance...`). Fall back to the official client name."
+    (when (featurep 'dbusbind)
+      (let* ((names (dbus-list-names :session))
+             (spotifyd
+              (seq-find
+               (lambda (name)
+                 (string-prefix-p "rs.spotifyd.instance" name))
+               names)))
+        (cond
+         (spotifyd spotifyd)
+         ((member "org.mpris.MediaPlayer2.spotify" names) "spotify")
+         (t nil)))))
+
+  (defun my/refresh-spotify-service-name (&rest _args)
+    (let ((service (my/spotify-session-service-name)))
+      (when service
+        (setq spotify-service-name service
+              counsel-spotify-service-name service))))
+
+  (defun my/spotify-dbus-service-name (service)
+    "Return the real DBus service name for SERVICE.
+
+spotify.el and counsel-spotify normally assume the runtime name is always
+`org.mpris.MediaPlayer2.<suffix>`, but spotifyd on this machine exports a
+live session name like `rs.spotifyd.instance10084` directly."
+    (if (string-prefix-p "rs.spotifyd.instance" service)
+        service
+      (format "org.mpris.MediaPlayer2.%s" service)))
+#+end_src
+
+** Startup buffer cleanup
+
+Remove transient buffers after the initial home buffer has been displayed.
+If these buffers are created again later (e.g. by opening *scratch*
+manually), they behave normally.
+
+#+begin_src emacs-lisp
+  (defconst my/startup-buffers-to-remove
+    '("*scratch*" "*Messages*" "*info*")
+    "Buffers to remove once after startup to keep the home view clean.")
+
+  (defun my/remove-startup-buffers ()
+    "Remove transient startup buffers after the initial home buffer appears.
+
+If these buffers are created again later, they behave normally and show up
+in tabs as usual."
+    (dolist (name my/startup-buffers-to-remove)
+      (when-let ((buffer (get-buffer name)))
+        (kill-buffer buffer))))
+#+end_src
+
+** Org mode and CalDAV
+
+Org agenda with CalDAV synchronization to Infomaniak:
+
+- Agenda files: =~/org/calendar.org= and =~/org/reminders.org=
+- Desktop notifications for upcoming appointments (15 min warning)
+- Automatic background sync every 15 minutes
+- Manual sync via =SPC a o S=
+
+#+begin_src emacs-lisp
+  (with-eval-after-load 'org
+    (setq org-directory "~/org")
+    (dolist (agenda-file '("calendar.org" "reminders.org"))
+      (let ((path (expand-file-name agenda-file org-directory)))
+        (unless (member path org-agenda-files)
+          (add-to-list 'org-agenda-files path))))
+    (setq appt-message-warning-time 15
+          appt-display-interval 5
+          appt-display-mode-line t)
+    (defun my/org-agenda-to-appt ()
+      (setq appt-time-msg-list nil)
+      (org-agenda-to-appt t))
+    (defun my/appt-send-notification (min-to-app new-time msg)
+      (if (require 'notifications nil t)
+          (notifications-notify
+           :title (format "Calendar in %s minute%s" min-to-app (if (= min-to-app 1) "" "s"))
+           :body (format "%s at %s" msg new-time)
+           :app-name "Emacs")
+        (appt-disp-window min-to-app new-time msg)))
+    (setq appt-disp-window-function #'my/appt-send-notification)
+    (add-hook 'org-agenda-finalize-hook #'my/org-agenda-to-appt)
+    (add-hook 'after-init-hook
+              (lambda ()
+                (my/org-agenda-to-appt)
+                (appt-activate 1))))
+
+  (defun my/org-caldav-sync ()
+    (interactive)
+    (require 'org-caldav)
+    (let ((inhibit-read-only t))
+      (save-window-excursion
+        (org-caldav-sync)))
+    (when (fboundp 'my/org-agenda-to-appt)
+      (my/org-agenda-to-appt))
+    (message "Finished CalDAV sync."))
+
+  (defvar my/org-caldav-auto-sync-interval (* 15 60)
+    "How often to auto-sync the calendar, in seconds.")
+
+  (defvar my/org-caldav-auto-sync-timer nil
+    "Timer used for background org-caldav sync.")
+
+  (defvar my/org-caldav-sync-in-progress nil
+    "Non-nil while a calendar sync is already running.")
+
+  (defun my/org-caldav-sync-safe ()
+    (unless my/org-caldav-sync-in-progress
+      (let ((my/org-caldav-sync-in-progress t))
+        (condition-case err
+            (my/org-caldav-sync)
+          (error
+           (message "org-caldav auto-sync failed: %s"
+                    (error-message-string err)))))))
+
+  (defun my/org-caldav-start-auto-sync ()
+    (interactive)
+    (when (timerp my/org-caldav-auto-sync-timer)
+      (cancel-timer my/org-caldav-auto-sync-timer))
+    (setq my/org-caldav-auto-sync-timer
+          (run-at-time "2 min"
+                       my/org-caldav-auto-sync-interval
+                       #'my/org-caldav-sync-safe))
+    (message "Started org-caldav auto-sync every %s minutes."
+             (/ my/org-caldav-auto-sync-interval 60)))
+
+  (defun my/org-caldav-reset-state ()
+    (interactive)
+    (require 'org-caldav)
+    (dolist (calendar-id (delete-dups (cons org-caldav-calendar-id
+                                            (mapcar (lambda (cal)
+                                                      (plist-get cal :calendar-id))
+                                                    org-caldav-calendars))))
+      (let ((state-file (org-caldav-sync-state-filename calendar-id)))
+        (when (file-exists-p state-file)
+          (delete-file state-file))))
+    (setq org-caldav-event-list nil
+          org-caldav-previous-calendar nil)
+    (message "Cleared org-caldav sync state."))
+
+  (defun my/org-caldav-basic-auth-header ()
+    (when (and (boundp 'org-caldav-username)
+               (boundp 'org-caldav-password)
+               org-caldav-username
+               org-caldav-password)
+      (concat "Basic "
+              (base64-encode-string
+               (concat org-caldav-username ":" org-caldav-password)
+               t))))
+
+  (defun my/org-caldav-inject-basic-auth (orig-fn url &optional request-method request-data extra-headers)
+    (if (or (not (stringp url))
+            (not (string-prefix-p "https://sync.infomaniak.com/" url))
+            (assoc "Authorization" extra-headers))
+        (funcall orig-fn url request-method request-data extra-headers)
+      (let ((auth (my/org-caldav-basic-auth-header)))
+        (funcall orig-fn
+                 url
+                 request-method
+                 request-data
+                 (if auth
+                     (cons `("Authorization" . ,auth) extra-headers)
+                   extra-headers)))))
+
+  (use-package org-caldav
+    :after org
+    :commands (org-caldav-sync my/org-caldav-sync my/org-caldav-reset-state)
+    :init
+    (setq org-caldav-url "https://sync.infomaniak.com/calendars/LV04107/"
+          org-caldav-calendar-id "a0fe5b9b-1a59-4cbe-8b13-bd262bf0738b"
+          org-caldav-inbox "~/org/calendar.org"
+          org-caldav-files '("~/org/calendar.org")
+          org-icalendar-timezone "America/Toronto"
+          org-caldav-sync-changes-to-org 'title-and-timestamp
+          org-caldav-delete-org-entries 'never
+          org-caldav-delete-calendar-entries 'never
+          org-caldav-resume-aborted 'never
+          org-caldav-show-sync-results nil
+          org-caldav-save-buffers t
+          org-caldav-debug-level 2)
+    :config
+    (let ((password-file (or (getenv "ORG_CALDAV_PASSWORD_FILE")
+                             (expand-file-name "~/.config/calendar/infomaniak-caldav-password"))))
+      (setq org-caldav-calendars
+            `((:calendar-id ,org-caldav-calendar-id
+               :inbox ,org-caldav-inbox
+               :files ,org-caldav-files)))
+      (when (file-readable-p password-file)
+        (setq org-caldav-username "LV04107"
+              org-caldav-password
+              (string-trim
+               (with-temp-buffer
+                 (insert-file-contents password-file)
+                 (buffer-string))))))
+  )
+  (advice-add 'org-caldav-url-retrieve-synchronously :around
+              #'my/org-caldav-inject-basic-auth)
+  (add-hook 'after-init-hook #'my/org-caldav-start-auto-sync)
+  (spacemacs/set-leader-keys
+    "aoS" 'my/org-caldav-sync
+    "aec" 'my/mu4e-compose-new
+    "ael" 'my/open-mail-irc-layout
+    "aeu" 'mu4e-update-mail-and-index)
+#+end_src
+
+** mu4e (mail)
+
+Full mu4e configuration reusing the Maildir layout, =mbsync= for fetching,
+and =msmtp= for sending — all managed by Home Manager.
+
+Folder structure:
+- Inbox: =/ludovic/Index=
+- Promotions, Social Networks, Drafts, Sent, Spam, Trash, Archives
+
+#+begin_src emacs-lisp
+  ;; Reuse the existing Maildir + mbsync/msmtp setup from Home Manager.
+  (use-package mu4e
+    :commands (mu4e mu4e-compose-new mu4e-update-mail-and-index)
+    :if (locate-library "mu4e")
+    :init
+    (setq mail-user-agent 'mu4e-user-agent
+          read-mail-command #'mu4e
+          mu4e-mu-binary "__MU_BIN__"
+          mu4e-maildir "~/mail"
+          mu4e-drafts-folder "/ludovic/Drafts"
+          mu4e-sent-folder "/ludovic/Sent"
+          mu4e-trash-folder "/ludovic/Trash"
+          mu4e-refile-folder "/ludovic/Archives"
+          mu4e-get-mail-command "__ISYNC_BIN__ -a"
+          mu4e-update-interval nil
+          mu4e-change-filenames-when-moving t
+          mu4e-view-show-images t
+          mu4e-compose-format-flowed t
+          message-send-mail-function 'message-send-mail-with-sendmail
+          sendmail-program "__MSMTP_BIN__"
+          message-sendmail-f-is-evil t
+          message-sendmail-extra-arguments '("--read-envelope-from")
+          mu4e-maildir-shortcuts
+          '((:maildir "/ludovic/Index" :key ?i :name "Inbox")
+            (:maildir "/ludovic/Promotions" :key ?p :name "Promotions")
+            (:maildir "/ludovic/SocialNetworks" :key ?n :name "Social Networks")
+            (:maildir "/ludovic/Drafts" :key ?d :name "Drafts")
+            (:maildir "/ludovic/Sent" :key ?s :name "Sent")
+            (:maildir "/ludovic/Spam" :key ?x :name "Spam")
+            (:maildir "/ludovic/Trash" :key ?t :name "Trash")
+            (:maildir "/ludovic/Archives" :key ?a :name "Archives"))
+          mu4e-bookmarks
+          '((:name "Unread messages" :query "flag:unread AND NOT flag:trashed" :key ?u)
+            (:name "Today's messages" :query "date:today..now" :key ?t)
+            (:name "Last 7 days" :query "date:7d..now" :key ?w)
+            (:name "Sent mail" :query "maildir:/ludovic/Sent" :key ?s)))
+    :config
+    (global-set-key (kbd "C-x m") #'mu4e-compose-new))
+
+  (spacemacs/set-leader-keys
+    "aem" 'my/mu4e-open-inbox)
+#+end_src
+
+** mu4e-alert
+
+Desktop notifications and mode-line display for unread mail.  Uses the
+filtered query defined earlier to only count relevant folders.
+
+#+begin_src emacs-lisp
+  (use-package mu4e-alert
+    :after mu4e
+    :if (locate-library "mu4e-alert")
+    :config
+    (setq mu4e-alert-interesting-mail-query my/mu4e-alert-query
+          mu4e-alert-modeline-formatter #'my/mu4e-alert-mode-line-formatter
+          mu4e-alert-style 'notifications)
+    (mu4e-alert-enable-notifications)
+    (mu4e-alert-enable-mode-line-display))
+#+end_src
+
+** Slack (after-load)
+
+Load private configuration when the Slack package is actually used.
+
+#+begin_src emacs-lisp
+  (with-eval-after-load 'slack
+    (my/load-private-elisp my/slack-private-config))
+#+end_src
+
+** Spotify (after-load)
+
+Refresh the DBus service name on load and wrap play/search commands to
+always use the live service name.
+
+#+begin_src emacs-lisp
+  (with-eval-after-load 'spotify
+    (my/refresh-spotify-service-name)
+    (advice-add 'spotify--dbus-service-name :filter-return #'my/spotify-dbus-service-name)
+    (advice-add 'spotify-dbus-call :before #'my/refresh-spotify-service-name)
+    (when (file-readable-p my/spotify-private-config)
+      (require 'counsel-spotify nil t)
+      (my/load-private-elisp my/spotify-private-config)))
+
+  (with-eval-after-load 'counsel-spotify
+    (my/refresh-spotify-service-name)
+    (advice-add 'counsel-spotify-call-spotify-via-dbus :before #'my/refresh-spotify-service-name)
+    (advice-add 'counsel-spotify-call-spotify-via-dbus :around
+                (lambda (orig-fn method &rest args)
+                  (let ((counsel-spotify-service-name
+                         (my/spotify-dbus-service-name counsel-spotify-service-name)))
+                    (apply orig-fn method args)))))
+#+end_src
+
+** Tabs (centaur-tabs)
+
+Visual configuration for centaur-tabs using the Gruvbox color palette.
+Global keybindings =C-x t o= / =C-x t O= for cycling tabs forward/backward.
+
+#+begin_src emacs-lisp
+  (with-eval-after-load 'centaur-tabs
+    (setq centaur-tabs-set-icons t
+          centaur-tabs-set-modified-marker nil
+          centaur-tabs-gray-out-icons 'buffer
+          centaur-tabs-height 24
+          centaur-tabs-bar-height 2
+          centaur-tabs-icon-scale-factor 0.8
+          centaur-tabs-label-fixed-length 18
+          centaur-tabs-icon-type 'nerd-icons)
+    (set-face-attribute 'centaur-tabs-default nil
+                        :background "#1d2021"
+                        :foreground "#7c6f64")
+    (set-face-attribute 'centaur-tabs-selected nil
+                        :background "#282828"
+                        :foreground "#d4be98"
+                        :box nil)
+    (set-face-attribute 'centaur-tabs-unselected nil
+                        :background "#1d2021"
+                        :foreground "#7c6f64"
+                        :box nil)
+    (set-face-attribute 'centaur-tabs-selected-modified nil
+                        :background "#282828"
+                        :foreground "#ebdbb2"
+                        :box nil)
+    (set-face-attribute 'centaur-tabs-unselected-modified nil
+                        :background "#1d2021"
+                        :foreground "#a89984"
+                        :box nil)
+    (set-face-attribute 'centaur-tabs-active-bar-face nil
+                        :background "#d79921")
+    (global-set-key (kbd "C-x t o") #'centaur-tabs-forward)
+    (global-set-key (kbd "C-x t O") #'centaur-tabs-backward))
+#+end_src
+
+** LSP tuning
+
+Performance and feature settings for LSP clients:
+- *clangd*: background indexing, clang-tidy, detailed completion
+- *pyright*: use =basedpyright-langserver= with basic type checking
+- *YAML*: schema store enabled with GitHub workflow schema mapping
+
+#+begin_src emacs-lisp
+  ;; LSP tuning for work languages.
+  (with-eval-after-load 'lsp-mode
+    (setq lsp-idle-delay 0.5
+          lsp-log-io nil
+          lsp-enable-on-type-formatting nil
+          lsp-headerline-breadcrumb-enable t
+          lsp-enable-symbol-highlighting t
+          lsp-enable-file-watchers nil))
+
+  (with-eval-after-load 'lsp-clangd
+    (setq lsp-clients-clangd-args
+          '("--background-index"
+            "--clang-tidy"
+            "--completion-style=detailed"
+            "--header-insertion=iwyu")))
+
+  (with-eval-after-load 'lsp-pyright
+    (setq lsp-pyright-langserver-command "basedpyright-langserver"
+          lsp-pyright-typechecking-mode "basic"))
+
+  (with-eval-after-load 'lsp-yaml
+    (setq lsp-yaml-schema-store-enable t
+          lsp-yaml-schemas
+          '(("https://json.schemastore.org/github-workflow.json"
+             . "/.github/workflows/*.yml")
+            ("https://json.schemastore.org/github-workflow.json"
+             . "/.github/workflows/*.yaml"))))
+#+end_src
+
+** Treemacs
+
+Keep Treemacs in sync with the current project and buffer via follow mode.
+Also add a custom icon mapping for =CMakeLists.txt= (the default only
+covers =.cmake= files).
+
+#+begin_src emacs-lisp
+  ;; Keep Treemacs in sync with the current project/buffer.
+  (with-eval-after-load 'treemacs
+    ;; Treemacs ships a CMake icon for `.cmake` files but not for the
+    ;; canonical `CMakeLists.txt` filename, so add that explicit mapping.
+    (when (fboundp 'treemacs-define-custom-icon)
+      (treemacs-define-custom-icon (treemacs-icon-for-mode 'cmake-mode)
+                                   "cmakelists.txt"))
+    (treemacs-follow-mode t)
+    (treemacs-filewatch-mode t)
+    (treemacs-project-follow-mode t))
+#+end_src
+
+** End of user-config
+
+Close the =dotspacemacs/user-config= function.
+
+#+begin_src emacs-lisp
+  )
+#+end_src

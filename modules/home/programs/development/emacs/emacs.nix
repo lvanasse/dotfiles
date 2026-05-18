@@ -8,27 +8,45 @@
       ...
     }:
     let
-      spacemacsTemplate = builtins.readFile ./spacemacs.template.el;
-      spacemacsConfig = builtins.replaceStrings
-        [
-          "__MU_SITE_LISP_MU4E__"
-          "__MU_SITE_LISP_MU__"
-          "__MU_SITE_LISP__"
-          "__MU_BIN__"
-          "__ISYNC_BIN__"
-          "__MSMTP_BIN__"
-          "__CURL_BIN__"
-        ]
-        [
-          "${pkgs.mu}/share/emacs/site-lisp/mu4e"
-          "${pkgs.mu}/share/emacs/site-lisp/mu"
-          "${pkgs.mu}/share/emacs/site-lisp"
-          "${pkgs.mu}/bin/mu"
-          "${pkgs.isync}/bin/mbsync"
-          "${pkgs.msmtp}/bin/msmtp"
-          "${pkgs.curl}/bin/curl"
-        ]
-        spacemacsTemplate;
+      spacemacsTemplateOrg = ../../../../../emacs/spacemacs.org;
+      spacemacsTemplate = builtins.readFile (
+        pkgs.runCommand "tangle-spacemacs" { nativeBuildInputs = [ pkgs.emacs-nox ]; } ''
+          cp ${spacemacsTemplateOrg} config.org
+          emacs --batch \
+            --eval "(require 'org)" \
+            --eval "(org-babel-tangle-file \"config.org\")"
+          cp config.el "$out"
+        ''
+      );
+      copilotCliPkg = pkgs.llm-agents.copilot-cli;
+      copilotCliWrapped = pkgs.writeShellScriptBin "copilot" ''
+        exec ${lib.getExe copilotCliPkg} \
+          --allow-all-tools \
+          --allow-all-paths \
+          --allow-all-urls \
+          "$@"
+      '';
+      spacemacsConfig =
+        builtins.replaceStrings
+          [
+            "__MU_SITE_LISP_MU4E__"
+            "__MU_SITE_LISP_MU__"
+            "__MU_SITE_LISP__"
+            "__MU_BIN__"
+            "__ISYNC_BIN__"
+            "__MSMTP_BIN__"
+            "__SPACEMACS_STARTUP_BANNER__"
+          ]
+          [
+            "${pkgs.mu}/share/emacs/site-lisp/mu4e"
+            "${pkgs.mu}/share/emacs/site-lisp/mu"
+            "${pkgs.mu}/share/emacs/site-lisp"
+            "${pkgs.mu}/bin/mu"
+            "${pkgs.isync}/bin/mbsync"
+            "${pkgs.msmtp}/bin/msmtp"
+            "${config.home.homeDirectory}/.config/emacs/spacemacs-home-buffer.jpeg"
+          ]
+          spacemacsTemplate;
       emacsServicePreStart = pkgs.writeShellScript "emacs-service-pre-start" ''
         set -eu
 
@@ -67,15 +85,14 @@
         package = pkgs.emacs-unstable;
         extraPackages =
           epkgs: with epkgs; [
+            gcmh
             gruvbox-theme
             vterm
             clipetty
             alert
             all-the-icons
-            copilot
             mu4e
             mu4e-alert
-            copilot-chat
             counsel-spotify
             emoji-cheat-sheet-plus
             flycheck
@@ -86,7 +103,6 @@
             nerd-icons
             pdf-tools
             slack
-            aidermacs
             bitbake-ts-mode
             nix-mode
             org-caldav
@@ -110,7 +126,14 @@
         ];
       };
 
+      home.packages = [
+        copilotCliWrapped
+      ];
+
       home.file.".spacemacs".text = spacemacsConfig;
+
+      xdg.configFile."emacs/spacemacs-home-buffer.jpeg".source =
+        ../../../../../wallpapers/shield-of-the-nation.jpg;
 
       home.file.".emacs.d" = {
         source = inputs.spacemacs;
@@ -126,28 +149,87 @@
             -c \
             -a "" \
             -F '((name . "mu4e-mail") (title . "mu4e-mail"))' \
-            --eval "(progn (require 'mu4e) (mu4e) nil)"
+            --eval "(progn (when (fboundp 'my/mu4e-open-inbox) (my/mu4e-open-inbox)) nil)"
         '';
       };
 
-      xdg.configFile."rcirc/README".text = ''
-        rcirc / Libera Chat setup
+      home.file.".local/bin/emacs-home-frame" = {
+        executable = true;
+        text = ''
+          #!${pkgs.bash}/bin/bash
+          emacsclient_bin="${config.programs.emacs.finalPackage}/bin/emacsclient"
+          emacs_bin="${config.programs.emacs.finalPackage}/bin/emacs"
 
-        Native Spacemacs entrypoint:
-        - `SPC a c i r` opens rcirc using the managed Libera defaults.
+          if [ "$#" -gt 0 ]; then
+            exec "$emacsclient_bin" -n -c -a "" "$@"
+          fi
+
+          if ! "$emacsclient_bin" --eval t >/dev/null 2>&1; then
+            "$emacs_bin" --fg-daemon >/dev/null 2>&1 &
+            for _ in $(seq 1 50); do
+              if "$emacsclient_bin" --eval t >/dev/null 2>&1; then
+                break
+              fi
+              sleep 0.1
+            done
+          fi
+
+          exec "$emacsclient_bin" \
+            -n \
+            -a "" \
+            --eval "(let ((frame (make-frame '((name . \"Emacs\") (title . \"Emacs\") (visibility . nil))))) (select-frame-set-input-focus frame) (with-selected-frame frame (when (fboundp 'spacemacs/home) (spacemacs/home))) (make-frame-visible frame) nil)"
+        '';
+      };
+
+      home.file.".local/share/applications/emacs.desktop" = {
+        text = ''
+          [Desktop Entry]
+          Name=Emacs
+          GenericName=Text Editor
+          Comment=Open Emacs directly on the Spacemacs home buffer
+          Exec=${config.home.homeDirectory}/.local/bin/emacs-home-frame
+          Icon=emacs
+          Type=Application
+          Terminal=false
+          StartupNotify=true
+          Categories=Development;TextEditor;
+        '';
+      };
+
+      xdg.configFile."erc/README".text = ''
+        ERC / Libera Chat setup
+
+        Native Spacemacs entrypoints:
+        - `SPC a c i` opens or raises ERC directly.
+        - `SPC a c i D` is the compatible mail+IRC layout alias on the same dispatcher.
+        - `SPC a c i j` prompts from your favorite channel list and joins or switches to that channel.
+        - `SPC a c i E` is the raw ERC TLS prompt and is only a lower-level fallback.
 
         Current direct IRC target:
         - server: `irc.libera.chat`
         - port: `6697`
         - transport: TLS
+        - nick: `lvanasse`
+        - channels: `#emacs`, `#yocto`
 
-        If you want NickServ auth, put your credential in `~/.authinfo.gpg`.
-        Example entry:
+        SASL auth is enabled and should come from `~/.authinfo` (or `~/.authinfo.gpg`), not the repo.
+        Use entries like:
 
-        machine irc.libera.chat port nickserv user YOUR_LIBERA_NICK password YOUR_LIBERA_PASSWORD
+        machine Libera.Chat login YOUR_LIBERA_NICK password "YOUR_LIBERA_PASSWORD"
+        machine irc.libera.chat port 6697 login YOUR_LIBERA_NICK password "YOUR_LIBERA_PASSWORD"
 
-        The nick and default channels are configured in `.spacemacs`.
-        Once connected, `/nick NEWNICK` is the native rcirc way to change nicks.
+        Quote passwords in authinfo entries when they contain special characters
+        (for example a leading `#`), or auth-source may parse them as empty.
+
+        The managed IRC session also auto-connects shortly after Emacs startup.
+        The first GUI frame of each Emacs process bootstraps the combined
+        mail+IRC layout once, then later frames leave it alone.
+        Favorite channels stay manual by default instead of autojoining.
+        Desktop notifications are sent for direct private messages and channel
+        messages containing your current nick. Plain IRC does not provide a
+        standard threaded "reply" event, so reply alerts are approximated by
+        nick mentions and PMs.
+        Once connected, `/nick NEWNICK` is the native ERC way to change nicks.
       '';
 
       xdg.configFile."slack/README".text = ''
@@ -189,7 +271,7 @@
           :subscribed-channels '(general))
       '';
 
-      xdg.configFile."spotify/README".text = ''
+      xdg.configFile."spotify-emacs/README".text = ''
         Spotify in Emacs
 
         Native Spacemacs entrypoints:
@@ -197,7 +279,7 @@
         - The native Spotify layer playback controls use DBus and work without API credentials.
 
         Optional search setup:
-        - Put API credentials in `${config.home.homeDirectory}/.config/spotify/private.el`
+        - Credentials are managed by agenix at `${config.home.homeDirectory}/.config/spotify/private.el`
         - That file is only loaded when present.
         - Keep only `counsel-spotify-client-id` and `counsel-spotify-client-secret` there.
         - Search features stay disabled until that file exists.
@@ -215,23 +297,16 @@
       '';
 
       xdg.configFile."copilot-chat/README".text = ''
-        Copilot Chat in Emacs
+        Copilot CLI in Emacs
 
         Spacemacs entrypoints:
-        - `SPC $ c` opens the native GitHub Copilot chat transient.
-        - `SPC $ m` opens `*Mcp-Hub*` for MCP servers if you configure them later.
-        - In a Copilot prompt buffer, `C-c C-c` sends and `C-c C-k` kills the chat.
-        - In normal state inside chat, `,,` sends and `,k` kills the chat.
-
-        Native Copilot completion bindings:
-        - `C-M-<return>` accepts the current completion.
-        - `C-M-S-<return>` accepts one word.
-        - `C-M-<tab>` and `C-M-<iso-lefttab>` cycle suggestions.
+        - `SPC a a C` opens the managed `copilot` CLI in a dedicated right-side `vterm` panel.
 
         Native Spacemacs mail entrypoints:
-        - `SPC a e m` opens mu4e.
+        - `SPC a e m` opens mu4e directly in Inbox.
         - `SPC a e c` composes a new message.
         - `SPC a e u` updates mail and index.
+        - `SPC a e l` opens the combined mail+IRC layout.
 
         Native Org/Calendar entrypoints:
         - `SPC a o a` opens the agenda.
@@ -239,43 +314,35 @@
         - `SPC a o S` runs the managed CalDAV sync command.
 
         Authentication:
-        1. For inline completion, run `SPC SPC copilot-install-server` once if needed.
-        2. Run `SPC SPC copilot-login` for the completion side if prompted.
-        3. Open chat with `SPC $ c` and choose the chat action from the transient.
-        4. Send a prompt.
-        5. Follow the device-flow instructions shown by `copilot-chat`.
-        6. In the browser, sign into the GitHub account that has the Copilot license.
-        7. If your work org uses SAML SSO, authorize it there too.
-
-        Managed storage paths:
-        - token: `${config.home.homeDirectory}/.config/copilot-chat/github-token`
-        - cache: `${config.home.homeDirectory}/.local/state/copilot-chat/token-cache`
-        - saved chats: `${config.home.homeDirectory}/.local/state/copilot-chat/chats/`
+        1. Open the CLI with `SPC a a C`.
+        2. Run `/login` if the CLI is not already authenticated.
+        3. In the browser, sign into the GitHub account that has your Copilot entitlement.
+        4. If Copilot comes from your work org, that org must allow Copilot CLI and you must authorize any required SSO.
 
         Runtime expectations:
-        - `curl` must be available (managed by this config).
-        - `node` and `npm` must be in `PATH` for the Copilot language server.
-        - A browser is needed for the first interactive device-flow login.
-        - `python3` is only needed later if you add MCP servers that require it.
-        - `gh auth status` is optional if you want to verify which GitHub account
-          is active outside Emacs.
+        - The `copilot` executable is installed declaratively by Home Manager.
+        - It starts with permissive read/network access, but local file edits and shell commands are denied by default.
+        - A browser is needed for the first interactive login.
+        - `gh auth status` is optional if you want to verify which GitHub account is active outside Emacs.
+        - Terminal output does not fully reflow old lines after a resize, so very long previous output may still look wrapped oddly until you rerun or clear it.
 
         Debug checklist:
-        - Confirm auth files exist:
-          - `${config.home.homeDirectory}/.config/copilot-chat/github-token`
-          - `${config.home.homeDirectory}/.local/state/copilot-chat/token-cache` (after first login)
-        - Confirm `node`, `npm`, and `curl` are visible from the shell that launches Emacs:
-          - `command -v node npm curl`
+          - Confirm the CLI is visible:
+          - `command -v copilot`
+          - `copilot --help`
         - Run the repo smoke test:
           - `bash ${config.home.homeDirectory}/Code/personal/dotfiles/scripts/smoke-test-spacemacs-runtime.sh`
         - In Emacs, verify the commands resolve:
-          - `SPC SPC copilot-login`
-          - `SPC $ c`
-        - When auth fails, inspect `*Messages*` and the Copilot chat buffer first.
+          - `SPC a a C`
+        - When auth fails, inspect `*Messages*` and the Copilot CLI panel first.
 
-        Model behavior:
-        - The managed default is `gpt-4.1`.
-        - Use the native Copilot chat transient to change model for the current chat.
+        Default permission profile:
+        - allowed without prompting: broad tool access, all paths, all URLs
+        - denied even if requested: local `write` tools and all `shell` commands
+        - caveat: MCP tools are still allowed, so an MCP server with side effects can still change remote systems unless you disable that server
+
+        The GitHub Copilot CLI is installed declaratively from `pkgs.llm-agents.copilot-cli`, then wrapped with the default permission flags above.
+        Launch the terminal workflow with `SPC a a C`.
       '';
 
       xdg.configFile."spell-checking/README".text = ''
@@ -303,11 +370,6 @@
         - `g C-S-t` moves the current tab left.
         - `C-c t s` switches tab groups.
         - `C-c t p` groups tabs by project.
-      '';
-
-      home.activation.ensureEmacsStateDirs = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-        mkdir -p \
-          "${config.home.homeDirectory}/.local/state/copilot-chat/chats"
       '';
 
       home.activation.removeXDGInit = lib.hm.dag.entryAfter [ "writeBoundary" ] ''

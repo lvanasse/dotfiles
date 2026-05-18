@@ -13,6 +13,18 @@
       nohm = pkgs.writeShellScriptBin "nohm" ''
         set -euo pipefail
 
+        NOHM_VERBOSE="''${NOHM_VERBOSE:-0}"
+        log_verbose() {
+          if [ "''${NOHM_VERBOSE}" = "1" ]; then
+            echo "$@" >&2
+          fi
+        }
+        log_cmd() {
+          local label="$1"
+          shift
+          printf '%s %s\n' "$label" "$*" >&2
+        }
+
         if [ $# -lt 1 ]; then
           echo "Usage: nohm <host>|auth [--target-host <user@ip>] [-- <extra nh os args>]" >&2
           exit 1
@@ -86,7 +98,7 @@
           nix_config="''${nix_config}
 ''${NIX_CONFIG}"
         fi
-        echo "[cfg] Nix: leaving ''${reserve_cores} machine core(s) free; max-jobs=''${max_jobs}; cores=''${build_cores}" >&2
+        log_verbose "[cfg] Nix: leaving ''${reserve_cores} machine core(s) free; max-jobs=''${max_jobs}; cores=''${build_cores}"
 
           if [ "''${host}" = "hm-only" ]; then
           if [ -n "''${target_host}" ]; then
@@ -101,7 +113,7 @@
           did_ita=""
           while IFS= read -r -d $'\0' path; do
             if [ -z "''${did_ita}" ]; then
-              echo "[pre] Git: marking untracked files as intent-to-add for flake evaluation" >&2
+              log_verbose "[pre] Git: marking untracked files as intent-to-add for flake evaluation"
               did_ita="1"
             fi
             "$git_bin" -C "''${flake_dir}" add -N -- "$path"
@@ -110,13 +122,13 @@
 
         bext="''${HM_BACKUP_EXT:-hm-$(date +%Y%m%d-%H%M%S)}"
         if [ -n "''${target_host}" ]; then
-          echo "[1/2] Home Manager: skipped explicit switch (applied by NixOS activation on remote target)" >&2
+          log_verbose "[1/2] Home Manager: skipped explicit switch (applied by NixOS activation on remote target)"
         else
-          echo "[1/2] Home Manager: home-manager switch --flake ''${flake_dir}#${username}@''${host} -b ''${bext}" >&2
+          log_cmd "[1/2]" "home-manager switch --flake ''${flake_dir}#${username}@''${host} -b ''${bext}"
           NIX_CONFIG="''${nix_config}" "$hm_bin" switch --flake "''${flake_dir}#${username}@''${host}" -b "''${bext}"
         fi
 
-        echo "[2/2] NixOS: nh os switch -H ''${host} ''${pass_args[*]}" >&2
+        log_cmd "[2/2]" "nh os switch -H ''${host} ''${pass_args[*]}"
         NH_FLAKE="''${flake_dir}" NIX_CONFIG="''${nix_config}" "$nh_bin" os switch -H "''${host}" "''${pass_args[@]}"
       '';
     in
@@ -142,10 +154,16 @@
   jiraTokenAge = "${inputs.secrets}/jira/api_token.age";
   infomaniakMailAge = "${inputs.secrets}/email/mail@ludovicvanasse.com-infomaniak.age";
   infomaniakCaldavAge = "${inputs.secrets}/calendar/infomaniak-caldav-password.age";
+  slackPrivateElAge = "${inputs.secrets}/emacs/slack-private.el.age";
+  spotifyPrivateElAge = "${inputs.secrets}/emacs/spotify-private.el.age";
+  liberaAuthinfoAge = "${inputs.secrets}/irc/authinfo.age";
   hasJiraCfg = builtins.pathExists jiraCfgAge;
   hasJiraToken = builtins.pathExists jiraTokenAge;
   hasInfomaniakMail = builtins.pathExists infomaniakMailAge;
   hasInfomaniakCaldav = builtins.pathExists infomaniakCaldavAge;
+  hasSlackPrivateEl = builtins.pathExists slackPrivateElAge;
+  hasSpotifyPrivateEl = builtins.pathExists spotifyPrivateElAge;
+  hasLiberaAuthinfo = builtins.pathExists liberaAuthinfoAge;
 in
 {
   # Host-specific overrides for the Home Manager-only configuration go here.
@@ -182,7 +200,7 @@ in
     SLACK_DISABLE_GPU = "1";
   };
 
-  # Decrypt Jira CLI secrets for hm-only via agenix (if present in secrets repo).
+  # Decrypt user secrets for hm-only via agenix (if present in secrets repo).
   age.identityPaths = [
     "${homeDir}/.ssh/id_ed25519_personal"
     "${homeDir}/.ssh/id_ed25519_work"
@@ -214,6 +232,27 @@ in
       "infomaniak-caldav-password" = {
         file = infomaniakCaldavAge;
         path = "${homeDir}/.config/calendar/infomaniak-caldav-password";
+        mode = "0600";
+      };
+    })
+    // (lib.optionalAttrs hasSlackPrivateEl {
+      "emacs-slack-private-el" = {
+        file = slackPrivateElAge;
+        path = "${homeDir}/.config/slack/private.el";
+        mode = "0600";
+      };
+    })
+    // (lib.optionalAttrs hasSpotifyPrivateEl {
+      "emacs-spotify-private-el" = {
+        file = spotifyPrivateElAge;
+        path = "${homeDir}/.config/spotify/private.el";
+        mode = "0600";
+      };
+    })
+    // (lib.optionalAttrs hasLiberaAuthinfo {
+      "libera-authinfo" = {
+        file = liberaAuthinfoAge;
+        path = "${homeDir}/.authinfo";
         mode = "0600";
       };
     });

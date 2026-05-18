@@ -13,16 +13,17 @@
       hasPersonalKeyAge = builtins.pathExists personalKeyAge;
     in
     {
-      age.identityPaths = lib.mkForce [ "${homeDir}/.ssh/id_ed25519_personal" ];
-      age.secrets = lib.mkForce (
-        lib.optionalAttrs hasPersonalKeyAge {
-          "ssh-id-ed25519-personal" = {
-            file = personalKeyAge;
-            path = "${homeDir}/.ssh/id_ed25519_personal";
-            mode = "0600";
-          };
-        }
-      );
+      age.identityPaths = lib.mkForce [
+        "${homeDir}/.ssh/id_ed25519_personal"
+        "${homeDir}/.ssh/id_ed25519_work"
+      ];
+      age.secrets = lib.optionalAttrs hasPersonalKeyAge {
+        "ssh-id-ed25519-personal" = {
+          file = personalKeyAge;
+          path = "${homeDir}/.ssh/id_ed25519_personal";
+          mode = "0600";
+        };
+      };
 
       # Keep user-level Nix cache settings present on the HM-only work laptop.
       # The host still needs to trust this user before restricted settings apply.

@@ -435,21 +435,23 @@ compact mail icon (nerd-font) with the count.
 
   (defun my/mu4e-alert-mode-line-formatter (mail-count)
     "Render a compact unread-mail indicator for MAIL-COUNT."
-    (when (> mail-count 0)
-      (let ((icon (if (fboundp 'nerd-icons-mdicon)
-                      (nerd-icons-mdicon "nf-md-email")
-                    "✉")))
-        (propertize
-         (format " %s %d " icon mail-count)
-         'help-echo (if (= mail-count 1)
-                         "You have 1 unread mail in Inbox, Promotions, or Social Networks"
-                       (format "You have %d unread mails in Inbox, Promotions, or Social Networks"
-                               mail-count))
-         'mouse-face 'mode-line-highlight
-         'keymap '(mode-line keymap
-                             (mouse-1 . mu4e-alert-view-unread-mails)
-                             (mouse-2 . mu4e-alert-view-unread-mails)
-                             (mouse-3 . mu4e-alert-view-unread-mails))))))
+    (let ((icon (if (fboundp 'nerd-icons-mdicon)
+                    (nerd-icons-mdicon "nf-md-email")
+                  "✉")))
+      (if (> mail-count 0)
+          (propertize
+           (format " %s %d " icon mail-count)
+           'face 'bold
+           'help-echo (if (= mail-count 1)
+                           "You have 1 unread mail"
+                         (format "You have %d unread mails" mail-count))
+           'mouse-face 'mode-line-highlight
+           'keymap '(mode-line keymap
+                               (mouse-1 . mu4e-alert-view-unread-mails)
+                               (mouse-2 . mu4e-alert-view-unread-mails)
+                               (mouse-3 . mu4e-alert-view-unread-mails)))
+        (propertize (format " %s " icon)
+                    'help-echo "No unread mail"))))
 #+end_src
 
 ** Shell / vterm
@@ -795,15 +797,16 @@ visual consistency.
         "Display the active window number as `wN`."
         (when active (my/current-window-label)))
 
-      ;; Rebuild the spaceline with our segments + global (for mu4e-alert mail).
+      ;; Rebuild the spaceline with our custom left-side segments.
+      ;; The default right side already includes the 'global' segment
+      ;; which renders global-mode-string (where mu4e-alert lives).
       (spaceline--theme
        '(((my-layout-label my-window-label) :separator " ")
          :fallback evil-state
          :face highlight-face
          :priority 100)
        '((buffer-modified buffer-size buffer-id remote-host)
-         :priority 98)
-       '(global :when active))
+         :priority 98))
 
       (setq spaceline-highlight-face-func 'spaceline-highlight-face-evil-state
             powerline-default-separator 'utf-8)
@@ -1451,9 +1454,10 @@ filtered query defined earlier to only count relevant folders.
 
 #+begin_src emacs-lisp
   (use-package mu4e-alert
-    :after mu4e
+    :defer 5
     :if (locate-library "mu4e-alert")
     :config
+    (require 'mu4e nil t)
     (setq mu4e-alert-interesting-mail-query my/mu4e-alert-query
           mu4e-alert-modeline-formatter #'my/mu4e-alert-mode-line-formatter
           mu4e-alert-style 'notifications)

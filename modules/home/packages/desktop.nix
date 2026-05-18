@@ -122,6 +122,7 @@
           os-prober
 
           # Fonts
+          emacs-all-the-icons-fonts
           font-awesome
           ibus
 

@@ -1,8 +1,19 @@
-{ ... }:
+{ inputs, ... }:
 {
   flake.modules.homeManager."packages.development" =
     { pkgs, ... }:
     let
+      fenix = {
+        packages = inputs.fenix.packages.${pkgs.stdenv.hostPlatform.system};
+        latest = inputs.fenix.packages.${pkgs.stdenv.hostPlatform.system}.latest;
+        toolchain = inputs.fenix.packages.${pkgs.stdenv.hostPlatform.system}.latest.withComponents [
+          "cargo"
+          "clippy"
+          "rust-src"
+          "rustc"
+          "rustfmt"
+        ];
+      };
       # Minimal but capable TeX Live for LaTeX Workshop (PDF build + bib + fonts)
       tex = pkgs.texlive.combine {
         inherit (pkgs.texlive)
@@ -24,7 +35,6 @@
           sonarlint-ls # CLI language server companion for SonarLint 4.37.0
           unstable.devenv
           direnv
-          rustup
           nodejs
           home-manager
           fish # Fish shell
@@ -33,9 +43,9 @@
           nixd
           act
           unstable.vscode
-          aider-chat
           clang-tools
           basedpyright
+          python3
           bash-language-server
           yaml-language-server
           cmake-language-server
@@ -89,6 +99,7 @@
           zlib
 
           jq
+          cachix
 
           # Hardware tools
           saleae-logic-2
@@ -98,6 +109,8 @@
 
           # Networking
           wireshark
+          fenix.packages.rust-analyzer
+          fenix.toolchain
         ])
         ++ [
           tex # TeX toolchain for LaTeX preview/build

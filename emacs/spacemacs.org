@@ -869,6 +869,19 @@ Markdown, and Dockerfiles.
   ;; Add Markdown detection
   (add-to-list 'auto-mode-alist '("\\.md\\'" . markdown-mode))
   (add-to-list 'auto-mode-alist '("\\.markdown\\'" . markdown-mode))
+
+  ;; Markdown performance: gate expensive features on buffer size.
+  (defun my/markdown-performance-setup ()
+    "Tune markdown-mode for large files by disabling expensive features."
+    ;; Disable wiki-link fontification (triggers file-missing-p on every cycle).
+    (setq-local markdown-enable-wiki-links nil)
+    ;; Disable native code-block fontification in buffers over 32KB.
+    (when (> (buffer-size) (* 32 1024))
+      (setq-local markdown-fontify-code-blocks-natively nil))
+    ;; Disable line numbers in large markdown buffers (reduces redisplay cost).
+    (when (> (buffer-size) (* 64 1024))
+      (display-line-numbers-mode -1)))
+  (add-hook 'markdown-mode-hook #'my/markdown-performance-setup)
   (add-to-list 'auto-mode-alist '("Dockerfile\\'" . dockerfile-mode))
   (add-hook 'dockerfile-mode-hook #'lsp-deferred)
   (add-hook 'dockerfile-mode-hook #'company-mode)

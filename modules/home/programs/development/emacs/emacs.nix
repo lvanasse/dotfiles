@@ -99,6 +99,7 @@
             flycheck-pos-tip
             flyspell-correct
             flyspell-correct-ivy
+            flyspell-lazy
             mcp
             nerd-icons
             pdf-tools

@@ -46,6 +46,10 @@
 
     # Development tools
     nix-gc-env.url = "github:Julow/nix-gc-env";
+    fenix = {
+      url = "github:nix-community/fenix/monthly";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     nix-vscode-extensions = {
       url = "github:nix-community/nix-vscode-extensions";
       inputs.nixpkgs.follows = "nixpkgs";

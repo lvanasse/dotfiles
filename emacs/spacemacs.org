@@ -786,18 +786,21 @@ mode-line and evil-state faces are themed with the Gruvbox palette for
 visual consistency.
 
 #+begin_src emacs-lisp
+  ;; Define custom spaceline segments (available once spaceline loads).
+  (with-eval-after-load 'spaceline
+    (spaceline-define-segment my-layout-label
+      "Display the active layout as `slot:name`."
+      (when active (my/current-layout-label)))
+
+    (spaceline-define-segment my-window-label
+      "Display the active window number as `wN`."
+      (when active (my/current-window-label))))
+
   (defun my/apply-gruvbox-modeline ()
-    "Apply gruvbox-dark-hard faces to spaceline after Spacemacs setup."
-    (when (fboundp 'spaceline-define-segment)
-      (spaceline-define-segment my-layout-label
-        "Display the active layout as `slot:name`."
-        (when active (my/current-layout-label)))
-
-      (spaceline-define-segment my-window-label
-        "Display the active window number as `wN`."
-        (when active (my/current-window-label)))
-
-      ;; Rebuild the spaceline with our custom left-side segments.
+    "Apply gruvbox-dark-hard faces to the spaceline modeline.
+Must run AFTER Spacemacs finishes its own modeline and theme setup."
+    (when (and (fboundp 'spaceline--theme) (fboundp 'spaceline-compile))
+      ;; Rebuild spaceline with custom left-side segments.
       ;; The default right side already includes the 'global' segment
       ;; which renders global-mode-string (where mu4e-alert lives).
       (spaceline--theme
@@ -812,7 +815,7 @@ visual consistency.
             powerline-default-separator 'utf-8)
       (spaceline-compile)
 
-      ;; Gruvbox mode-line faces.
+      ;; Gruvbox mode-line faces — override whatever the theme set.
       (set-face-attribute 'mode-line nil
                           :background "#282828" :foreground "#ebdbb2"
                           :box nil :height 0.95)
@@ -850,11 +853,14 @@ visual consistency.
                             :background "#1d2021" :foreground "#928374"))
       (force-mode-line-update t)))
 
-  ;; Run AFTER Spacemacs completes its own modeline setup (priority 90 = late).
-  (add-hook 'emacs-startup-hook #'my/apply-gruvbox-modeline 90)
-  ;; Re-apply when switching themes.
-  (when (boundp 'spacemacs-post-theme-change-hook)
-    (add-hook 'spacemacs-post-theme-change-hook #'my/apply-gruvbox-modeline))
+  ;; Use an idle timer to guarantee we run AFTER Spacemacs's startup hooks,
+  ;; theme application, and modeline setup have all completed.
+  (run-with-idle-timer 2 nil #'my/apply-gruvbox-modeline)
+
+  ;; Re-apply after any theme change (advice is more reliable than
+  ;; spacemacs-post-theme-change-hook which may not be bound yet).
+  (advice-add 'load-theme :after
+              (lambda (&rest _) (run-with-idle-timer 0.5 nil #'my/apply-gruvbox-modeline)))
 #+end_src
 
 ** Programming modes
@@ -1453,16 +1459,19 @@ Desktop notifications and mode-line display for unread mail.  Uses the
 filtered query defined earlier to only count relevant folders.
 
 #+begin_src emacs-lisp
-  (use-package mu4e-alert
-    :defer 5
-    :if (locate-library "mu4e-alert")
-    :config
-    (require 'mu4e nil t)
-    (setq mu4e-alert-interesting-mail-query my/mu4e-alert-query
-          mu4e-alert-modeline-formatter #'my/mu4e-alert-mode-line-formatter
-          mu4e-alert-style 'notifications)
-    (mu4e-alert-enable-notifications)
-    (mu4e-alert-enable-mode-line-display))
+  ;; Load mu4e-alert independently of mu4e (don't wait for user to open mu4e).
+  ;; Use run-with-timer (not idle timer) so it fires even if user is typing.
+  (run-with-timer 8 nil
+    (lambda ()
+      (when (locate-library "mu4e-alert")
+        (require 'mu4e nil t)
+        (require 'mu4e-alert nil t)
+        (when (featurep 'mu4e-alert)
+          (setq mu4e-alert-interesting-mail-query my/mu4e-alert-query
+                mu4e-alert-modeline-formatter #'my/mu4e-alert-mode-line-formatter
+                mu4e-alert-style 'notifications)
+          (mu4e-alert-enable-notifications)
+          (mu4e-alert-enable-mode-line-display)))))
 #+end_src
 
 ** Slack (after-load)

@@ -10,6 +10,20 @@
           DefaultSearchEngine = "Qwant";
           DefaultSearchEnginePrivate = "Qwant";
           SearchSuggestEnabled = false;
+          Preferences = {
+            "browser.urlbar.placeholderName" = {
+              Value = "Qwant";
+              Status = "locked";
+            };
+            "browser.urlbar.placeholderName.private" = {
+              Value = "Qwant";
+              Status = "locked";
+            };
+            "browser.search.suggest.enabled" = {
+              Value = false;
+              Status = "locked";
+            };
+          };
         };
         profiles = {
           default = {

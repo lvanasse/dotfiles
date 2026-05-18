@@ -40,6 +40,9 @@
                 name = "Ludovic Vanasse";
                 email = "mail@ludovicvanasse.com";
               };
+              url."git@github-personal:" = {
+                insteadOf = "git@github.com:";
+              };
             };
           }
           {

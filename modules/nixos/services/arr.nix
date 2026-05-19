@@ -1,5 +1,8 @@
-{ lib, ... }:
+{ inputs, lib, ... }:
 let
+  arrSecretsAge = "${inputs.secrets}/server/arr-secrets.yml.age";
+  arrSecretsPlainRepo = "${inputs.secrets}/server/arr-secrets.yml";
+  arrSecretsPlainOverride = ../../../overrides/arr-secrets.yml;
   storageBackedUnits = [
     "docker-sonarr"
     "docker-radarr"
@@ -22,12 +25,25 @@ let
 in
 {
   flake.modules.nixos."services.arr" =
-    { pkgs, ... }:
+    { config, pkgs, ... }:
     let
+      hasAgeSecrets = builtins.pathExists arrSecretsAge;
+      hasPlainSecretsRepo = builtins.pathExists arrSecretsPlainRepo;
+      hasPlainSecretsOverride = builtins.pathExists arrSecretsPlainOverride;
+      qBittorrentSecretsPath =
+        if hasAgeSecrets then
+          config.age.secrets."arr-secrets".path
+        else if hasPlainSecretsOverride then
+          toString arrSecretsPlainOverride
+        else if hasPlainSecretsRepo then
+          toString arrSecretsPlainRepo
+        else
+          "/etc/arr-secrets.yml";
       qBittorrentBooksCategoryPath = "/downloads/books";
       qBittorrentAudiobookCategoryPath = "/downloads/audiobook";
       qBittorrentConfigPath = "/mnt/storage/appdata/qbittorrent/qBittorrent/qBittorrent.conf";
       qBittorrentCategoriesPath = "/mnt/storage/appdata/qbittorrent/qBittorrent/categories.json";
+      pythonWithYaml = pkgs.python3.withPackages (ps: [ ps.pyyaml ]);
       qBittorrentMamConfig = pkgs.writeText "qbittorrent-mam-config.py" ''
         import configparser
         import json
@@ -108,6 +124,135 @@ in
             json.dump(categories, fh, indent=4, sort_keys=True)
             fh.write("\n")
           os.replace(tmp_path, categories_path)
+      '';
+      qBittorrentAlwaysSeed = pkgs.writeText "qbittorrent-always-seed.py" ''
+        import argparse
+        import http.cookiejar
+        import json
+        import pathlib
+        import sys
+        import time
+        import urllib.parse
+        import urllib.request
+
+        import yaml
+
+
+        ALWAYS_SEED_CATEGORIES = {"books", "audiobook"}
+        ALWAYS_SEED_TAGS = {"book", "books", "audiobook", "audiobooks"}
+
+
+        def read_secrets(path):
+          data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+          username = data.get("QBITTORRENT_USER") or data.get("QBITTORRENT_USERNAME")
+          password = data.get("QBITTORRENT_PASS") or data.get("QBITTORRENT_PASSWORD")
+
+          if not username or not password:
+            raise RuntimeError("missing QBITTORRENT_USER/QBITTORRENT_PASS in {}".format(path))
+
+          return username, password
+
+
+        def make_opener():
+          cookies = http.cookiejar.CookieJar()
+          return urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cookies))
+
+
+        def post(opener, base_url, endpoint, data):
+          request = urllib.request.Request(
+            base_url + endpoint,
+            data=urllib.parse.urlencode(data).encode("utf-8"),
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            method="POST",
+          )
+          with opener.open(request, timeout=15) as response:
+            return response.read().decode("utf-8", errors="replace")
+
+
+        def get_json(opener, base_url, endpoint):
+          with opener.open(base_url + endpoint, timeout=15) as response:
+            return json.loads(response.read().decode("utf-8"))
+
+
+        def torrent_tags(value):
+          if isinstance(value, list):
+            raw_tags = value
+          else:
+            raw_tags = str(value or "").split(",")
+
+          return {tag.strip().casefold() for tag in raw_tags if tag and tag.strip()}
+
+
+        def should_always_seed(torrent):
+          category = str(torrent.get("category") or "").casefold()
+          tags = torrent_tags(torrent.get("tags"))
+          return category in ALWAYS_SEED_CATEGORIES or bool(tags & ALWAYS_SEED_TAGS)
+
+
+        def reconcile(args):
+          secrets_path = pathlib.Path(args.secrets)
+          username, password = read_secrets(secrets_path)
+          base_url = args.url.rstrip("/")
+          opener = make_opener()
+
+          login_response = post(
+            opener,
+            base_url,
+            "/api/v2/auth/login",
+            {"username": username, "password": password},
+          ).strip()
+          if login_response == "Fails.":
+            raise RuntimeError("qBittorrent login failed")
+
+          torrents = get_json(opener, base_url, "/api/v2/torrents/info")
+          hashes = [torrent["hash"] for torrent in torrents if should_always_seed(torrent)]
+
+          if not hashes:
+            print("no book or audiobook torrents matched")
+            return
+
+          joined_hashes = "|".join(hashes)
+          post(
+            opener,
+            base_url,
+            "/api/v2/torrents/setShareLimits",
+            {
+              "hashes": joined_hashes,
+              "ratioLimit": "-1",
+              "seedingTimeLimit": "-1",
+              "inactiveSeedingTimeLimit": "-1",
+            },
+          )
+          post(opener, base_url, "/api/v2/torrents/resume", {"hashes": joined_hashes})
+          print("set unlimited seeding for {} book/audiobook torrents".format(len(hashes)))
+
+
+        def main():
+          parser = argparse.ArgumentParser()
+          parser.add_argument("--url", default="http://127.0.0.1:8081")
+          parser.add_argument("--secrets", required=True)
+          parser.add_argument("--retries", type=int, default=12)
+          parser.add_argument("--retry-delay", type=float, default=5.0)
+          args = parser.parse_args()
+
+          for attempt in range(1, args.retries + 1):
+            try:
+              reconcile(args)
+              return
+            except Exception as error:
+              if attempt == args.retries:
+                raise
+              print(
+                "qBittorrent always-seed attempt {}/{} failed: {}".format(
+                  attempt, args.retries, error
+                ),
+                file=sys.stderr,
+              )
+              time.sleep(args.retry_delay)
+
+
+        if __name__ == "__main__":
+          main()
       '';
     in
     {
@@ -271,18 +416,16 @@ in
 
       # Ensure storage pool is mounted before media containers start.
       systemd.services =
-        (lib.genAttrs storageBackedUnits (
-          _: {
-            requires = [
-              "mnt-data3.mount"
-              "mnt-storage.mount"
-            ];
-            after = [
-              "mnt-data3.mount"
-              "mnt-storage.mount"
-            ];
-          }
-        ))
+        (lib.genAttrs storageBackedUnits (_: {
+          requires = [
+            "mnt-data3.mount"
+            "mnt-storage.mount"
+          ];
+          after = [
+            "mnt-data3.mount"
+            "mnt-storage.mount"
+          ];
+        }))
         // {
           # Keep the live WebUI/RSS config, but enforce the MaM-safe tracker settings.
           "docker-qbittorrent".preStart = lib.mkBefore ''
@@ -290,7 +433,35 @@ in
               ${lib.escapeShellArg qBittorrentConfigPath} \
               ${lib.escapeShellArg qBittorrentCategoriesPath}
           '';
+
+          qbittorrent-always-seed-books = {
+            description = "Keep book and audiobook qBittorrent torrents seeding";
+            wants = [ "network-online.target" ];
+            requires = [ "docker-qbittorrent.service" ];
+            after = [
+              "docker-qbittorrent.service"
+              "network-online.target"
+            ];
+            serviceConfig = {
+              Type = "oneshot";
+            };
+            script = ''
+              ${pythonWithYaml}/bin/python3 ${qBittorrentAlwaysSeed} \
+                --url http://127.0.0.1:8081 \
+                --secrets ${lib.escapeShellArg qBittorrentSecretsPath}
+            '';
+          };
         };
+
+      systemd.timers.qbittorrent-always-seed-books = {
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          OnBootSec = "3min";
+          OnUnitActiveSec = "15min";
+          AccuracySec = "1min";
+          Unit = "qbittorrent-always-seed-books.service";
+        };
+      };
 
       networking.firewall.allowedTCPPorts = [
         8989

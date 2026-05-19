@@ -238,8 +238,26 @@ suppression for a cleaner tiling WM experience.
 
 Set the fringe background to match the Gruvbox dark-hard background so
 there's no visible seam between buffer content and window edges.
+Also register the Nerd Font symbol fallback used by Waybar icons, so the
+mail indicator renders the same glyphs inside GUI Emacs frames.
 
 #+begin_src emacs-lisp
+  (require 'seq)
+
+  (defun my/setup-nerd-font-symbols (&optional frame)
+    "Use Symbols Nerd Font as a fallback for icon glyphs."
+    (when (display-graphic-p frame)
+      (with-selected-frame (or frame (selected-frame))
+        (let ((font-family
+               (seq-find (lambda (family)
+                           (member family (font-family-list)))
+                         '("Symbols Nerd Font Mono" "Symbols Nerd Font"))))
+          (when font-family
+            (set-fontset-font t 'symbol (font-spec :family font-family) nil 'append))))))
+
+  (my/setup-nerd-font-symbols)
+  (add-hook 'after-make-frame-functions #'my/setup-nerd-font-symbols)
+
   (set-face-attribute 'fringe nil :background "#1d2021")
 #+end_src
 
@@ -438,33 +456,67 @@ available (e.g. before the first Home Manager switch).
 ** mu4e-alert query and mode-line formatter
 
 The unread-mail query is limited to folders the user actively monitors
-(Inbox, Promotions, Social Networks).  The mode-line formatter shows a
-compact mail icon (nerd-font) with the count.
+(Inbox, Promotions, Social Networks).  The mode-line formatter uses the
+same Nerd Font mail glyphs as Waybar.
 
 #+begin_src emacs-lisp
   (defconst my/mu4e-alert-query
     "flag:unread AND NOT flag:trashed AND (maildir:/ludovic/Index OR maildir:/ludovic/Promotions OR maildir:/ludovic/SocialNetworks)"
     "Unread mail query limited to the folders the user cares about.")
 
-  (defun my/mu4e-alert-mode-line-formatter (mail-count)
-    "Render a compact unread-mail indicator for MAIL-COUNT."
-    (let ((icon (if (fboundp 'nerd-icons-mdicon)
-                    (nerd-icons-mdicon "nf-md-email")
-                  "✉")))
-      (if (> mail-count 0)
-          (propertize
-           (format " %s %d " icon mail-count)
-           'face 'bold
-           'help-echo (if (= mail-count 1)
-                           "You have 1 unread mail"
-                         (format "You have %d unread mails" mail-count))
-           'mouse-face 'mode-line-highlight
-           'keymap '(mode-line keymap
-                               (mouse-1 . mu4e-alert-view-unread-mails)
-                               (mouse-2 . mu4e-alert-view-unread-mails)
-                               (mouse-3 . mu4e-alert-view-unread-mails)))
-        (propertize (format " %s " icon)
-                    'help-echo "No unread mail"))))
+  (defconst my/mu-binary "__MU_BIN__"
+    "Path to the mu binary rendered by Home Manager.")
+
+  (defvar my/mail-unread-count 0
+    "Cached unread mail count for the mode-line.")
+
+  (defvar my/mail-unread-count-timer nil
+    "Timer used to refresh `my/mail-unread-count'.")
+
+  (defvar mu4e-alert-mode-line nil
+    "Mode-line string consumed by Spaceline's mu4e-alert segment.")
+
+  (defun my/mail-unread-count-from-mu ()
+    "Return unread mail count using the same mu query as Waybar."
+    (when (and (file-executable-p my/mu-binary)
+               (file-directory-p (expand-file-name "~/.cache/mu")))
+      (with-temp-buffer
+        (let ((status (call-process my/mu-binary nil t nil
+                                    "find" "--nocolor" "--format=plain"
+                                    my/mu4e-alert-query)))
+          (when (eq status 0)
+            (let ((count 0))
+              (goto-char (point-min))
+              (while (not (eobp))
+                (unless (looking-at-p "^[[:space:]]*$")
+                  (setq count (1+ count)))
+                (forward-line 1))
+              count))))))
+
+  (defun my/refresh-mail-unread-count (&rest _)
+    "Refresh the cached unread mail count and repaint mode-lines."
+    (let ((count (my/mail-unread-count-from-mu)))
+      (when (integerp count)
+        (setq my/mail-unread-count count)
+        (when (boundp 'mu4e-alert-mode-line)
+          (setq mu4e-alert-mode-line
+                (my/mu4e-alert-mode-line-formatter count)))
+        (force-mode-line-update t))))
+
+  (defun my/start-mail-unread-count-refresh ()
+    "Start the Waybar-style unread mail refresh timer."
+    (my/refresh-mail-unread-count)
+    (unless (timerp my/mail-unread-count-timer)
+      (setq my/mail-unread-count-timer
+            (run-with-timer 30 30 #'my/refresh-mail-unread-count))))
+
+  (defun my/mu4e-alert-mode-line-formatter (_mail-count)
+    "Return empty string — mail info is shown on the right side of the bar."
+    "")
+
+  ;; (setq mu4e-alert-mode-line
+  ;;      (my/mu4e-alert-mode-line-formatter my/mail-unread-count))
+  ;; (my/start-mail-unread-count-refresh)
 #+end_src
 
 ** Shell / vterm
@@ -519,6 +571,7 @@ inside a native Emacs org-mode buffer.  Unlike the vterm-based CLI
 normal Emacs scrolling, search, and yank.
 
 - =SPC a a h= opens the chat buffer (mnemonic: "h" for help/chat).
+- =C-c C-c= or =C-c RET= sends the prompt from the input area.
 - =SPC a a e= explain selected region.
 - =SPC a a r= review selected region.
 - =SPC a a f= fix selected region.
@@ -528,8 +581,12 @@ The vterm CLI (=SPC a a C=) remains available for agentic tasks.
 
 #+begin_src emacs-lisp
   (with-eval-after-load 'copilot-chat
-    (setq copilot-chat-frontend 'org
-          copilot-chat-backend 'curl))
+    (customize-set-variable 'copilot-chat-frontend 'org)
+    (customize-set-variable 'copilot-chat-backend 'curl)
+
+    ;; Ensure prompt-mode keybindings (C-c C-c / C-c RET to send) work in the
+    ;; base buffer even when polymode fails to switch to the inner indirect buffer.
+    (add-hook 'copilot-chat-org-poly-mode-hook #'copilot-chat-prompt-mode))
 
   (spacemacs/set-leader-keys
     "a a h" 'copilot-chat-display
@@ -552,7 +609,9 @@ AI tools, remote access, and the view prefix.
 #+begin_src emacs-lisp
   (spacemacs/set-leader-keys
     "'" 'spacemacs/default-pop-shell
-    "bs" 'vterm)
+    "bt" 'vterm)
+
+  (spacemacs/declare-prefix "b t" "terminal")
 
   (spacemacs/declare-prefix "a a" "ai")
   (spacemacs/declare-prefix "a r" "remote")
@@ -761,15 +820,15 @@ on the left, and ERC (Libera Chat) on the right.  Invoked via
     (my/open-mail-irc-layout))
 #+end_src
 
-** Mail+IRC bootstrap on first GUI frame
+** Mail bootstrap on first GUI frame
 
-Automatically open the mail+IRC layout the first time a graphical frame
+Automatically open the email layout the first time a graphical frame
 appears (whether via daemon or direct launch).  Subsequent frames leave
-the layout alone.
+the layout alone.  IRC is available manually via =SPC a c i=.
 
 #+begin_src emacs-lisp
-  (defun my/mail-irc-bootstrap-on-frame (frame)
-    "Bootstrap the managed mail+IRC layout once for the first GUI FRAME."
+  (defun my/mail-bootstrap-on-frame (frame)
+    "Bootstrap the managed email layout once for the first GUI FRAME."
     (when (and (not my/mail-irc-bootstrap-done)
                (frame-live-p frame)
                (display-graphic-p frame))
@@ -781,12 +840,12 @@ the layout alone.
          (when (frame-live-p target-frame)
            (select-frame-set-input-focus target-frame)
            (with-selected-frame target-frame
-             (my/open-mail-irc-layout))))
+             (my/setup-email-layout))))
        frame)))
 
-  (defun my/bootstrap-mail-irc-for-current-frame ()
-    "Bootstrap the managed mail+IRC layout for the selected frame when needed."
-    (my/mail-irc-bootstrap-on-frame (selected-frame)))
+  (defun my/bootstrap-mail-for-current-frame ()
+    "Bootstrap the managed email layout for the selected frame when needed."
+    (my/mail-bootstrap-on-frame (selected-frame)))
 #+end_src
 
 ** IRC dispatch
@@ -821,8 +880,8 @@ or accepts a subcommand:
         (setq unread-command-events (list event))
         (my/erc-open-or-connect)))))
 
-  (add-hook 'emacs-startup-hook #'my/bootstrap-mail-irc-for-current-frame)
-  (add-hook 'after-make-frame-functions #'my/mail-irc-bootstrap-on-frame)
+  (add-hook 'emacs-startup-hook #'my/bootstrap-mail-for-current-frame)
+  (add-hook 'after-make-frame-functions #'my/mail-bootstrap-on-frame)
 #+end_src
 
 ** Mode-line (spaceline)
@@ -831,8 +890,71 @@ Override the Spacemacs spaceline modeline faces with Gruvbox Dark Hard
 palette colours.  We do NOT rebuild the spaceline theme — Spacemacs
 already includes =mu4e-alert-segment=, =global=, and all standard
 segments.  We only repaint the faces after each spaceline compilation.
+The Spacemacs home buffer normally hides its mode-line with a buffer-local
+empty value, so restore the stock Spaceline value there instead of creating
+a separate home-only mode-line.  Keep the existing =mu4e-alert-segment=
+high enough in Spaceline's responsive priority order that the mail count
+survives normal narrow-window pruning.
 
 #+begin_src emacs-lisp
+  (defun my/spaceline-segment-spec-matches-p (spec segment)
+    "Return non-nil when Spaceline SPEC contains SEGMENT."
+    (or (eq spec segment)
+        (and (consp spec)
+             (or (eq (car spec) segment)
+                 (and (consp (car spec))
+                      (memq segment (car spec)))))))
+
+  (defun my/spaceline-segment-index (segments segment)
+    "Return the index of SEGMENT in Spaceline SEGMENTS."
+    (let ((index 0)
+          found)
+      (while (and segments (not found))
+        (when (my/spaceline-segment-spec-matches-p (car segments) segment)
+          (setq found index))
+        (setq segments (cdr segments)
+              index (1+ index)))
+      found))
+
+  (defun my/prioritize-mu4e-alert-spaceline-segment (&rest _)
+    "Keep Spaceline's existing mu4e-alert segment visible in normal widths."
+    (when (and (boundp 'spaceline--mode-lines)
+               (boundp 'spaceline--segments-code-main-left))
+      (let* ((main (cdr (assq 'main spaceline--mode-lines)))
+             (left-spec (car main))
+             (index (my/spaceline-segment-index left-spec 'mu4e-alert-segment))
+             (left-data (default-value 'spaceline--segments-code-main-left)))
+        (when (and index (< index (length left-data)))
+          (let ((runtime (nth index left-data)))
+            (aset runtime 0 99)
+            (aset runtime 2 t))
+          (dolist (buffer (buffer-list))
+            (with-current-buffer buffer
+              (kill-local-variable 'spaceline--segments-code-main-left)
+              (kill-local-variable 'spaceline--segments-code-main-right)
+              (kill-local-variable 'spaceline--runtime-data-main)))))))
+
+  (defun my/restore-spacemacs-home-spaceline (&rest _)
+    "Use the regular Spaceline mode-line on the Spacemacs home buffer."
+    (when (and (boundp 'spacemacs-buffer-name)
+               (default-value 'mode-line-format))
+      (let ((buffer (get-buffer spacemacs-buffer-name)))
+        (when buffer
+          (with-current-buffer buffer
+            (setq-local mode-line-format (default-value 'mode-line-format))
+            (force-mode-line-update))))))
+
+  (with-eval-after-load 'core-spacemacs-buffer
+    (unless (advice-member-p #'my/restore-spacemacs-home-spaceline
+                             'spacemacs-buffer/goto-buffer)
+      (advice-add 'spacemacs-buffer/goto-buffer
+                  :after #'my/restore-spacemacs-home-spaceline))
+    (unless (advice-member-p #'my/restore-spacemacs-home-spaceline
+                             'spacemacs-buffer//startup-hook)
+      (advice-add 'spacemacs-buffer//startup-hook
+                  :after #'my/restore-spacemacs-home-spaceline))
+    (my/restore-spacemacs-home-spaceline))
+
   (defun my/apply-gruvbox-modeline ()
     "Apply gruvbox-dark-hard faces to the modeline.
 Do NOT rebuild the spaceline theme — let Spacemacs handle segments
@@ -875,18 +997,25 @@ Only override the face colours."
     (when (facep 'powerline-inactive2)
       (set-face-attribute 'powerline-inactive2 nil
                           :background "#1d2021" :foreground "#928374"))
-    (powerline-reset)
+    (when (fboundp 'powerline-reset)
+      (powerline-reset))
     (force-mode-line-update t))
+
+  (defun my/refresh-spaceline-modeline (&rest _)
+    "Refresh Spaceline priorities and Gruvbox mode-line faces."
+    (my/prioritize-mu4e-alert-spaceline-segment)
+    (my/apply-gruvbox-modeline)
+    (my/restore-spacemacs-home-spaceline))
 
   ;; Apply after spaceline compiles (catches Spacemacs's late byte-compilation).
   (with-eval-after-load 'spaceline
-    (advice-add 'spaceline-compile :after
-                (lambda (&rest _) (my/apply-gruvbox-modeline))))
+    (advice-add 'spaceline-compile :after #'my/refresh-spaceline-modeline)
+    (my/prioritize-mu4e-alert-spaceline-segment))
   ;; Also apply on a short timer in case advice misses the first compile.
-  (run-with-timer 3 nil #'my/apply-gruvbox-modeline)
+  (run-with-timer 3 nil #'my/refresh-spaceline-modeline)
   ;; Re-apply after any theme change.
   (advice-add 'load-theme :after
-              (lambda (&rest _) (run-with-timer 0.5 nil #'my/apply-gruvbox-modeline)))
+              (lambda (&rest _) (run-with-timer 0.5 nil #'my/refresh-spaceline-modeline)))
 #+end_src
 
 ** Programming modes
@@ -1502,9 +1631,26 @@ The mu4e layer starts the server in the background at startup
 formatter.
 
 #+begin_src emacs-lisp
-  (with-eval-after-load 'mu4e-alert
+  (defvar my/mu4e-alert-mode-line-display-enabled nil
+    "Whether `mu4e-alert-enable-mode-line-display' has been called.")
+
+  (defun my/configure-mu4e-alert ()
+    "Configure mu4e-alert for the shared unread-mail mode-line segment."
     (setq mu4e-alert-interesting-mail-query my/mu4e-alert-query
-          mu4e-alert-modeline-formatter #'my/mu4e-alert-mode-line-formatter))
+          mu4e-alert-modeline-formatter #'my/mu4e-alert-mode-line-formatter
+          mu4e-alert-mode-line
+          (my/mu4e-alert-mode-line-formatter my/mail-unread-count))
+    (when (and (fboundp 'mu4e-alert-enable-mode-line-display)
+               (not my/mu4e-alert-mode-line-display-enabled))
+      (setq my/mu4e-alert-mode-line-display-enabled t)
+      (mu4e-alert-enable-mode-line-display))
+    (my/refresh-mail-unread-count))
+
+  (when (require 'mu4e-alert nil t)
+    (my/configure-mu4e-alert))
+
+  (with-eval-after-load 'mu4e-alert
+    (my/configure-mu4e-alert))
 #+end_src
 
 ** Slack (after-load)
@@ -1634,6 +1780,31 @@ covers =.cmake= files).
     (treemacs-follow-mode t)
     (treemacs-filewatch-mode t)
     (treemacs-project-follow-mode t))
+#+end_src
+
+** Autosave
+
+Automatically save visited file buffers every 30 seconds.  This uses the
+built-in =auto-save-visited-mode= which writes directly to the visited
+file (no =\#file\#= temporaries) and is safe for version-controlled
+projects.
+
+#+begin_src emacs-lisp
+  (setq auto-save-visited-interval 30)
+  (auto-save-visited-mode 1)
+#+end_src
+
+** Dired
+
+Bind =SPC d= as a prefix for directory/file-manager commands powered by
+Dired.
+
+#+begin_src emacs-lisp
+  (spacemacs/declare-prefix "d" "dired")
+  (spacemacs/set-leader-keys
+    "d d" 'dired
+    "d j" 'dired-jump
+    "d p" 'projectile-dired)
 #+end_src
 
 ** End of user-config

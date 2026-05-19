@@ -32,7 +32,11 @@
         find_output="$("$mu_bin" find --nocolor --format=plain "$query" 2>&1)"
         find_status=$?
         set -e
-        if [ "$find_status" -ne 0 ]; then
+        if [ "$find_status" -eq 2 ]; then
+          # mu returns 2 when there are no matches
+          print_state "󰇯" "idle" "No unread mail in Inbox, Promotions, or Social Networks"
+          exit 0
+        elif [ "$find_status" -ne 0 ]; then
           error_text="$(printf '%s' "$find_output" | head -n 1)"
           if [ -z "$error_text" ]; then
             error_text="mu find failed with exit code $find_status"
@@ -43,7 +47,7 @@
         count="$(printf '%s\n' "$find_output" | sed '/^$/d' | wc -l)"
         count="$(printf '%s' "$count" | tr -d '[:space:]')"
         if [ -z "$count" ] || [ "$count" = "0" ]; then
-          print_state "󰇯 0" "idle" "No unread mail in Inbox, Promotions, or Social Networks"
+          print_state "󰇯" "idle" "No unread mail in Inbox, Promotions, or Social Networks"
         else
           print_state "󰇮 $count" "attention" "$count unread mail in Inbox, Promotions, or Social Networks"
         fi
@@ -170,7 +174,6 @@
         #battery, #tray, #custom-weather, #custom-datetime, #custom-power, #custom-mode, #custom-mail { padding: 0 10px; }
         #custom-mode { background: ${config.theme.palette.dark1}; color: ${config.theme.palette.bright_orange}; font-weight: 600; }
         #custom-mail.attention { color: ${config.theme.palette.bright_orange}; font-weight: 700; }
-        #custom-mail.idle { color: ${config.theme.waybar.foreground}; }
         #custom-mail.error { color: ${config.theme.palette.bright_red}; font-weight: 700; }
         /* Add spacing between individual tray icons */
         #tray > .passive, #tray > .active, #tray > .needs-attention { padding: 0 5px; }

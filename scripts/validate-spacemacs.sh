@@ -43,11 +43,11 @@ run_user_config='(progn
   (when (fboundp (quote dotspacemacs/user-init))
     nil))'
 
-echo "[1/4] Loading Spacemacs init with the target dotfile"
+echo "[1/5] Loading Spacemacs init with the target dotfile"
 run_elisp "(princ \"init-loaded\")"
 echo
 
-echo "[2/4] Checking expected native layer bindings"
+echo "[2/5] Checking expected native layer bindings"
 run_elisp "(progn
   ${run_user_config}
   (require 'core-keybindings)
@@ -72,7 +72,7 @@ run_elisp "(progn
       (unless (eq actual expected)
         (kill-emacs 1)))))"
 
-echo "[3/4] Checking tab navigation bindings"
+echo "[3/5] Checking tab navigation bindings"
 run_elisp "(progn
   ${run_user_config}
   (let* ((legacy-tabs
@@ -104,5 +104,39 @@ run_elisp "(progn
           (setq matched t))))
     (unless matched
       (kill-emacs 1))))"
+
+echo "[4/5] Checking mail mode-line formatter"
+run_elisp "(progn
+  ${run_user_config}
+  (let ((zero (my/mu4e-alert-mode-line-formatter 0))
+        (two (my/mu4e-alert-mode-line-formatter 2)))
+    (princ (format \"mail 0 => %s\\n\" zero))
+    (princ (format \"mail 2 => %s\\n\" two))
+    (unless (and (string= \"\" zero)
+                 (string= \"\" two)
+                 (string-match-p \"maildir:/ludovic/Index\" my/mu4e-alert-query)
+                 (string-match-p \"maildir:/ludovic/Promotions\" my/mu4e-alert-query)
+                 (string-match-p \"maildir:/ludovic/SocialNetworks\" my/mu4e-alert-query))
+      (kill-emacs 1))))"
+
+echo "[5/5] Checking Spacemacs home-buffer mode-line"
+run_elisp "(progn
+  ${run_user_config}
+  (require (quote core-spacemacs-buffer))
+  (require (quote spaceline-config))
+  (setq my/mail-unread-count 2
+        mu4e-alert-mode-line (my/mu4e-alert-mode-line-formatter 2))
+  (spacemacs-buffer/goto-buffer t t)
+  (with-current-buffer (get-buffer spacemacs-buffer-name)
+    (let* ((formatted (format-mode-line mode-line-format))
+           (line (if (string= formatted \"\")
+                     (spaceline-ml-main)
+                   formatted)))
+      (princ (format \"home mode-line => %s\\n\" line))
+      (unless (and (equal mode-line-format
+                          (quote (\"%e\" (:eval (spaceline-ml-main)))))
+                   (not (string-match-p \"my/spacemacs-home-mode-line\"
+                                         (format \"%S\" mode-line-format))))
+        (kill-emacs 1)))))"
 
 echo "Spacemacs validation passed."

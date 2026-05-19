@@ -132,7 +132,7 @@
               }),
               -- Force Fish as the default shell inside WezTerm
               default_prog = { '${pkgs.fish}/bin/fish', '-l' },
-              font_size = 11.0,
+              font_size = 10.5,
 
               -- Minimal chrome
               enable_tab_bar = false, -- never show the tab/header bar

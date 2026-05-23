@@ -44,7 +44,7 @@ Git forge dependencies.
   (setq-default
    dotspacemacs-distribution 'spacemacs
    dotspacemacs-enable-lazy-installation 'unused
-   dotspacemacs-ask-for-lazy-installation t
+   dotspacemacs-ask-for-lazy-installation nil
    dotspacemacs-install-packages 'used-only
    dotspacemacs-configuration-layers '(
      better-defaults

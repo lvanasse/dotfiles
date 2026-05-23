@@ -1322,7 +1322,11 @@ TLS ERC session using the managed defaults and return its server buffer."
     (add-hook 'erc-text-matched-hook #'my/erc-notify-current-nick-match)
     (add-hook 'erc-server-PRIVMSG-functions #'my/erc-notify-private-message)
     (setq erc-hide-list '("JOIN" "PART" "QUIT")
+          erc-fill-function 'erc-fill-static
+          erc-fill-static-center 14
           erc-fill-column 140
+          erc-insert-timestamp-function 'erc-insert-timestamp-left
+          erc-timestamp-format "[%H:%M] "
           erc-track-shorten-start 8
           erc-track-exclude-types '("JOIN" "NICK" "PART" "QUIT" "MODE"
                                     "324" "329" "332" "333" "353" "477")

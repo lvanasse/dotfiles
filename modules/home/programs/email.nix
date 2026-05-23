@@ -102,8 +102,8 @@
           exec "$emacsclient_bin" --eval "$emacs_index_elisp"
         fi
 
-        echo "Emacs daemon unavailable; falling back to mu index"
-        exec "$mu_bin" index
+        echo "Emacs daemon unavailable; skipping index (will happen when mu4e starts)"
+        exit 0
       '';
     in
     {
@@ -113,45 +113,44 @@
 
       accounts.email.maildirBasePath = "mail";
 
-      accounts.email.accounts.ludovic =
-        {
-          address = "mail@ludovicvanasse.com";
-          userName = "mail@ludovicvanasse.com";
-          realName = "Ludovic Vanasse";
-          primary = true;
+      accounts.email.accounts.ludovic = {
+        address = "mail@ludovicvanasse.com";
+        userName = "mail@ludovicvanasse.com";
+        realName = "Ludovic Vanasse";
+        primary = true;
 
-          imap = {
-            host = "mail.infomaniak.com";
-            port = 993;
-            tls.enable = true;
-          };
-          smtp = {
-            host = "mail.infomaniak.com";
-            port = 587;
-            tls = {
-              enable = true;
-              useStartTls = true;
-            };
-          };
-
-          folders = {
-            inbox = "Index";
-            sent = "Sent";
-            drafts = "Drafts";
-            trash = "Trash";
-          };
-
-          mbsync = {
-            enable = true;
-            create = "maildir";
-            expunge = "both";
-          };
-          msmtp.enable = true;
-          mu.enable = true;
-        }
-        // lib.optionalAttrs hasInfomaniakPassword {
-          passwordCommand = "cat ${infomaniakPasswordPath}";
+        imap = {
+          host = "mail.infomaniak.com";
+          port = 993;
+          tls.enable = true;
         };
+        smtp = {
+          host = "mail.infomaniak.com";
+          port = 587;
+          tls = {
+            enable = true;
+            useStartTls = true;
+          };
+        };
+
+        folders = {
+          inbox = "Index";
+          sent = "Sent";
+          drafts = "Drafts";
+          trash = "Trash";
+        };
+
+        mbsync = {
+          enable = true;
+          create = "maildir";
+          expunge = "both";
+        };
+        msmtp.enable = true;
+        mu.enable = true;
+      }
+      // lib.optionalAttrs hasInfomaniakPassword {
+        passwordCommand = "cat ${infomaniakPasswordPath}";
+      };
 
       services.mbsync = lib.mkIf enableAccount {
         enable = true;

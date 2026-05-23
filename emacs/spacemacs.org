@@ -1621,6 +1621,50 @@ Folder structure:
     "aem" 'my/mu4e-open-inbox)
 #+end_src
 
+** mu4e stale-lock cleanup
+
+When the mu server process dies unexpectedly it can leave the Xapian
+database locked.  The advice below kills any orphaned =mu= processes
+before (re)starting the server so mu4e recovers automatically.
+
+#+begin_src emacs-lisp
+  (defun my/mu4e-kill-stale-mu-processes ()
+    "Kill any mu processes holding the Xapian database lock.
+Called before starting the mu server so mu4e can acquire the lock."
+    (let ((mu-pids
+           (split-string
+            (string-trim
+             (shell-command-to-string
+              (format "pgrep -u %s -x mu 2>/dev/null" (user-login-name))))
+            "\n" t)))
+      (when mu-pids
+        (message "mu4e: found %d stale mu process(es), terminating: %s"
+                 (length mu-pids) (string-join mu-pids ", "))
+        (dolist (pid mu-pids)
+          (let ((pid-num (string-to-number pid)))
+            (when (> pid-num 0)
+              (signal-process pid-num 15))))
+        (sleep-for 1)
+        (let ((remaining
+               (split-string
+                (string-trim
+                 (shell-command-to-string
+                  (format "pgrep -u %s -x mu 2>/dev/null" (user-login-name))))
+                "\n" t)))
+          (dolist (pid remaining)
+            (let ((pid-num (string-to-number pid)))
+              (when (> pid-num 0)
+                (message "mu4e: force-killing stale mu process %d" pid-num)
+                (signal-process pid-num 9))))
+          (when remaining
+            (sleep-for 0.5))))))
+
+  (with-eval-after-load 'mu4e
+    (when (fboundp 'mu4e--server-start)
+      (advice-add 'mu4e--server-start :before
+                  #'my/mu4e-kill-stale-mu-processes)))
+#+end_src
+
 ** mu4e-alert
 
 Desktop notifications and mode-line display for unread mail.  Uses the

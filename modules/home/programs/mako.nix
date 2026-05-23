@@ -41,7 +41,7 @@
           WantedBy = [ swayTarget ];
         };
       };
-      home.file.".config/mako/config".text = ''
+      home.file.".config/mako/config".text = lib.mkIf (config.theme ? palette) ''
         font=Inter 11
         width=320
         height=160

@@ -46,6 +46,7 @@
             "127.0.0.1:8092"
             "127.0.0.1:8093"
             "127.0.0.1:8095"
+            "127.0.0.1:8097"
             "${gatewayAddress}:8094"
             "${host}:8082"
             "${localTailscaleHost}:8082"
@@ -274,6 +275,21 @@
                     AnnotationSync = {
                       href = "http://${serverTailscaleHost}:8085";
                       description = "KOReader annotation WebDAV";
+                      widget = {
+                        type = "customapi";
+                        url = "http://127.0.0.1:8097/status.json";
+                        refreshInterval = 30000;
+                        mappings = [
+                          {
+                            field = "status";
+                            label = "WebDAV";
+                          }
+                          {
+                            field = "checkedAt";
+                            label = "Checked";
+                          }
+                        ];
+                      };
                     };
                   }
                 ];
@@ -489,8 +505,12 @@
                             label = "Overall";
                           }
                           {
-                            field = "checkedAt";
-                            label = "Checked";
+                            field = "publicIp.ip";
+                            label = "Public IP";
+                          }
+                          {
+                            field = "publicIp.since";
+                            label = "IP Since";
                           }
                           {
                             field = "pppoe.status";
@@ -615,7 +635,7 @@
           layout = {
             Media = {
               style = "row";
-              columns = 5;
+              columns = 6;
             };
             Downloads = {
               style = "row";
@@ -623,7 +643,7 @@
             };
             Productivity = {
               style = "row";
-              columns = 4;
+              columns = 5;
             };
             Infra = {
               style = "row";

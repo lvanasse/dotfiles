@@ -1,4 +1,4 @@
-{ ... }:
+{ lib, pkgs, ... }:
 {
   flake.modules.nixos."services.snapraid" =
     { pkgs, ... }:
@@ -6,6 +6,33 @@
       stateRoot = "/var/lib/snapraid-status";
       apiRoot = "${stateRoot}/api";
       statusPath = "${apiRoot}/status.json";
+      quiesceUnits = [
+        "audiobookshelf-normalize-single-file-books-watch.service"
+        "docker-actual.service"
+        "docker-audiobookshelf.service"
+        "docker-bazarr.service"
+        "docker-calibre-web-automated.service"
+        "docker-calibre.service"
+        "docker-dockhand.service"
+        "docker-headplane.service"
+        "docker-jellyfin.service"
+        "docker-jellyseerr.service"
+        "docker-lidarr.service"
+        "docker-linkwarden-meilisearch.service"
+        "docker-linkwarden-postgres.service"
+        "docker-linkwarden.service"
+        "docker-mariadb.service"
+        "docker-mousehole.service"
+        "docker-nextcloud.service"
+        "docker-prowlarr.service"
+        "docker-qbittorrent.service"
+        "docker-radarr.service"
+        "docker-shelfmark.service"
+        "docker-sonarr.service"
+        "docker-vaultwarden.service"
+        "docker-vikunja-postgres.service"
+        "docker-vikunja.service"
+      ];
       writeDefaultStatus = ''
                 mkdir -p "${apiRoot}"
                 if [ ! -f "${statusPath}" ]; then
@@ -47,6 +74,26 @@
         data["${field}"] = current
         status_path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
         PY
+      '';
+      quiesceWritersScript = action: ''
+        echo "snapraid: ${action}ping stateful services on protected disks"
+        for unit in ${lib.concatStringsSep " " (map lib.escapeShellArg quiesceUnits)}; do
+          if ${pkgs.systemd}/bin/systemctl --system list-unit-files "$unit" >/dev/null 2>&1; then
+            ${pkgs.systemd}/bin/systemctl --system ${action} "$unit"
+          fi
+        done
+      '';
+      resumeWritersAndUpdateStatusScript = field: extra: ''
+        resume_failed=0
+        for unit in ${lib.concatStringsSep " " (map lib.escapeShellArg quiesceUnits)}; do
+          if ${pkgs.systemd}/bin/systemctl --system list-unit-files "$unit" >/dev/null 2>&1; then
+            if ! ${pkgs.systemd}/bin/systemctl --system start "$unit"; then
+              resume_failed=1
+            fi
+          fi
+        done
+        ${updateStatusScript field extra}
+        exit "$resume_failed"
       '';
     in
     {
@@ -94,6 +141,8 @@
           "*.pid.lock"
           "*.sock"
           "*ipc-socket"
+          # Volatile qBittorrent config files (recreated on container start)
+          "/appdata/qbittorrent/qBittorrent/categories.json"
         ];
         sync.interval = "Tue,Fri 03:00";
         scrub = {
@@ -104,13 +153,21 @@
       };
 
       systemd.services.snapraid-sync = {
-        postStop = updateStatusScript "sync" "{}";
-        serviceConfig.ReadWritePaths = [ stateRoot ];
+        preStart = quiesceWritersScript "stop";
+        postStop = resumeWritersAndUpdateStatusScript "sync" "{}";
+        serviceConfig = {
+          ReadWritePaths = [ stateRoot ];
+          RestrictAddressFamilies = [ "AF_UNIX" ];
+        };
       };
 
       systemd.services.snapraid-scrub = {
-        postStop = updateStatusScript "scrub" ''{"plan": "10%", "olderThanDays": 7}'';
-        serviceConfig.ReadWritePaths = [ stateRoot ];
+        preStart = quiesceWritersScript "stop";
+        postStop = resumeWritersAndUpdateStatusScript "scrub" ''{"plan": "10%", "olderThanDays": 7}'';
+        serviceConfig = {
+          ReadWritePaths = [ stateRoot ];
+          RestrictAddressFamilies = [ "AF_UNIX" ];
+        };
       };
 
       systemd.services.snapraid-status-api = {

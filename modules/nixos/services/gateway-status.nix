@@ -26,6 +26,7 @@
         status_path = pathlib.Path(sys.argv[2])
 
         WAN_INTERFACES = ("enp5s0", "enp5s0.40", "ppp0")
+        IP_STATE_PATH = pathlib.Path("${gatewayStatusStateRoot}/ip-state.json")
         COMMANDS = {
             "dnsmasq": ["${pkgs.systemd}/bin/systemctl", "is-active", "dnsmasq"],
             "gateway-pppoe": ["${pkgs.systemd}/bin/systemctl", "is-active", "gateway-pppoe"],
@@ -36,6 +37,7 @@
             "listen-tcp": ["${pkgs.iproute2}/bin/ss", "-H", "-ltn"],
             "listen-udp": ["${pkgs.iproute2}/bin/ss", "-H", "-lun"],
             "ruleset": ["${pkgs.nftables}/bin/nft", "-nn", "list", "ruleset"],
+            "public-ip": ["${pkgs.curl}/bin/curl", "-4", "-s", "--max-time", "5", "https://ifconfig.me/ip"],
         }
 
         def run(name):
@@ -161,6 +163,53 @@
 
             return ",".join(str(port) for port in sorted(ports)) or "none"
 
+        def get_public_ip():
+            rc, stdout, _ = run("public-ip")
+            if rc != 0 or not stdout:
+                return None
+            ip = stdout.strip()
+            if re.match(r"^\d{1,3}(\.\d{1,3}){3}$", ip):
+                return ip
+            return None
+
+        def track_public_ip():
+            now = datetime.now(timezone.utc)
+            current_ip = get_public_ip()
+            if current_ip is None:
+                return {"ip": "unavailable", "since": "unknown"}
+
+            state = {}
+            if IP_STATE_PATH.exists():
+                try:
+                    state = json.loads(IP_STATE_PATH.read_text(encoding="utf-8"))
+                except Exception:
+                    pass
+
+            if state.get("ip") != current_ip:
+                state = {"ip": current_ip, "since": now.strftime("%Y-%m-%dT%H:%M:%SZ")}
+                IP_STATE_PATH.write_text(json.dumps(state) + "\n", encoding="utf-8")
+
+            since_str = state.get("since", "")
+            duration = "unknown"
+            if since_str:
+                try:
+                    since_dt = datetime.strptime(since_str, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+                    delta = int((now - since_dt).total_seconds())
+                    days, rem = divmod(delta, 86400)
+                    hours, rem = divmod(rem, 3600)
+                    minutes, _ = divmod(rem, 60)
+                    parts = []
+                    if days:
+                        parts.append(f"{days}d")
+                    if hours or days:
+                        parts.append(f"{hours}h")
+                    parts.append(f"{minutes}m")
+                    duration = " ".join(parts)
+                except Exception:
+                    pass
+
+            return {"ip": current_ip, "since": duration}
+
         pppoe_status = service_status("gateway-pppoe")
         dnsmasq_status = service_status("dnsmasq")
         tailscale_status = service_status("tailscaled")
@@ -170,6 +219,7 @@
         listen_udp = summarize_ports("listen-udp")
         wan_open_tcp = summarize_wan_open("tcp")
         wan_open_udp = summarize_wan_open("udp")
+        public_ip_info = track_public_ip()
 
         overall = "ok"
         if pppoe_status != "active" or dnsmasq_status != "active":
@@ -186,6 +236,7 @@
         payload = {
             "checkedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "uptime": uptime_human(),
+            "publicIp": public_ip_info,
             "pppoe": {
                 "status": pppoe_status,
                 "iface": "ppp0",

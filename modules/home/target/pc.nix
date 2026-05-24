@@ -28,6 +28,9 @@
         # Displays/workspaces (from nwg-displays)
         include ${config.home.homeDirectory}/.config/sway/outputs
         include ${config.home.homeDirectory}/.config/sway/workspaces
+
+        # Ultrawide starts on workspace 4
+        workspace 4 output DP-2
       '';
 
   # Ensure Yeti microphone input level is set around 70% on login

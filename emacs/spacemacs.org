@@ -225,6 +225,11 @@ suppression for a cleaner tiling WM experience.
         indicate-buffer-boundaries nil
         indicate-empty-lines nil)
 
+  ;; Which-Key already renders a dedicated popup; do not also echo the live
+  ;; prefix in the minibuffer line, which can visually overlap the popup.
+  (setq which-key-show-prefix nil
+        echo-keystrokes 1.0)
+
   ;; Pixel-precise smooth scrolling (Emacs 29+).
   (when (fboundp 'pixel-scroll-precision-mode)
     (pixel-scroll-precision-mode 1))
@@ -655,6 +660,8 @@ Plain `find-file` with TRAMP syntax remains fully supported."
     "a a c" #'my/copilot-cli
     "a r f" #'my/find-remote-file
     "a c i" #'my/irc-dispatch
+    "v <right>" #'centaur-tabs-forward
+    "v <left>" #'centaur-tabs-backward
     "v n" #'centaur-tabs-forward
     "v p" #'centaur-tabs-backward)
 #+end_src
@@ -1771,9 +1778,7 @@ Global keybindings =C-x t o= / =C-x t O= for cycling tabs forward/backward.
     (set-face-attribute 'centaur-tabs-active-bar-face nil
                         :background "#d79921")
     (global-set-key (kbd "C-x t o") #'centaur-tabs-forward)
-    (global-set-key (kbd "C-x t O") #'centaur-tabs-backward)
-    (global-set-key (kbd "<right>") #'centaur-tabs-forward)
-    (global-set-key (kbd "<left>") #'centaur-tabs-backward))
+    (global-set-key (kbd "C-x t O") #'centaur-tabs-backward))
 #+end_src
 
 ** LSP tuning

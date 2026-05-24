@@ -1,0 +1,407 @@
+{
+  inputs,
+  config,
+  pkgs,
+  lib,
+  emacsBin,
+  emacsClientBin,
+  systemctlBin,
+  daemonServicePreStart,
+  ensureDaemonScript,
+}:
+let
+  xdgConfigHome = config.xdg.configHome;
+  spacemacsRoot = "${xdgConfigHome}/spacemacs";
+  spacemacsInitDir = "${spacemacsRoot}/.emacs.d";
+  spacemacsServerName = "spacemacs";
+  spacemacsTemplateOrg = ../../../../../emacs/spacemacs.org;
+  spacemacsTemplate = builtins.readFile (
+    pkgs.runCommand "tangle-spacemacs" { nativeBuildInputs = [ pkgs.emacs-nox ]; } ''
+      cp ${spacemacsTemplateOrg} config.org
+      emacs --batch \
+        --eval "(require 'org)" \
+        --eval "(org-babel-tangle-file \"config.org\")"
+      cp config.el "$out"
+    ''
+  );
+  spacemacsConfig =
+    let
+      renderedTemplate =
+        builtins.replaceStrings
+          [
+            "__MU_SITE_LISP_MU4E__"
+            "__MU_SITE_LISP_MU__"
+            "__MU_SITE_LISP__"
+            "__MU_BIN__"
+            "__ISYNC_BIN__"
+            "__MSMTP_BIN__"
+            "__SPACEMACS_STARTUP_BANNER__"
+          ]
+          [
+            "${pkgs.mu}/share/emacs/site-lisp/mu4e"
+            "${pkgs.mu}/share/emacs/site-lisp/mu"
+            "${pkgs.mu}/share/emacs/site-lisp"
+            "${pkgs.mu}/bin/mu"
+            "${pkgs.isync}/bin/mbsync"
+            "${pkgs.msmtp}/bin/msmtp"
+            "${spacemacsRoot}/spacemacs-home-buffer.jpeg"
+          ]
+          spacemacsTemplate;
+      quelpaWritablePatch = ''
+
+        ;; Ensure Quelpa/package-build copies are owner-writable even when
+        ;; the source files in the Spacemacs tree are read-only.
+        (defun my/make-path-owner-writable (path)
+          (when (file-exists-p path)
+            (condition-case nil
+                (set-file-modes path (logior (file-modes path) #o200))
+              (error nil))
+            (when (file-directory-p path)
+              (dolist (entry (directory-files path t directory-files-no-dot-files-regexp))
+                (my/make-path-owner-writable entry)))))
+
+        (with-eval-after-load 'quelpa
+          (advice-add
+           'quelpa-build--copy-file
+           :around
+           (lambda (orig file newname &rest args)
+             (prog1 (apply orig file newname args)
+               (my/make-path-owner-writable newname)))))
+
+        (with-eval-after-load 'package-build
+          (advice-add
+           'package-build--copy-package-files
+           :around
+           (lambda (orig files target-dir &rest args)
+             (prog1 (apply orig files target-dir args)
+               (my/make-path-owner-writable target-dir)))))
+      '';
+    in
+    renderedTemplate + quelpaWritablePatch;
+  spacemacsRawBin = pkgs.writeShellScriptBin "spacemacs-raw" ''
+    export SPACEMACSDIR=${lib.escapeShellArg spacemacsRoot}
+    exec ${emacsBin} \
+      --init-directory ${lib.escapeShellArg spacemacsInitDir} \
+      "$@"
+  '';
+  spacemacsClientBin = pkgs.writeShellScriptBin "spacemacsclient" ''
+    export SPACEMACSDIR=${lib.escapeShellArg spacemacsRoot}
+    exec ${emacsClientBin} \
+      -s ${lib.escapeShellArg spacemacsServerName} \
+      "$@"
+  '';
+  spacemacsBootstrapCleanup = pkgs.writeShellScript "spacemacs-bootstrap-cleanup" ''
+    set -eu
+
+    emacs_dir=${lib.escapeShellArg spacemacsInitDir}
+    packages_dir="$emacs_dir/quelpa/packages"
+    quelpa_build_dir="$emacs_dir/.cache/quelpa/build"
+
+    if [ -d "$packages_dir" ]; then
+      find "$packages_dir" -maxdepth 1 -type f \( -name '*.el' -o -name '.#*' \) -delete
+      chmod -R u+w "$packages_dir" 2>/dev/null || true
+    fi
+
+    if [ -d "$quelpa_build_dir" ]; then
+      chmod -R u+w "$quelpa_build_dir" 2>/dev/null || true
+      find "$quelpa_build_dir" -mindepth 1 -maxdepth 1 \( -type d -o -type f \) -exec rm -rf {} +
+    fi
+  '';
+  rsyncBin = "${pkgs.rsync}/bin/rsync";
+in
+{
+  homePackages = [
+    spacemacsRawBin
+    spacemacsClientBin
+  ];
+
+  homeActivations.syncSpacemacsTree = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    set -eu
+
+    source_dir=${lib.escapeShellArg inputs.spacemacs}
+    target_dir=${lib.escapeShellArg spacemacsInitDir}
+
+    if [ -L "$target_dir" ]; then
+      rm -f "$target_dir"
+    fi
+
+    mkdir -p "$target_dir"
+
+    ${rsyncBin} -a --delete \
+      --exclude '.cache/' \
+      --exclude 'elpa/' \
+      --exclude 'eln-cache/' \
+      --exclude 'quelpa/' \
+      --exclude 'auto-save-list/' \
+      "$source_dir"/ "$target_dir"/
+
+    chmod -R u+w "$target_dir" 2>/dev/null || true
+  '';
+
+  systemdUserServices.spacemacs = {
+    Unit = {
+      Description = "Spacemacs text editor";
+      Documentation = [ "info:emacs" "man:emacs(1)" ];
+      PartOf = [ "graphical-session.target" ];
+      After = [ "graphical-session.target" ];
+    };
+    Install.WantedBy = [ "graphical-session.target" ];
+    Service = {
+      Type = "simple";
+      ExecStartPre = [
+        ""
+        "${spacemacsBootstrapCleanup}"
+        "${daemonServicePreStart "${spacemacsClientBin}/bin/spacemacsclient"}"
+      ];
+      ExecStart = "${spacemacsRawBin}/bin/spacemacs-raw --fg-daemon=${spacemacsServerName}";
+      ExecStop = "${spacemacsClientBin}/bin/spacemacsclient --eval '(kill-emacs)'";
+      Restart = "on-failure";
+    };
+  };
+
+  xdgConfigFiles = {
+    "spacemacs/init.el".text = spacemacsConfig;
+    "spacemacs/spacemacs-home-buffer.jpeg".source =
+      ../../../../../wallpapers/shield-of-the-nation.jpg;
+
+    "erc/README".text = ''
+      ERC / Libera Chat setup
+
+      Native Spacemacs entrypoints:
+      - `SPC a c i` opens or raises ERC directly.
+      - `SPC a c i D` is the compatible mail+IRC layout alias on the same dispatcher.
+      - `SPC a c i j` prompts from your favorite channel list and joins or switches to that channel.
+      - `SPC a c i E` is the raw ERC TLS prompt and is only a lower-level fallback.
+
+      Current direct IRC target:
+      - server: `irc.libera.chat`
+      - port: `6697`
+      - transport: TLS
+      - nick: `lvanasse`
+      - channels: `#emacs`, `#yocto`
+
+      SASL auth is enabled and should come from `~/.authinfo` (or `~/.authinfo.gpg`), not the repo.
+      Use entries like:
+
+      machine Libera.Chat login YOUR_LIBERA_NICK password "YOUR_LIBERA_PASSWORD"
+      machine irc.libera.chat port 6697 login YOUR_LIBERA_NICK password "YOUR_LIBERA_PASSWORD"
+
+      Quote passwords in authinfo entries when they contain special characters
+      (for example a leading `#`), or auth-source may parse them as empty.
+
+      The managed IRC session also auto-connects shortly after Emacs startup.
+      The first GUI frame of each Emacs process bootstraps the combined
+      mail+IRC layout once, then later frames leave it alone.
+      Favorite channels stay manual by default instead of autojoining.
+      Desktop notifications are sent for direct private messages and channel
+      messages containing your current nick. Plain IRC does not provide a
+      standard threaded "reply" event, so reply alerts are approximated by
+      nick mentions and PMs.
+      Once connected, `/nick NEWNICK` is the native ERC way to change nicks.
+    '';
+
+    "slack/README".text = ''
+      Slack in Emacs
+
+      Native Spacemacs entrypoints:
+      - `SPC a c s s` starts or reconnects Slack.
+      - `SPC a c s j` joins a channel.
+      - `SPC a c s d` opens a direct message.
+      - `SPC a c s u` shows unread rooms.
+      - `SPC a c s a` shows the activity feed.
+
+      Private configuration:
+      - Put your `slack-register-team` forms in
+        ${config.home.homeDirectory}/.config/slack/private.el
+      - That file is loaded automatically if present.
+      - Keep client ID, client secret, and token there, not in the repo.
+      - Use a user token (`xoxp-...`) for the workspace you want Emacs to join.
+
+      Setup flow:
+      1. In the Slack API dashboard, create an app for the target workspace:
+         https://api.slack.com/apps
+      2. Under `OAuth & Permissions`, add the user scopes you need for chat.
+      3. Install the app to the workspace and copy:
+         - client ID
+         - client secret
+         - user OAuth token (`xoxp-...`)
+      4. Save them in ${config.home.homeDirectory}/.config/slack/private.el
+      5. Restart Emacs or reload the file, then run `SPC a c s s`.
+
+      Example:
+
+      (slack-register-team
+        :name "work"
+        :default t
+        :client-id "..."
+        :client-secret "..."
+        :token "xoxp-..."
+        :subscribed-channels '(general))
+    '';
+
+    "spotify-emacs/README".text = ''
+      Spotify in Emacs
+
+      Native Spacemacs entrypoints:
+      - `SPC a m s p` toggles play/pause.
+      - The native Spotify layer playback controls use DBus and work without API credentials.
+
+      Optional search setup:
+      - Credentials are managed by agenix at ${config.home.homeDirectory}/.config/spotify/private.el
+      - That file is only loaded when present.
+      - Keep only `counsel-spotify-client-id` and `counsel-spotify-client-secret` there.
+      - Search features stay disabled until that file exists.
+
+      Setup flow:
+      1. Create an app at https://developer.spotify.com/dashboard
+      2. Copy the client ID and client secret
+      3. Save them in ${config.home.homeDirectory}/.config/spotify/private.el
+      4. Restart Emacs and run a `counsel-spotify` search command if desired
+
+      Example:
+
+      (setq counsel-spotify-client-id "..."
+            counsel-spotify-client-secret "...")
+    '';
+
+    "copilot-chat/README".text = ''
+      Copilot CLI in Emacs
+
+      Spacemacs entrypoints:
+      - `SPC a a C` opens the managed `copilot` CLI in a dedicated right-side `vterm` panel.
+
+      Native Spacemacs mail entrypoints:
+      - `SPC a e m` opens mu4e directly in Inbox.
+      - `SPC a e c` composes a new message.
+      - `SPC a e u` updates mail and index.
+      - `SPC a e l` opens the combined mail+IRC layout.
+
+      Native Org/Calendar entrypoints:
+      - `SPC a o a` opens the agenda.
+      - `SPC a o c` captures a new Org item.
+      - `SPC a o S` runs the managed CalDAV sync command.
+
+      Authentication:
+      1. Open the CLI with `SPC a a C`.
+      2. Run `/login` if the CLI is not already authenticated.
+      3. In the browser, sign into the GitHub account that has your Copilot entitlement.
+      4. If Copilot comes from your work org, that org must allow Copilot CLI and you must authorize any required SSO.
+
+      Runtime expectations:
+      - The `copilot` executable is installed declaratively by Home Manager.
+      - It starts with permissive read/network access, but local file edits and shell commands are denied by default.
+      - A browser is needed for the first interactive login.
+      - `gh auth status` is optional if you want to verify which GitHub account is active outside Emacs.
+      - Terminal output does not fully reflow old lines after a resize, so very long previous output may still look wrapped oddly until you rerun or clear it.
+
+      Debug checklist:
+        - Confirm the CLI is visible:
+        - `command -v copilot`
+        - `copilot --help`
+      - Run the repo smoke test:
+        - `bash ${config.home.homeDirectory}/Code/personal/dotfiles/scripts/smoke-test-spacemacs-runtime.sh`
+      - In Emacs, verify the commands resolve:
+        - `SPC a a C`
+      - When auth fails, inspect `*Messages*` and the Copilot CLI panel first.
+
+      Default permission profile:
+      - allowed without prompting: broad tool access, all paths, all URLs
+      - denied even if requested: local `write` tools and all `shell` commands
+      - caveat: MCP tools are still allowed, so an MCP server with side effects can still change remote systems unless you disable that server
+
+      The GitHub Copilot CLI is installed declaratively from `pkgs.llm-agents.copilot-cli`, then wrapped with the default permission flags above.
+      Launch the terminal workflow with `SPC a a C`.
+    '';
+
+    "spell-checking/README".text = ''
+      Spell checking in Emacs
+
+      Native Spacemacs entrypoints:
+      - `SPC t S` toggles flyspell in the current buffer.
+      - `SPC S b` checks the whole buffer.
+      - `SPC S s` corrects the word at point.
+      - `SPC S d` changes dictionary.
+
+      Managed backend:
+      - `aspell` is installed declaratively.
+      - Default dictionary is `en`.
+      - Switch to French with `SPC S d` when needed.
+    '';
+
+    "tabs/README".text = ''
+      Tabs in Emacs
+
+      Native Spacemacs entrypoints:
+      - `g t` moves to the next tab.
+      - `g T` moves to the previous tab.
+      - `g C-t` moves the current tab right.
+      - `g C-S-t` moves the current tab left.
+      - `C-c t s` switches tab groups.
+      - `C-c t p` groups tabs by project.
+    '';
+  };
+
+  homeFiles = {
+    ".local/bin/emacs-mu4e-frame" = {
+      executable = true;
+      text = ''
+        #!${pkgs.bash}/bin/bash
+        exec ${spacemacsClientBin}/bin/spacemacsclient \
+          -n \
+          -c \
+          -a "" \
+          -F '((name . "mu4e-mail") (title . "mu4e-mail"))' \
+          --eval "(progn (when (fboundp 'my/mu4e-open-inbox) (my/mu4e-open-inbox)) nil)"
+      '';
+    };
+
+    ".local/bin/spacemacs" = {
+      executable = true;
+      text = ''
+        #!${pkgs.bash}/bin/bash
+        emacsclient_bin="${spacemacsClientBin}/bin/spacemacsclient"
+        home_expr="(progn (when (fboundp 'spacemacs/home) (spacemacs/home)) nil)"
+
+        ${ensureDaemonScript {
+          clientCmd = "\"$emacsclient_bin\"";
+          serviceName = "spacemacs.service";
+          startCmd = "${spacemacsRawBin}/bin/spacemacs-raw --fg-daemon=${spacemacsServerName}";
+        }}
+
+        if [ "$#" -gt 0 ]; then
+          exec "$emacsclient_bin" -n -c -a "" "$@"
+        fi
+
+        exec "$emacsclient_bin" \
+          -n \
+          -c \
+          -a "" \
+          -F '((name . "Spacemacs") (title . "Spacemacs"))' \
+          --eval "$home_expr"
+      '';
+    };
+
+    ".local/bin/emacs-home-frame" = {
+      executable = true;
+      text = ''
+        #!${pkgs.bash}/bin/bash
+        exec "$HOME/.local/bin/spacemacs" "$@"
+      '';
+    };
+
+    ".local/share/applications/spacemacs.desktop" = {
+      text = ''
+        [Desktop Entry]
+        Name=Spacemacs
+        GenericName=Text Editor
+        Comment=Open Emacs directly on the Spacemacs home buffer
+        Exec=${config.home.homeDirectory}/.local/bin/emacs-home-frame
+        Icon=emacs
+        Type=Application
+        Terminal=false
+        StartupNotify=true
+        Categories=Development;TextEditor;
+      '';
+    };
+  };
+}

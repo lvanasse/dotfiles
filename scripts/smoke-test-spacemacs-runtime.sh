@@ -1,9 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-EMACS_BIN="${EMACS_BIN:-emacs}"
-SPACEMACS_FILE="${SPACEMACS_FILE:-$HOME/.spacemacs}"
-EMACSD_DIR="${EMACSD_DIR:-$HOME/.emacs.d}"
+SPACEMACS_FILE="${SPACEMACS_FILE:-$HOME/.config/spacemacs/init.el}"
+EMACSD_DIR="${EMACSD_DIR:-$HOME/.config/spacemacs/.emacs.d}"
+if [ -n "${EMACS_BIN:-}" ]; then
+  EMACS_BIN="$EMACS_BIN"
+else
+  EMACS_BIN=""
+  while IFS= read -r candidate; do
+    [ "$candidate" = "$HOME/.local/bin/emacs" ] && continue
+    EMACS_BIN="$candidate"
+    break
+  done < <(type -P -a emacs || true)
+  EMACS_BIN="${EMACS_BIN:-emacs}"
+fi
 
 if [ ! -f "$SPACEMACS_FILE" ]; then
   echo "spacemacs file not found: $SPACEMACS_FILE" >&2

@@ -2,13 +2,23 @@
 set -euo pipefail
 
 if [ $# -gt 2 ]; then
-  echo "Usage: $0 [path-to-.spacemacs] [path-to-.emacs.d]" >&2
+  echo "Usage: $0 [path-to-spacemacs-init.el] [path-to-spacemacs-.emacs.d]" >&2
   exit 2
 fi
 
-SPACEMACS_FILE="${1:-$HOME/.spacemacs}"
-EMACSD_DIR="${2:-$HOME/.emacs.d}"
-EMACS_BIN="${EMACS_BIN:-emacs}"
+SPACEMACS_FILE="${1:-$HOME/.config/spacemacs/init.el}"
+EMACSD_DIR="${2:-$HOME/.config/spacemacs/.emacs.d}"
+if [ -n "${EMACS_BIN:-}" ]; then
+  EMACS_BIN="$EMACS_BIN"
+else
+  EMACS_BIN=""
+  while IFS= read -r candidate; do
+    [ "$candidate" = "$HOME/.local/bin/emacs" ] && continue
+    EMACS_BIN="$candidate"
+    break
+  done < <(type -P -a emacs || true)
+  EMACS_BIN="${EMACS_BIN:-emacs}"
+fi
 
 if [ ! -f "$SPACEMACS_FILE" ]; then
   echo "spacemacs file not found: $SPACEMACS_FILE" >&2
@@ -26,15 +36,25 @@ cleanup() {
 }
 trap cleanup EXIT
 
-ln -s "$SPACEMACS_FILE" "$TMP_HOME/.spacemacs"
-ln -s "$EMACSD_DIR" "$TMP_HOME/.emacs.d"
+mkdir -p "$TMP_HOME/.config/spacemacs"
+ln -s "$SPACEMACS_FILE" "$TMP_HOME/.config/spacemacs/init.el"
+cp -a "$EMACSD_DIR" "$TMP_HOME/.config/spacemacs/.emacs.d"
+ln -s "$TMP_HOME/.config/spacemacs/.emacs.d" "$TMP_HOME/.emacs.d"
+chmod -R u+w "$TMP_HOME/.config/spacemacs/.emacs.d" 2>/dev/null || true
+if [ -d "$TMP_HOME/.config/spacemacs/.emacs.d/quelpa/packages" ]; then
+  find "$TMP_HOME/.config/spacemacs/.emacs.d/quelpa/packages" -maxdepth 1 -type f \( -name '*.el' -o -name '.#*' \) -delete
+fi
+if [ -d "$TMP_HOME/.config/spacemacs/.emacs.d/.cache/quelpa/build" ]; then
+  find "$TMP_HOME/.config/spacemacs/.emacs.d/.cache/quelpa/build" -mindepth 1 -maxdepth 1 \( -type d -o -type f \) -exec rm -rf {} +
+fi
 mkdir -p \
-  "$TMP_HOME/.config" \
   "$TMP_HOME/.cache" \
   "$TMP_HOME/.local/state"
 
 run_elisp() {
-  HOME="$TMP_HOME" "$EMACS_BIN" --batch --quick -l "$TMP_HOME/.emacs.d/init.el" --eval "$1"
+  HOME="$TMP_HOME" \
+    SPACEMACSDIR="$TMP_HOME/.config/spacemacs" \
+    "$EMACS_BIN" --batch --quick -l "$TMP_HOME/.config/spacemacs/.emacs.d/init.el" --eval "$1"
 }
 
 run_user_config='(progn

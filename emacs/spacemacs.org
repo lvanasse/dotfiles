@@ -225,10 +225,26 @@ suppression for a cleaner tiling WM experience.
         indicate-buffer-boundaries nil
         indicate-empty-lines nil)
 
-  ;; Which-Key already renders a dedicated popup; do not also echo the live
-  ;; prefix in the minibuffer line, which can visually overlap the popup.
-  (setq which-key-show-prefix nil
-        echo-keystrokes 1.0)
+  ;; Which-Key: use a bottom side-window.  Keep keystroke echo in the echo
+  ;; area (not in the which-key popup).  Remove the mode-line on the popup
+  ;; window and grow by 1 line to avoid overlap with the echo area.
+  (with-eval-after-load 'which-key
+    (setq which-key-popup-type 'side-window
+          which-key-side-window-location 'bottom
+          which-key-show-prefix 'echo)
+    ;; Hide the mode-line and grow by 1 line for clearance above echo area.
+    (defun my/which-key-adjust-window (&rest _)
+      (when-let ((win (get-buffer-window which-key--buffer)))
+        (with-selected-window win
+          (setq-local mode-line-format nil)
+          (ignore-errors (enlarge-window 1))))
+      (run-at-time 0 nil
+                   (lambda ()
+                     (when-let ((win (get-buffer-window which-key--buffer)))
+                       (with-selected-window win
+                         (setq-local mode-line-format nil)
+                         (ignore-errors (enlarge-window 1)))))))
+    (advice-add 'which-key--show-popup :after #'my/which-key-adjust-window))
 
   ;; Pixel-precise smooth scrolling (Emacs 29+).
   (when (fboundp 'pixel-scroll-precision-mode)
@@ -1328,10 +1344,20 @@ TLS ERC session using the managed defaults and return its server buffer."
     (remove-hook 'erc-nickserv-identified-hook #'erc-autojoin-after-ident)
     (add-hook 'erc-text-matched-hook #'my/erc-notify-current-nick-match)
     (add-hook 'erc-server-PRIVMSG-functions #'my/erc-notify-private-message)
+
+    ;; Enable scroll-to-bottom so new messages are always visible
+    (add-to-list 'erc-modules 'scrolltobottom)
+    (add-to-list 'erc-modules 'truncate)
+    (erc-scrolltobottom-mode 1)
+    (erc-truncate-mode 1)
+
     (setq erc-hide-list '("JOIN" "PART" "QUIT")
+          erc-scrolltobottom-all t
+          erc-input-line-position -1
+          erc-max-buffer-size 100000
           erc-fill-function 'erc-fill-static
           erc-fill-static-center 14
-          erc-fill-column 140
+          erc-fill-column 100
           erc-insert-timestamp-function 'erc-insert-timestamp-left
           erc-timestamp-format "[%H:%M] "
           erc-track-shorten-start 8

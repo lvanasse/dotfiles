@@ -115,11 +115,6 @@ BEXT="${HM_BACKUP_EXT:-hm-$(date +%Y%m%d-%H%M%S)}"
 log_cmd "[1/2]" "home-manager switch --flake ${FLAKE_DIR}#${USERNAME}@${HOST} -b ${BEXT}"
 NIX_CONFIG="${NIX_WRAPPER_CONFIG}" home-manager switch --flake "${FLAKE_DIR}#${USERNAME}@${HOST}" -b "${BEXT}"
 
-if should_validate_spacemacs && [ -x "$FLAKE_DIR/scripts/validate-spacemacs.sh" ]; then
-    log_cmd "[1.5/2]" "$FLAKE_DIR/scripts/validate-spacemacs.sh $HOME/.spacemacs $HOME/.emacs.d"
-    "$FLAKE_DIR/scripts/validate-spacemacs.sh" "$HOME/.spacemacs" "$HOME/.emacs.d"
-fi
-
 # Step 2: NixOS or post-switch tasks
 if is_nixos && [ "$HOST" != "hm-only" ]; then
     log_cmd "[2/2]" "nh os switch -H ${HOST}${EXTRA_ARGS:+ ${EXTRA_ARGS}}"

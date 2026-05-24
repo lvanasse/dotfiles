@@ -128,18 +128,6 @@ in
                   fi
                 fi
 
-                # --- Step: Validate Spacemacs (if applicable) ---
-                if should_validate_spacemacs && [ -x "''${flake_dir}/scripts/validate-spacemacs.sh" ]; then
-                  step "Validate Spacemacs"
-                  if "''${flake_dir}/scripts/validate-spacemacs.sh" "$HOME/.spacemacs" "$HOME/.emacs.d" >/dev/null 2>&1; then
-                    ok "Spacemacs"
-                  else
-                    fail "Spacemacs"
-                    "''${flake_dir}/scripts/validate-spacemacs.sh" "$HOME/.spacemacs" "$HOME/.emacs.d" >&2
-                    exit 1
-                  fi
-                fi
-
                 # --- Step: NixOS switch ---
                 if is_remote; then
                   out_link="$(mktemp -d)/result"

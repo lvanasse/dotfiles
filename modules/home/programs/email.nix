@@ -17,7 +17,7 @@
         set -eu
 
         lock_file="${config.xdg.cacheHome}/mu/index-after-mbsync.lock"
-        emacsclient_bin="${config.programs.emacs.finalPackage}/bin/emacsclient"
+        emacsclient_bin="${homeDir}/.local/bin/spacemacsclient"
         mu_bin="${pkgs.mu}/bin/mu"
         flock_bin="${pkgs.util-linux}/bin/flock"
         emacs_index_elisp='

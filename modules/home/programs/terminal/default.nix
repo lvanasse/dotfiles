@@ -15,7 +15,7 @@
         executable = true;
         text = ''
           #!/bin/sh
-          exec emacsclient -t -a "" "$@"
+          exec "$HOME/.local/bin/spacemacsclient" -t -a "" "$@"
         '';
       };
     };

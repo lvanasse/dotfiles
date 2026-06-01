@@ -33,7 +33,6 @@
           sonarsource.sonarlint-vscode # SonarLint 4.37.0 via refreshed nix-vscode-extensions
           jeff-hykin.better-c-syntax
           marus25.cortex-debug
-          mcu-debug.debug-tracker-vscode
           mcu-debug.memory-view
           mcu-debug.rtos-views
           mcu-debug.peripheral-viewer

@@ -35,5 +35,15 @@
 
       # Keep the existing local public key file to avoid clobbering the bootstrap key path.
       home.file.".ssh/id_ed25519_personal.pub".enable = lib.mkForce false;
+
+      # VS Code white-screen workaround (work-laptop only).
+      # On Sway/Wayland with multiple displays, Electron's offscreen compositor
+      # sometimes fails to paint a webview (for example the Copilot Chat panel),
+      # leaving a blank pane that reads "No content for off screen to display" until
+      # the window is moved/resized. Disabling GPU hardware acceleration routes
+      # rendering through the CPU and eliminates the glitch.
+      home.file.".config/Code/argv.json".text = builtins.toJSON {
+        "disable-hardware-acceleration" = true;
+      };
     };
 }

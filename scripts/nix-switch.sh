@@ -2,7 +2,7 @@
 # Internal switch implementation for `nohm`
 # Usage: nohm <hostname> [-- <extra nh os args>]
 #
-# On NixOS:     runs home-manager switch, then nh os switch
+# On NixOS:     runs home-manager switch, then nh os switch for NixOS targets
 # On non-NixOS: runs home-manager switch, then symlinks wayland sessions for GDM
 
 set -euo pipefail
@@ -12,7 +12,9 @@ FLAKE_DIR="${NH_FLAKE:-$HOME/Code/personal/dotfiles}"
 NOHM_VERBOSE="${NOHM_VERBOSE:-0}"
 
 log_verbose() {
-    [ "$NOHM_VERBOSE" = "1" ] && echo "$@"
+    if [ "$NOHM_VERBOSE" = "1" ]; then
+        echo "$@"
+    fi
 }
 
 log_cmd() {
@@ -26,7 +28,7 @@ if [ $# -lt 1 ]; then
     echo "Examples:" >&2
     echo "  nohm pc" >&2
     echo "  nohm laptop" >&2
-    echo "  nohm hm-only" >&2
+    echo "  nohm work-laptop" >&2
     exit 1
 fi
 
@@ -49,6 +51,13 @@ cd "$FLAKE_DIR"
 should_validate_spacemacs() {
     case "$HOST" in
         pc|laptop|hm-only) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+is_home_manager_only_target() {
+    case "$HOST" in
+        hm-only|work-laptop|steamdeck) return 0 ;;
         *) return 1 ;;
     esac
 }
@@ -116,12 +125,12 @@ log_cmd "[1/2]" "home-manager switch --flake ${FLAKE_DIR}#${USERNAME}@${HOST} -b
 NIX_CONFIG="${NIX_WRAPPER_CONFIG}" home-manager switch --flake "${FLAKE_DIR}#${USERNAME}@${HOST}" -b "${BEXT}"
 
 # Step 2: NixOS or post-switch tasks
-if is_nixos && [ "$HOST" != "hm-only" ]; then
+if is_nixos && ! is_home_manager_only_target; then
     log_cmd "[2/2]" "nh os switch -H ${HOST}${EXTRA_ARGS:+ ${EXTRA_ARGS}}"
     # shellcheck disable=SC2086
     NH_FLAKE="${FLAKE_DIR}" NIX_CONFIG="${NIX_WRAPPER_CONFIG}" nh os switch -H "${HOST}" $EXTRA_ARGS
-elif is_nixos && [ "$HOST" = "hm-only" ]; then
-    log_verbose "[2/2] hm-only target detected; skipping NixOS switch"
+elif is_nixos && is_home_manager_only_target; then
+    log_verbose "[2/2] Home Manager-only target detected; skipping NixOS switch"
 else
     # Non-NixOS: symlink Wayland session files for GDM visibility
     # Use ~/.local/share (home-manager managed) which has the wrapped sway path

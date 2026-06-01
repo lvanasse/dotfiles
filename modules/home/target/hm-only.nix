@@ -100,9 +100,16 @@
         fi
         log_verbose "[cfg] Nix: leaving ''${reserve_cores} machine core(s) free; max-jobs=''${max_jobs}; cores=''${build_cores}"
 
-          if [ "''${host}" = "hm-only" ]; then
+        is_home_manager_only_target() {
+          case "''${host}" in
+            hm-only|work-laptop|steamdeck) return 0 ;;
+            *) return 1 ;;
+          esac
+        }
+
+        if is_home_manager_only_target; then
           if [ -n "''${target_host}" ]; then
-            echo "nohm: --target-host is not supported for hm-only; run nohm on that machine." >&2
+            echo "nohm: --target-host is not supported for Home Manager-only targets; run nohm on that machine." >&2
             exit 1
           fi
           exec bash "''${nix_switch_script}" "''${host}"
@@ -180,7 +187,6 @@ in
     picocom
     poetry
     unstable.spotatui
-    (python3.withPackages (ps: [ ps.tkinter ]))
     nohm
   ];
 

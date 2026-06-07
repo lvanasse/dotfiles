@@ -49,6 +49,7 @@
           yocto-project.yocto-bitbake
           eamodio.gitlens
           github.vscode-pull-request-github
+          wharflab.tally
         ];
         profiles.default.userSettings = {
           "github.copilot.enable"."*" = false;

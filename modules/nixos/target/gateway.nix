@@ -92,6 +92,7 @@ in
           # Firewall defaults: SSH on management/LAN only, DHCP+DNS on LAN only.
           firewall = {
             enable = true;
+            allowPing = false;
             trustedInterfaces = [ "tailscale0" ];
             allowedTCPPorts = lib.mkForce [ ];
             allowedUDPPorts = lib.mkForce [ ];
@@ -99,10 +100,14 @@ in
               # Clamp forwarded TCP MSS to the discovered path MTU.
               # This avoids selective HTTPS stalls behind the PPPoE uplink.
               iptables -t mangle -A FORWARD -o ${pppoeIf} -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
+              iptables -A INPUT -i ${lanIf} -p icmp --icmp-type echo-request -j ACCEPT
+              iptables -A INPUT -i tailscale0 -p icmp --icmp-type echo-request -j ACCEPT
               iptables -A INPUT -i ${lanIf} -p tcp -s ${serverLeaseAddress} --dport ${toString gatewayStatusPort} -j ACCEPT
             '';
             extraStopCommands = ''
               iptables -t mangle -D FORWARD -o ${pppoeIf} -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu || true
+              iptables -D INPUT -i ${lanIf} -p icmp --icmp-type echo-request -j ACCEPT || true
+              iptables -D INPUT -i tailscale0 -p icmp --icmp-type echo-request -j ACCEPT || true
               iptables -D INPUT -i ${lanIf} -p tcp -s ${serverLeaseAddress} --dport ${toString gatewayStatusPort} -j ACCEPT || true
             '';
             interfaces = {

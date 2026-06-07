@@ -554,6 +554,10 @@
                             label = "Failed";
                           }
                           {
+                            field = "exposure.wanPingV4";
+                            label = "WAN Ping";
+                          }
+                          {
                             field = "exposure.wanOpenTcp";
                             label = "WAN TCP";
                           }

@@ -163,6 +163,25 @@
 
             return ",".join(str(port) for port in sorted(ports)) or "none"
 
+        def wan_ping_v4():
+            rc, stdout, _ = run("ruleset")
+            if rc != 0 or not stdout:
+                return "unknown"
+
+            for line in stdout.splitlines():
+                stripped = line.strip()
+                if "icmp type echo-request" not in stripped or " accept" not in f" {stripped} ":
+                    continue
+
+                # An unscoped echo-request accept rule means WAN will answer too.
+                if "iifname" not in stripped:
+                    return "yes"
+
+                if any(f'iifname "{iface}"' in stripped for iface in WAN_INTERFACES):
+                    return "yes"
+
+            return "no"
+
         def get_public_ip():
             rc, stdout, _ = run("public-ip")
             if rc != 0 or not stdout:
@@ -219,6 +238,7 @@
         listen_udp = summarize_ports("listen-udp")
         wan_open_tcp = summarize_wan_open("tcp")
         wan_open_udp = summarize_wan_open("udp")
+        wan_ping = wan_ping_v4()
         public_ip_info = track_public_ip()
 
         overall = "ok"
@@ -230,6 +250,7 @@
             or password_auth != "no"
             or wan_open_tcp != "none"
             or wan_open_udp != "none"
+            or wan_ping != "no"
         ):
             overall = "warning"
 
@@ -262,6 +283,7 @@
                 "listenUdp": listen_udp,
                 "wanOpenTcp": wan_open_tcp,
                 "wanOpenUdp": wan_open_udp,
+                "wanPingV4": wan_ping,
             },
             "overall": {
                 "status": overall,
@@ -334,7 +356,8 @@
               "listenTcp": "unknown",
               "listenUdp": "unknown",
               "wanOpenTcp": "unknown",
-              "wanOpenUdp": "unknown"
+              "wanOpenUdp": "unknown",
+              "wanPingV4": "unknown"
             },
             "overall": {
               "status": "not-run"

@@ -14,13 +14,20 @@ in
       # Core Home Manager configuration
       nixpkgs.config = {
         allowUnfree = true;
-        # Bitwarden Desktop still requires the EOL Electron 39 release.
-        permittedInsecurePackages = [ "electron-39.8.10" ];
+        permittedInsecurePackages = [
+          # Required by bitwarden-desktop 2026.5.0 on NixOS 26.05.
+          "electron-39.8.10"
+        ];
       };
 
       # Ensure ad-hoc nix commands (nix shell/build/run) allow unfree packages
       xdg.configFile."nixpkgs/config.nix".text = ''
-        { allowUnfree = true; }
+        {
+          allowUnfree = true;
+          permittedInsecurePackages = [
+            "electron-39.8.10"
+          ];
+        }
       '';
 
       home = {

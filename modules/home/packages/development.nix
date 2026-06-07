@@ -92,7 +92,7 @@
           (devcontainer.override { docker = docker_29; })
 
           # Nix tools
-          nixfmt-rfc-style
+          nixfmt
 
           # Libraries
           ncurses

@@ -1,7 +1,7 @@
 { ... }:
 {
   flake.modules.homeManager."desktop.gtk" =
-    { pkgs, ... }:
+    { config, pkgs, ... }:
     {
       # Enforce a dark GTK theme for GTK3/GTK4 apps (Plasma and Sway)
       gtk = {
@@ -27,8 +27,11 @@
         gtk3.extraConfig = {
           "gtk-application-prefer-dark-theme" = 1;
         };
-        gtk4.extraConfig = {
-          "gtk-application-prefer-dark-theme" = true;
+        gtk4 = {
+          theme = config.gtk.theme;
+          extraConfig = {
+            "gtk-application-prefer-dark-theme" = true;
+          };
         };
       };
 

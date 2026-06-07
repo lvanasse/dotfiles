@@ -5,6 +5,14 @@
   ...
 }:
 let
+  nixpkgsConfig = {
+    allowUnfree = true;
+    permittedInsecurePackages = [
+      # Required by bitwarden-desktop 2026.5.0 on NixOS 26.05.
+      "electron-39.8.10"
+    ];
+  };
+
   overlays = [
     config.flake.overlays.unstablePackages
     config.flake.overlays.qbittorrent510_2505
@@ -46,7 +54,7 @@ let
             networking.hostName = hostname;
             nixpkgs = {
               inherit overlays;
-              config.allowUnfree = true;
+              config = nixpkgsConfig;
             };
           }
         )
@@ -70,7 +78,7 @@ let
                 imports = hmModules;
                 nixpkgs = {
                   inherit overlays;
-                  config.allowUnfree = true;
+                  config = nixpkgsConfig;
                 };
               };
               sharedModules = [
@@ -98,21 +106,20 @@ let
     inputs.home-manager.lib.homeManagerConfiguration {
       pkgs = import inputs.nixpkgs {
         inherit system overlays;
-        config.allowUnfree = true;
+        config = nixpkgsConfig;
       };
       extraSpecialArgs = {
         inherit inputs username;
         flakeModules = config.flake.modules;
       };
-      modules =
-        [
-          inputs.agenix.homeManagerModules.default
-        ]
-        ++ hmModules
-        ++ [
-          inputs.plasma-manager.homeModules.plasma-manager
-        ]
-        ++ extraModules;
+      modules = [
+        inputs.agenix.homeManagerModules.default
+      ]
+      ++ hmModules
+      ++ [
+        inputs.plasma-manager.homeModules.plasma-manager
+      ]
+      ++ extraModules;
     };
 
 in

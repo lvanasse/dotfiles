@@ -43,7 +43,7 @@
       # Manage idle behavior within Sway: blank screen on idle
       services.swayidle = {
         enable = true;
-        systemdTarget = "sway-session.target";
+        systemdTargets = [ "sway-session.target" ];
 
         # Timeouts in seconds
         timeouts = [
@@ -67,31 +67,15 @@
           }
         ];
 
-        events = [
+        events = {
           # Ensure we lock right before system sleep (temporarily disabled)
-          /*
-            {
-              event = "before-sleep";
-              command = "${swaylockPixelate}; swaymsg 'output * power off'";
-            }
-          */
+          # "before-sleep" = "${swaylockPixelate}; swaymsg 'output * power off'";
           # Wake displays after resume
-          {
-            event = "after-resume";
-            command = "${wakeDisplaysHard}";
-          }
+          "after-resume" = "${wakeDisplaysHard}";
           # Run the same hard wake path when unlocking a swaylock session.
-          {
-            event = "unlock";
-            command = "${wakeDisplaysHard}";
-          }
-          /*
-            {
-              event = "lock";
-              command = swaylockPixelate;
-            }
-          */
-        ];
+          unlock = "${wakeDisplaysHard}";
+          # lock = swaylockPixelate;
+        };
       };
     };
 }

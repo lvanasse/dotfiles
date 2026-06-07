@@ -17,7 +17,7 @@
           # Nix formatting
           nixfmt = {
             enable = true;
-            package = pkgs.nixfmt-rfc-style;
+            package = pkgs.nixfmt;
           };
 
           # Markdown formatting

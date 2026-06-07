@@ -5,6 +5,7 @@
     {
       programs.firefox = {
         enable = true;
+        configPath = ".mozilla/firefox";
         # Enforce default search engine at the browser level for all profiles
         policies = {
           DefaultSearchEngine = "Qwant";

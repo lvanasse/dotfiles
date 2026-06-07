@@ -214,7 +214,7 @@ in
         nohm
         nhOsWithHomeCompat
         nixpkgs-review
-        nixfmt-rfc-style
+        nixfmt
         treefmt
         pkgs.llm-agents.codex
         pkgs.llm-agents.claude-code
@@ -242,10 +242,10 @@ in
           curl
           glib
           glibc
-          xorg.libX11
-          xorg.libXcursor
-          xorg.libXrandr
-          xorg.libXi
+          libx11
+          libxcursor
+          libxrandr
+          libxi
           libGL
         ];
       };

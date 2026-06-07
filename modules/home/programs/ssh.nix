@@ -48,14 +48,14 @@ in
               exec ${pkgs.openssh}/bin/ssh server-ts wake-pc-lan "$@"
             '';
           };
-      };
+        };
 
       # SSH configuration for different keys
       programs.ssh = {
         enable = true;
         enableDefaultConfig = false; # Disable default config to avoid future warnings
 
-        matchBlocks = {
+        settings = {
           # Personal hosts (LAN aliases)
           "pc" = {
             hostname = "192.168.0.100";

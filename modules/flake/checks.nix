@@ -17,7 +17,7 @@
 
         # Formatting check
         formatting = pkgs.runCommand "check-formatting" { } ''
-          ${pkgs.nixfmt-rfc-style}/bin/nixfmt --check ${inputs.self}/**/*.nix
+          ${pkgs.nixfmt}/bin/nixfmt --check ${inputs.self}/**/*.nix
           touch $out
         '';
 
@@ -44,7 +44,7 @@
         pre-commit = inputs.pre-commit-hooks.lib.${system}.run {
           src = inputs.self;
           hooks = {
-            nixfmt-rfc-style.enable = true;
+            nixfmt.enable = true;
             deadnix.enable = true;
             statix.enable = false;
             markdownlint.enable = false;

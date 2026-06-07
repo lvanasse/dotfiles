@@ -13,16 +13,16 @@
         # DNS configuration
         resolved = {
           enable = true;
-          dnssec = "false";
-          domains = [ "home.arpa" ];
-          fallbackDns = [
-            "1.1.1.1"
-            "9.9.9.9"
-          ];
-          extraConfig = ''
-            Cache=no-negative                  # avoid long NXDOMAIN waits
-            TrustAnchor=false                  # strips the "trust-ad" bit
-          '';
+          settings.Resolve = {
+            DNSSEC = false;
+            Domains = [ "home.arpa" ];
+            FallbackDNS = [
+              "1.1.1.1"
+              "9.9.9.9"
+            ];
+            Cache = "no-negative";
+            TrustAnchor = false;
+          };
         };
 
         # PC-specific Flatpak configuration

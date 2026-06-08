@@ -4,6 +4,7 @@
     { ... }:
     {
       imports = [
+        config.flake.modules.nixos."core.dbus"
         config.flake.modules.nixos."core.nix"
         config.flake.modules.nixos."core.locale"
         config.flake.modules.nixos."core.networking"

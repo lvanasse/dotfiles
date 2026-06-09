@@ -120,6 +120,27 @@ in
                 should_validate_spacemacs() {
                   case "''${host}" in pc|laptop|hm-only) return 0 ;; *) return 1 ;; esac
                 }
+                verify_remote_target() {
+                  [ -n "''${target_host}" ] || return 0
+                  [ "''${NOHM_ALLOW_TARGET_MISMATCH:-0}" = "1" ] && return 0
+
+                  step "Verify target host (''${target_host})"
+                  cmd "ssh ''${target_host} hostname"
+                  if ! remote_hostname="$("$ssh_bin" "''${target_host}" hostname 2>/dev/null)"; then
+                    echo "nohm: could not read hostname from ''${target_host}; refusing remote activation." >&2
+                    echo "nohm: set NOHM_ALLOW_TARGET_MISMATCH=1 to override." >&2
+                    exit 1
+                  fi
+                  remote_hostname="''${remote_hostname%%$'\n'*}"
+                  remote_hostname="''${remote_hostname%$'\r'}"
+
+                  if [ "''${remote_hostname}" != "''${host}" ]; then
+                    echo "nohm: target host mismatch: requested config ''${host} but ''${target_host} reports hostname ''${remote_hostname}." >&2
+                    echo "nohm: refusing remote activation; set NOHM_ALLOW_TARGET_MISMATCH=1 to override." >&2
+                    exit 1
+                  fi
+                  ok "Target host"
+                }
 
                 # --- Step: Home Manager (local only) ---
                 if ! is_remote; then
@@ -137,6 +158,8 @@ in
 
                 # --- Step: NixOS switch ---
                 if is_remote; then
+                  verify_remote_target
+
                   out_link="$(mktemp -d)/result"
 
                   step "Build NixOS configuration (''${host}) [''${build_cores} cores, ''${max_jobs} jobs]"

@@ -54,6 +54,9 @@ in
         users.users.${username}.initialPassword = "changeme";
 
         # Headless gateway defaults.
+        # Prefer the LTS kernel on infrastructure hosts. The 6.18 unstable
+        # kernel hit an igc driver oops on the gateway's Intel NICs.
+        boot.kernelPackages = lib.mkForce pkgs.linuxPackages_6_12;
         boot.loader.systemd-boot.enable = true;
         boot.loader.efi.canTouchEfiVariables = true;
         services.fstrim.enable = true;

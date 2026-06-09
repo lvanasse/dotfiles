@@ -43,6 +43,8 @@
       };
 
       # Headless server settings
+      # Prefer the LTS kernel on infrastructure hosts.
+      boot.kernelPackages = lib.mkForce pkgs.linuxPackages_6_12;
       boot.loader.systemd-boot.enable = true;
       boot.loader.efi.canTouchEfiVariables = true;
 

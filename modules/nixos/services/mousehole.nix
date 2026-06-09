@@ -16,6 +16,9 @@
           TZ = "America/Toronto";
           MOUSEHOLE_PORT = "5010";
           MOUSEHOLE_STATE_DIR_PATH = "/srv/mousehole";
+          # Mousehole v0.4.0 requires an explicit auth choice. This preserves
+          # the previous unauthenticated behavior for the private server UI.
+          MOUSEHOLE_INSECURE_ALLOW_NO_AUTH = "true";
         };
         volumes = [
           "${appDataRoot}:/srv/mousehole"

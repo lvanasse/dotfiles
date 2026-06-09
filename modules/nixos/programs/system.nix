@@ -27,17 +27,26 @@ in
 
                 # --- Argument parsing ---
                 if [ $# -lt 1 ]; then
-                  echo "Usage: nohm <host>|auth [--target-host <user@ip>] [-- <extra nh args>]" >&2
+                  echo "Usage: nohm <host>|auth [--boot|--switch] [--target-host <user@ip>] [-- <extra nh args>]" >&2
                   exit 1
                 fi
 
                 host="$1"
                 shift
 
+                action="switch"
                 target_host=""
                 extra_args=()
                 while [ $# -gt 0 ]; do
                   case "$1" in
+                    --boot)
+                      action="boot"
+                      shift
+                      ;;
+                    --switch)
+                      action="switch"
+                      shift
+                      ;;
                     --target-host)
                       [ $# -lt 2 ] && { echo "Missing value for --target-host" >&2; exit 1; }
                       target_host="$2"
@@ -142,8 +151,8 @@ in
                   ok "Target host"
                 }
 
-                # --- Step: Home Manager (local only) ---
-                if ! is_remote; then
+                # --- Step: Home Manager (local switch only) ---
+                if ! is_remote && [ "''${action}" = "switch" ]; then
                   step "Home Manager switch (''${host})"
                   cmd "home-manager switch --flake .#${username}@''${host}"
                   bext="''${HM_BACKUP_EXT:-hm-$(date +%Y%m%d-%H%M%S)}"
@@ -154,9 +163,12 @@ in
                     fail "Home Manager"
                     exit 1
                   fi
+                elif ! is_remote; then
+                  step "Home Manager switch (''${host})"
+                  ok "Skipped for boot"
                 fi
 
-                # --- Step: NixOS switch ---
+                # --- Step: NixOS switch/boot ---
                 if is_remote; then
                   verify_remote_target
 
@@ -183,13 +195,25 @@ in
                     exit 1
                   fi
 
-                  step "Activate on ''${target_host}"
-                  cmd "switch-to-configuration switch"
-                  if "$ssh_bin" -t "''${target_host}" \
-                    "sudo nix-env --profile /nix/var/nix/profiles/system --set ''${system_path} && sudo ''${system_path}/bin/switch-to-configuration switch"; then
-                    ok "Activate"
+                  if [ "''${action}" = "boot" ]; then
+                    step "Set boot configuration on ''${target_host}"
                   else
-                    fail "Activate"
+                    step "Activate on ''${target_host}"
+                  fi
+                  cmd "switch-to-configuration ''${action}"
+                  if "$ssh_bin" -t "''${target_host}" \
+                    "sudo nix-env --profile /nix/var/nix/profiles/system --set ''${system_path} && sudo ''${system_path}/bin/switch-to-configuration ''${action}"; then
+                    if [ "''${action}" = "boot" ]; then
+                      ok "Boot"
+                    else
+                      ok "Activate"
+                    fi
+                  else
+                    if [ "''${action}" = "boot" ]; then
+                      fail "Boot"
+                    else
+                      fail "Activate"
+                    fi
                     exit 1
                   fi
 
@@ -198,10 +222,10 @@ in
                   step "Home Manager-only target (''${host})"
                   ok "Skipped NixOS switch"
                 else
-                  step "NixOS switch (''${host}) [''${build_cores} cores, ''${max_jobs} jobs]"
-                  cmd "nh os switch -H ''${host}"
+                  step "NixOS ''${action} (''${host}) [''${build_cores} cores, ''${max_jobs} jobs]"
+                  cmd "nh os ''${action} -H ''${host}"
                   if env NH_FLAKE="''${flake_dir}" NIX_CONFIG="''${nix_config}" \
-                    "$nh_bin" os switch -H "''${host}" "''${extra_args[@]}"; then
+                    "$nh_bin" os "''${action}" -H "''${host}" "''${extra_args[@]}"; then
                     ok "NixOS"
                   else
                     fail "NixOS"

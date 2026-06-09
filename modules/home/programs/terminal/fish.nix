@@ -188,7 +188,7 @@
             description = "Switch NixOS/Home Manager configuration";
             body = ''
               if test (count $argv) -lt 1
-                echo "Usage: nohm <host>|auth [--target-host user@ip] [extra nh args]" >&2
+                echo "Usage: nohm <host>|auth [--boot|--switch] [--target-host user@ip] [extra nh args]" >&2
                 return 1
               end
 

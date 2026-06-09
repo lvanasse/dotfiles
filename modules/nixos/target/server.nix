@@ -43,8 +43,9 @@
       };
 
       # Headless server settings
-      # Prefer the LTS kernel on infrastructure hosts.
-      boot.kernelPackages = lib.mkForce pkgs.linuxPackages_6_12;
+      # Use the release kernel on infrastructure hosts instead of the
+      # globally configured unstable kernel.
+      boot.kernelPackages = lib.mkForce pkgs.linuxPackages;
       boot.loader.systemd-boot.enable = true;
       boot.loader.efi.canTouchEfiVariables = true;
 

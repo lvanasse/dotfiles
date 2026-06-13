@@ -41,8 +41,11 @@
         delete_generations = "+5";
       };
 
-      # Allow unfree packages
-      nixpkgs.config.allowUnfree = true;
+      nixpkgs.config = {
+        allowUnfree = true;
+        # Bitwarden Desktop still requires the EOL Electron 39 release.
+        permittedInsecurePackages = [ "electron-39.8.10" ];
+      };
 
       # Use this flake as the nixpkgs registry source (wrapper enables unfree)
       nix.registry.nixpkgs = lib.mkForce {

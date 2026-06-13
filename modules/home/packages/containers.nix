@@ -5,7 +5,7 @@
     {
       # Containers / local tooling
       home.packages = with pkgs; [
-        docker
+        docker_29
         containerd
         docker-compose
         docker-buildx

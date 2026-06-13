@@ -22,8 +22,8 @@ in
           RemainAfterExit = true;
         };
         script = ''
-          if ! ${pkgs.docker}/bin/docker network inspect linkwarden >/dev/null 2>&1; then
-            ${pkgs.docker}/bin/docker network create linkwarden >/dev/null
+          if ! ${pkgs.docker_29}/bin/docker network inspect linkwarden >/dev/null 2>&1; then
+            ${pkgs.docker_29}/bin/docker network create linkwarden >/dev/null
           fi
         '';
       };

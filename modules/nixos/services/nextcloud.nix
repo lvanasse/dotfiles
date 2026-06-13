@@ -39,7 +39,7 @@
         path = with pkgs; [
           bash
           coreutils
-          docker
+          docker_29
           gnugrep
         ];
         script = ''

@@ -246,7 +246,7 @@ in
         serviceConfig = {
           Type = "oneshot";
           ExecStart = ''
-            ${pkgs.docker}/bin/docker run --rm --name recyclarr-sync \
+            ${pkgs.docker_29}/bin/docker run --rm --name recyclarr-sync \
               --network=host \
               --user=0:0 \
               -v /var/lib/recyclarr:/config \
@@ -278,7 +278,7 @@ in
         serviceConfig = {
           Type = "oneshot";
           ExecStart = ''
-            ${pkgs.docker}/bin/docker run --rm --name configarr-sync \
+            ${pkgs.docker_29}/bin/docker run --rm --name configarr-sync \
               --network=host \
               -e TZ=America/Toronto \
               -v /var/lib/configarr/config:/app/config \

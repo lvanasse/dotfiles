@@ -84,7 +84,7 @@ Git forge dependencies.
      (shell :variables shell-default-shell 'vterm)
      shell-scripts
    )
-   dotspacemacs-additional-packages '(gruvbox-theme vterm clipetty all-the-icons nerd-icons counsel-spotify bitbake-ts-mode nix-mode json-mode org-caldav gcmh flyspell-lazy copilot-chat)
+   dotspacemacs-additional-packages '(gruvbox-theme vterm clipetty all-the-icons nerd-icons counsel-spotify bitbake-ts-mode nix-mode json-mode org-caldav gcmh flyspell-lazy copilot-chat devcontainer)
    dotspacemacs-excluded-packages '(forge)))
 #+end_src
 
@@ -636,6 +636,7 @@ AI tools, remote access, and the view prefix.
 
   (spacemacs/declare-prefix "a a" "ai")
   (spacemacs/declare-prefix "a r" "remote")
+  (spacemacs/declare-prefix "a r d" "devcontainer")
   (define-key spacemacs-default-map (kbd "v") nil)
   (spacemacs/declare-prefix "v" "view")
 #+end_src
@@ -680,6 +681,51 @@ Plain `find-file` with TRAMP syntax remains fully supported."
     "v <left>" #'centaur-tabs-backward
     "v n" #'centaur-tabs-forward
     "v p" #'centaur-tabs-backward)
+#+end_src
+
+** Devcontainers
+
+Use the project =devcontainer.json= as the execution environment while
+keeping Spacemacs on the host.  =devcontainer-mode= redirects =compile=
+commands into the running container when the current project defines one.
+
+#+begin_src emacs-lisp
+  (defun my/devcontainer-cmake-compile-commands (build-dir)
+    "Configure CMake with exported compile commands in BUILD-DIR.
+
+When `devcontainer-mode' is active for a project with a devcontainer, this
+command runs inside the container and writes the symlink into the bind-mounted
+workspace."
+    (interactive (list (read-string "CMake build directory: " "build")))
+    (let* ((root (if-let ((project (project-current nil)))
+                     (project-root project)
+                   default-directory))
+           (quoted-build-dir (shell-quote-argument build-dir))
+           (default-directory root))
+      (compile
+       (format "cmake -S . -B %s -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && ln -sf %s/compile_commands.json compile_commands.json"
+               quoted-build-dir
+               quoted-build-dir))))
+
+  (when (require 'devcontainer nil t)
+    (setq devcontainer-engine 'docker
+          devcontainer-apply-customization 'ask
+          devcontainer-term-shell "bash"
+          devcontainer-execute-outside-container
+          '("grep" "rg" "ag" "git" "ls" "find"))
+    (devcontainer-mode 1))
+
+  (spacemacs/set-leader-keys
+    "a r d c" #'my/devcontainer-cmake-compile-commands
+    "a r d d" #'devcontainer-tramp-dired
+    "a r d e" #'devcontainer-execute-command
+    "a r d E" #'devcontainer-execute-command-interactive
+    "a r d k" #'devcontainer-kill-container
+    "a r d m" #'devcontainer-mode
+    "a r d r" #'devcontainer-restart
+    "a r d R" #'devcontainer-rebuild-and-restart
+    "a r d t" #'devcontainer-term
+    "a r d u" #'devcontainer-up)
 #+end_src
 
 ** mu4e Inbox helpers
@@ -1829,7 +1875,8 @@ Performance and feature settings for LSP clients:
           '("--background-index"
             "--clang-tidy"
             "--completion-style=detailed"
-            "--header-insertion=iwyu")))
+            "--header-insertion=iwyu"
+            "--query-driver=/nix/store/*/bin/*gcc,/nix/store/*/bin/*g++,/nix/store/*/bin/*clang,/nix/store/*/bin/*clang++,/usr/bin/*gcc,/usr/bin/*g++,/usr/bin/*clang,/usr/bin/*clang++,/opt/*/bin/*gcc,/opt/*/bin/*g++")))
 
   (with-eval-after-load 'lsp-pyright
     (setq lsp-pyright-langserver-command "basedpyright-langserver"

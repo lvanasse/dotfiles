@@ -49,7 +49,7 @@
         tmp_path = Path(sys.argv[1])
         status_path = Path(sys.argv[2])
 
-        docker_bin = "${pkgs.docker}/bin/docker"
+        docker_bin = "${pkgs.docker_29}/bin/docker"
 
         ids_proc = subprocess.run(
             [docker_bin, "ps", "-aq", "--no-trunc"],
@@ -144,7 +144,7 @@
         path = with pkgs; [
           bash
           coreutils
-          docker
+          docker_29
           python3
         ];
         script = ''

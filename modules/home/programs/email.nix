@@ -118,6 +118,13 @@
         userName = "mail@ludovicvanasse.com";
         realName = "Ludovic Vanasse";
         primary = true;
+        signature = {
+          text = ''
+            Ludovic Vanasse
+            mail@ludovicvanasse.com
+          '';
+          showSignature = "append";
+        };
 
         imap = {
           host = "mail.infomaniak.com";

@@ -49,7 +49,9 @@ Git forge dependencies.
    dotspacemacs-configuration-layers '(
      better-defaults
      git
-     org
+     (org :variables
+          org-enable-modern-support t
+          org-enable-appear-support t)
      (auto-completion :variables auto-completion-enable-snippets-in-popup t)
      spell-checking
      syntax-checking
@@ -84,7 +86,7 @@ Git forge dependencies.
      (shell :variables shell-default-shell 'vterm)
      shell-scripts
    )
-   dotspacemacs-additional-packages '(gruvbox-theme vterm clipetty all-the-icons nerd-icons counsel-spotify bitbake-ts-mode nix-mode json-mode org-caldav gcmh flyspell-lazy copilot-chat devcontainer)
+   dotspacemacs-additional-packages '(gruvbox-theme vterm clipetty all-the-icons nerd-icons counsel-spotify bitbake-ts-mode nix-mode json-mode org-caldav gcmh flyspell-lazy copilot-chat devcontainer visual-fill-column)
    dotspacemacs-excluded-packages '(forge)))
 #+end_src
 
@@ -253,6 +255,20 @@ suppression for a cleaner tiling WM experience.
   ;; Protect against accidentally opening huge/minified files.
   (when (fboundp 'global-so-long-mode)
     (global-so-long-mode 1))
+
+  ;; Pretty Org mode display
+  (setq org-startup-indented t
+        org-hide-emphasis-markers t
+        org-pretty-entities t
+        org-ellipsis " ▾")
+  (add-hook 'org-mode-hook #'visual-line-mode)
+  (setq org-superstar-headline-bullets-list
+        '(?◉ ?○ ?◆ ?◇ ?▶ ?▷))
+
+  ;; Center prose in Org buffers on wide monitors
+  (setq visual-fill-column-width 100
+        visual-fill-column-center-text t)
+  (add-hook 'org-mode-hook #'visual-fill-column-mode)
 #+end_src
 
 ** Theme and faces
@@ -676,7 +692,10 @@ Plain `find-file` with TRAMP syntax remains fully supported."
     "a a C" #'my/copilot-cli
     "a a c" #'my/copilot-cli
     "a r f" #'my/find-remote-file
-    "a c i" #'my/irc-dispatch
+    "a c i e" #'my/irc-dispatch
+    "a c i D" #'my/open-mail-irc-layout
+    "a c i j" #'my/erc-join-favorite-channel
+    "a c i E" #'erc-tls
     "v <right>" #'centaur-tabs-forward
     "v <left>" #'centaur-tabs-backward
     "v n" #'centaur-tabs-forward
@@ -1679,6 +1698,7 @@ Folder structure:
           mu4e-change-filenames-when-moving t
           mu4e-view-show-images t
           mu4e-compose-format-flowed t
+          mu4e-compose-signature "Ludovic Vanasse\nmail@ludovicvanasse.com"
           message-send-mail-function 'message-send-mail-with-sendmail
           sendmail-program "__MSMTP_BIN__"
           message-sendmail-f-is-evil t

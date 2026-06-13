@@ -25,6 +25,7 @@ in
         flakeConfig.flake.modules.homeManager."programs.firefox"
         flakeConfig.flake.modules.homeManager."programs.email"
         flakeConfig.flake.modules.homeManager."programs.calendar"
+        flakeConfig.flake.modules.homeManager."programs.media-inhibit"
       ];
 
       home.file.".local/bin/ccs" = {

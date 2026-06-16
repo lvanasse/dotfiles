@@ -6,7 +6,12 @@ let
 in
 {
   flake.modules.nixos."services.vikunja" =
-    { config, lib, pkgs, ... }:
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
       hasVikunjaEnvAge = builtins.pathExists vikunjaEnvAge;
       hasVikunjaEnvPlainRepo = builtins.pathExists vikunjaEnvPlainRepo;
@@ -55,14 +60,13 @@ in
 
       virtualisation.oci-containers.containers.vikunja-postgres = {
         image = "postgres:16-alpine";
-        environment =
-          {
-            POSTGRES_USER = "vikunja";
-            POSTGRES_DB = "vikunja";
-          }
-          // lib.optionalAttrs (!hasVikunjaEnv) {
-            POSTGRES_PASSWORD = defaultDbPassword;
-          };
+        environment = {
+          POSTGRES_USER = "vikunja";
+          POSTGRES_DB = "vikunja";
+        }
+        // lib.optionalAttrs (!hasVikunjaEnv) {
+          POSTGRES_PASSWORD = defaultDbPassword;
+        };
         environmentFiles = lib.optional hasVikunjaEnv vikunjaEnvPath;
         volumes = [ "${appDataRoot}/db:/var/lib/postgresql/data" ];
         extraOptions = [
@@ -75,20 +79,19 @@ in
       virtualisation.oci-containers.containers.vikunja = {
         image = "vikunja/vikunja:latest";
         dependsOn = [ "vikunja-postgres" ];
-        environment =
-          {
-            VIKUNJA_SERVICE_PUBLICURL = "https://vikunja.ludovicvanasse.com/";
-            VIKUNJA_SERVICE_ENABLEREGISTRATION = "false";
-            VIKUNJA_DATABASE_TYPE = "postgres";
-            VIKUNJA_DATABASE_HOST = "vikunja-db";
-            XDG_CACHE_HOME = "/tmp/.cache";
-          }
-          // lib.optionalAttrs (!hasVikunjaEnv) {
-            VIKUNJA_DATABASE_USER = "vikunja";
-            VIKUNJA_DATABASE_DATABASE = "vikunja";
-            VIKUNJA_DATABASE_PASSWORD = defaultDbPassword;
-            VIKUNJA_SERVICE_JWTSECRET = defaultJwtSecret;
-          };
+        environment = {
+          VIKUNJA_SERVICE_PUBLICURL = "https://vikunja.ludovicvanasse.com/";
+          VIKUNJA_SERVICE_ENABLEREGISTRATION = "false";
+          VIKUNJA_DATABASE_TYPE = "postgres";
+          VIKUNJA_DATABASE_HOST = "vikunja-db";
+          XDG_CACHE_HOME = "/tmp/.cache";
+        }
+        // lib.optionalAttrs (!hasVikunjaEnv) {
+          VIKUNJA_DATABASE_USER = "vikunja";
+          VIKUNJA_DATABASE_DATABASE = "vikunja";
+          VIKUNJA_DATABASE_PASSWORD = defaultDbPassword;
+          VIKUNJA_SERVICE_JWTSECRET = defaultJwtSecret;
+        };
         environmentFiles = lib.optional hasVikunjaEnv vikunjaEnvPath;
         volumes = [ "${appDataRoot}/files:/app/vikunja/files" ];
         ports = [ "3456:3456" ];

@@ -6,7 +6,7 @@ let
 in
 {
   flake.modules.nixos."services.cloudflared" =
-    { config, ... }:
+    { ... }:
     let
       hasCloudflaredEnvAge = builtins.pathExists cloudflaredEnvAge;
       hasCloudflaredEnvPlainRepo = builtins.pathExists cloudflaredEnvPlainRepo;
@@ -14,10 +14,7 @@ in
       hasCloudflaredEnvPlain = hasCloudflaredEnvPlainRepo || hasCloudflaredEnvPlainOverride;
       hasCloudflaredEnv = hasCloudflaredEnvAge || hasCloudflaredEnvPlain;
       cloudflaredEnvPath =
-        if hasCloudflaredEnvAge then
-          "/run/agenix/cloudflared-env"
-        else
-          "/etc/cloudflared.env";
+        if hasCloudflaredEnvAge then "/run/agenix/cloudflared-env" else "/etc/cloudflared.env";
     in
     {
       age.secrets = lib.mkIf hasCloudflaredEnvAge {
@@ -32,10 +29,7 @@ in
 
       environment.etc."cloudflared.env" = lib.mkIf hasCloudflaredEnvPlain {
         source =
-          if hasCloudflaredEnvPlainRepo then
-            cloudflaredEnvPlainRepo
-          else
-            cloudflaredEnvPlainOverride;
+          if hasCloudflaredEnvPlainRepo then cloudflaredEnvPlainRepo else cloudflaredEnvPlainOverride;
         mode = "0400";
       };
 

@@ -88,6 +88,9 @@
               "browser.urlbar.placeholderName.private" = "Qwant";
               "browser.startup.page" = 1;
               "browser.startup.homepage" = "http://server.tail7e8d6c.ts.net:8082";
+              "layers.acceleration.disabled" = false;
+              "media.ffmpeg.vaapi.enabled" = true;
+              "media.hardware-video-decoding.enabled" = true;
             };
           };
         };

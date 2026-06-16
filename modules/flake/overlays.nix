@@ -1,13 +1,11 @@
 { inputs, ... }:
 let
-  unstablePackages =
-    _final: prev:
-    {
-      unstable = import inputs."nixpkgs-unstable" {
-        system = prev.stdenv.hostPlatform.system;
-        config.allowUnfree = true;
-      };
+  unstablePackages = _final: prev: {
+    unstable = import inputs."nixpkgs-unstable" {
+      system = prev.stdenv.hostPlatform.system;
+      config.allowUnfree = true;
     };
+  };
 
   qbittorrent510_2505 =
     _final: prev:

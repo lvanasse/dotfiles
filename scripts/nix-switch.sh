@@ -12,24 +12,24 @@ FLAKE_DIR="${NH_FLAKE:-$HOME/Code/personal/dotfiles}"
 NOHM_VERBOSE="${NOHM_VERBOSE:-0}"
 
 log_verbose() {
-    if [ "$NOHM_VERBOSE" = "1" ]; then
-        echo "$@"
-    fi
+  if [ "$NOHM_VERBOSE" = "1" ]; then
+    echo "$@"
+  fi
 }
 
 log_cmd() {
-    local label="$1"
-    shift
-    printf '%s %s\n' "$label" "$*"
+  local label="$1"
+  shift
+  printf '%s %s\n' "$label" "$*"
 }
 
 if [ $# -lt 1 ]; then
-    echo "Usage: nohm <hostname> [-- <extra nh os args>]" >&2
-    echo "Examples:" >&2
-    echo "  nohm pc" >&2
-    echo "  nohm laptop" >&2
-    echo "  nohm work-laptop" >&2
-    exit 1
+  echo "Usage: nohm <hostname> [-- <extra nh os args>]" >&2
+  echo "Examples:" >&2
+  echo "  nohm pc" >&2
+  echo "  nohm laptop" >&2
+  echo "  nohm work-laptop" >&2
+  exit 1
 fi
 
 HOST="$1"
@@ -38,74 +38,74 @@ shift
 # Collect extra args (everything after --)
 EXTRA_ARGS=""
 while [ $# -gt 0 ]; do
-    if [ "$1" = "--" ]; then
-        shift
-        EXTRA_ARGS="$*"
-        break
-    fi
+  if [ "$1" = "--" ]; then
     shift
+    EXTRA_ARGS="$*"
+    break
+  fi
+  shift
 done
 
 cd "$FLAKE_DIR"
 
 should_validate_spacemacs() {
-    case "$HOST" in
-        pc|laptop|hm-only) return 0 ;;
-        *) return 1 ;;
-    esac
+  case "$HOST" in
+  pc | laptop | hm-only) return 0 ;;
+  *) return 1 ;;
+  esac
 }
 
 is_home_manager_only_target() {
-    case "$HOST" in
-        hm-only|work-laptop|steamdeck) return 0 ;;
-        *) return 1 ;;
-    esac
+  case "$HOST" in
+  hm-only | work-laptop | steamdeck) return 0 ;;
+  *) return 1 ;;
+  esac
 }
 
 is_nixos() {
-    [ -f /etc/NIXOS ]
+  [ -f /etc/NIXOS ]
 }
 
 resolve_nix_config() {
-    local reserve_cores build_cores total_cores available_cores max_jobs
+  local reserve_cores build_cores total_cores available_cores max_jobs
 
-    reserve_cores="${MACHINE_RESERVED_CORES:-${NOHM_RESERVED_CORES:-2}}"
-    case "$reserve_cores" in
-        ''|*[!0-9]*) reserve_cores=2 ;;
-    esac
+  reserve_cores="${MACHINE_RESERVED_CORES:-${NOHM_RESERVED_CORES:-2}}"
+  case "$reserve_cores" in
+  '' | *[!0-9]*) reserve_cores=2 ;;
+  esac
 
-    total_cores="$(nproc)"
-    case "$total_cores" in
-        ''|*[!0-9]*) total_cores=1 ;;
-    esac
+  total_cores="$(nproc)"
+  case "$total_cores" in
+  '' | *[!0-9]*) total_cores=1 ;;
+  esac
 
-    available_cores=$(( total_cores - reserve_cores ))
-    if [ "$available_cores" -lt 1 ]; then
-        available_cores=1
-    fi
+  available_cores=$((total_cores - reserve_cores))
+  if [ "$available_cores" -lt 1 ]; then
+    available_cores=1
+  fi
 
-    build_cores="${MACHINE_BUILD_CORES:-${NOHM_BUILD_CORES:-auto}}"
-    case "$build_cores" in
-        ''|auto) build_cores="$available_cores" ;;
-        *[!0-9]*) build_cores="$available_cores" ;;
-    esac
-    if [ "$build_cores" -lt 1 ]; then
-        build_cores=1
-    elif [ "$build_cores" -gt "$available_cores" ]; then
-        build_cores="$available_cores"
-    fi
+  build_cores="${MACHINE_BUILD_CORES:-${NOHM_BUILD_CORES:-auto}}"
+  case "$build_cores" in
+  '' | auto) build_cores="$available_cores" ;;
+  *[!0-9]*) build_cores="$available_cores" ;;
+  esac
+  if [ "$build_cores" -lt 1 ]; then
+    build_cores=1
+  elif [ "$build_cores" -gt "$available_cores" ]; then
+    build_cores="$available_cores"
+  fi
 
-    max_jobs=$(( available_cores / build_cores ))
-    if [ "$max_jobs" -lt 1 ]; then
-        max_jobs=1
-    fi
+  max_jobs=$((available_cores / build_cores))
+  if [ "$max_jobs" -lt 1 ]; then
+    max_jobs=1
+  fi
 
-    printf 'experimental-features = nix-command flakes\nmax-jobs = %s\ncores = %s\n' "$max_jobs" "$build_cores"
+  printf 'experimental-features = nix-command flakes\nmax-jobs = %s\ncores = %s\n' "$max_jobs" "$build_cores"
 }
 
 NIX_WRAPPER_CONFIG="$(resolve_nix_config)"
 if [ -n "${NIX_CONFIG:-}" ]; then
-    NIX_WRAPPER_CONFIG="${NIX_WRAPPER_CONFIG}
+  NIX_WRAPPER_CONFIG="${NIX_WRAPPER_CONFIG}
 ${NIX_CONFIG}
 "
 fi
@@ -126,33 +126,33 @@ NIX_CONFIG="${NIX_WRAPPER_CONFIG}" home-manager switch --flake "${FLAKE_DIR}#${U
 
 # Step 2: NixOS or post-switch tasks
 if is_nixos && ! is_home_manager_only_target; then
-    log_cmd "[2/2]" "nh os switch -H ${HOST}${EXTRA_ARGS:+ ${EXTRA_ARGS}}"
-    # shellcheck disable=SC2086
-    NH_FLAKE="${FLAKE_DIR}" NIX_CONFIG="${NIX_WRAPPER_CONFIG}" nh os switch -H "${HOST}" $EXTRA_ARGS
+  log_cmd "[2/2]" "nh os switch -H ${HOST}${EXTRA_ARGS:+ ${EXTRA_ARGS}}"
+  # shellcheck disable=SC2086
+  NH_FLAKE="${FLAKE_DIR}" NIX_CONFIG="${NIX_WRAPPER_CONFIG}" nh os switch -H "${HOST}" $EXTRA_ARGS
 elif is_nixos && is_home_manager_only_target; then
-    log_verbose "[2/2] Home Manager-only target detected; skipping NixOS switch"
+  log_verbose "[2/2] Home Manager-only target detected; skipping NixOS switch"
 else
-    # Non-NixOS: symlink Wayland session files for GDM visibility
-    # Use ~/.local/share (home-manager managed) which has the wrapped sway path
-    WAYLAND_SESSIONS_SRC="$HOME/.local/share/wayland-sessions"
-    WAYLAND_SESSIONS_DST="/usr/share/wayland-sessions"
-    log_cmd "[2/2]" "bash $FLAKE_DIR/scripts/setup-sway-auth.sh"
-    bash "$FLAKE_DIR/scripts/setup-sway-auth.sh"
+  # Non-NixOS: symlink Wayland session files for GDM visibility
+  # Use ~/.local/share (home-manager managed) which has the wrapped sway path
+  WAYLAND_SESSIONS_SRC="$HOME/.local/share/wayland-sessions"
+  WAYLAND_SESSIONS_DST="/usr/share/wayland-sessions"
+  log_cmd "[2/2]" "bash $FLAKE_DIR/scripts/setup-sway-auth.sh"
+  bash "$FLAKE_DIR/scripts/setup-sway-auth.sh"
 
-    if [ -d "$WAYLAND_SESSIONS_SRC" ]; then
-        log_verbose "[2/2] Symlinking Wayland session files for GDM"
-        for session in "$WAYLAND_SESSIONS_SRC"/*.desktop; do
-            [ -f "$session" ] || continue
-            name=$(basename "$session")
-            # Resolve the symlink to get the actual nix store path (GDM can't traverse ~/...)
-            resolved=$(readlink -f "$session")
-            target="$WAYLAND_SESSIONS_DST/$name"
-            if [ ! -L "$target" ] || [ "$(readlink "$target")" != "$resolved" ]; then
-                sudo ln -sf "$resolved" "$target"
-                log_verbose "  linked: $name -> $resolved"
-            else
-                log_verbose "  already linked: $name"
-            fi
-        done
-    fi
+  if [ -d "$WAYLAND_SESSIONS_SRC" ]; then
+    log_verbose "[2/2] Symlinking Wayland session files for GDM"
+    for session in "$WAYLAND_SESSIONS_SRC"/*.desktop; do
+      [ -f "$session" ] || continue
+      name=$(basename "$session")
+      # Resolve the symlink to get the actual nix store path (GDM can't traverse ~/...)
+      resolved=$(readlink -f "$session")
+      target="$WAYLAND_SESSIONS_DST/$name"
+      if [ ! -L "$target" ] || [ "$(readlink "$target")" != "$resolved" ]; then
+        sudo ln -sf "$resolved" "$target"
+        log_verbose "  linked: $name -> $resolved"
+      else
+        log_verbose "  already linked: $name"
+      fi
+    done
+  fi
 fi

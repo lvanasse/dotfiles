@@ -52,8 +52,7 @@ fi
 
 for private_file in \
   "$HOME/.config/slack/private.el" \
-  "$HOME/.config/spotify/private.el"
-do
+  "$HOME/.config/spotify/private.el"; do
   if [ -r "$private_file" ]; then
     echo "  - present: $private_file"
   else
@@ -72,8 +71,7 @@ for cmd in \
   bash-language-server \
   yaml-language-server \
   docker-langserver \
-  marksman
-do
+  marksman; do
   check_cmd "$cmd"
 done
 

@@ -22,8 +22,14 @@
       };
 
       systemd.services.docker-dockhand = {
-        requires = [ "docker.service" "mnt-data3.mount" ];
-        after = [ "docker.service" "mnt-data3.mount" ];
+        requires = [
+          "docker.service"
+          "mnt-data3.mount"
+        ];
+        after = [
+          "docker.service"
+          "mnt-data3.mount"
+        ];
       };
 
       networking.firewall.allowedTCPPorts = [ 3001 ];

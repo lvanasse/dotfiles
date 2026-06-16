@@ -20,37 +20,39 @@
       emacsBin = "${config.programs.emacs.finalPackage}/bin/emacs";
       emacsClientBin = "${config.programs.emacs.finalPackage}/bin/emacsclient";
       systemctlBin = "${pkgs.systemd}/bin/systemctl";
-      daemonServicePreStart = clientCmd: pkgs.writeShellScript "emacs-service-pre-start" ''
-        set -eu
+      daemonServicePreStart =
+        clientCmd:
+        pkgs.writeShellScript "emacs-service-pre-start" ''
+          set -eu
 
-        emacsclient_bin="${clientCmd}"
-        ps_bin="${pkgs.procps}/bin/ps"
-        sleep_bin="${pkgs.coreutils}/bin/sleep"
+          emacsclient_bin="${clientCmd}"
+          ps_bin="${pkgs.procps}/bin/ps"
+          sleep_bin="${pkgs.coreutils}/bin/sleep"
 
-        if "$emacsclient_bin" --eval '(daemonp)' >/dev/null 2>&1; then
-          daemon_pid="$("$emacsclient_bin" --eval '(emacs-pid)' | tr -d '[:space:]')"
-          daemon_ppid="$("$ps_bin" -o ppid= -p "$daemon_pid" 2>/dev/null | tr -d '[:space:]' || true)"
+          if "$emacsclient_bin" --eval '(daemonp)' >/dev/null 2>&1; then
+            daemon_pid="$("$emacsclient_bin" --eval '(emacs-pid)' | tr -d '[:space:]')"
+            daemon_ppid="$("$ps_bin" -o ppid= -p "$daemon_pid" 2>/dev/null | tr -d '[:space:]' || true)"
 
-          if [ "$daemon_ppid" = "1" ]; then
-            echo "Stopping existing Emacs daemon pid $daemon_pid before systemd startup"
-            "$emacsclient_bin" --eval '(kill-emacs)' >/dev/null 2>&1 || kill "$daemon_pid" >/dev/null 2>&1 || true
+            if [ "$daemon_ppid" = "1" ]; then
+              echo "Stopping existing Emacs daemon pid $daemon_pid before systemd startup"
+              "$emacsclient_bin" --eval '(kill-emacs)' >/dev/null 2>&1 || kill "$daemon_pid" >/dev/null 2>&1 || true
 
-            for _ in $(seq 1 50); do
-              if ! kill -0 "$daemon_pid" 2>/dev/null; then
-                exit 0
-              fi
-              "$sleep_bin" 0.2
-            done
+              for _ in $(seq 1 50); do
+                if ! kill -0 "$daemon_pid" 2>/dev/null; then
+                  exit 0
+                fi
+                "$sleep_bin" 0.2
+              done
 
-            echo "Existing Emacs daemon pid $daemon_pid did not exit after SIGTERM; sending SIGKILL"
-            kill -KILL "$daemon_pid" >/dev/null 2>&1 || true
-            exit 0
+              echo "Existing Emacs daemon pid $daemon_pid did not exit after SIGTERM; sending SIGKILL"
+              kill -KILL "$daemon_pid" >/dev/null 2>&1 || true
+              exit 0
+            fi
+
+            echo "Refusing to replace Emacs server owned by non-daemon pid $daemon_pid (ppid=$daemon_ppid)" >&2
+            exit 1
           fi
-
-          echo "Refusing to replace Emacs server owned by non-daemon pid $daemon_pid (ppid=$daemon_ppid)" >&2
-          exit 1
-        fi
-      '';
+        '';
       ensureDaemonScript =
         {
           clientCmd,
@@ -134,44 +136,44 @@
           ];
           Type = lib.mkForce "simple";
         };
-      } // spacemacs.systemdUserServices;
+      }
+      // spacemacs.systemdUserServices;
 
       home.packages = [ copilotCliWrapped ] ++ spacemacs.homePackages;
 
-      home.file =
-        {
-          ".local/bin/emacs" = {
-            executable = true;
-            text = ''
-              #!${pkgs.bash}/bin/bash
-              emacsclient_bin="${emacsClientBin}"
+      home.file = {
+        ".local/bin/emacs" = {
+          executable = true;
+          text = ''
+            #!${pkgs.bash}/bin/bash
+            emacsclient_bin="${emacsClientBin}"
 
-              ${ensureDaemonScript {
-                clientCmd = "\"$emacsclient_bin\"";
-                serviceName = "emacs.service";
-                startCmd = "${emacsBin} --init-directory ${lib.escapeShellArg vanillaRoot} --fg-daemon";
-              }}
+            ${ensureDaemonScript {
+              clientCmd = "\"$emacsclient_bin\"";
+              serviceName = "emacs.service";
+              startCmd = "${emacsBin} --init-directory ${lib.escapeShellArg vanillaRoot} --fg-daemon";
+            }}
 
-              exec "$emacsclient_bin" -n -c -a "" "$@"
-            '';
-          };
+            exec "$emacsclient_bin" -n -c -a "" "$@"
+          '';
+        };
 
-          ".local/share/applications/emacs.desktop" = {
-            text = ''
-              [Desktop Entry]
-              Name=Emacs
-              GenericName=Text Editor
-              Comment=Open a new frame on the vanilla Emacs daemon
-              Exec=${config.home.homeDirectory}/.local/bin/emacs
-              Icon=emacs
-              Type=Application
-              Terminal=false
-              StartupNotify=true
-              Categories=Development;TextEditor;
-            '';
-          };
-        }
-        // spacemacs.homeFiles;
+        ".local/share/applications/emacs.desktop" = {
+          text = ''
+            [Desktop Entry]
+            Name=Emacs
+            GenericName=Text Editor
+            Comment=Open a new frame on the vanilla Emacs daemon
+            Exec=${config.home.homeDirectory}/.local/bin/emacs
+            Icon=emacs
+            Type=Application
+            Terminal=false
+            StartupNotify=true
+            Categories=Development;TextEditor;
+          '';
+        };
+      }
+      // spacemacs.homeFiles;
 
       home.activation = spacemacs.homeActivations;
 

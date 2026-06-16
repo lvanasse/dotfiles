@@ -1,10 +1,9 @@
 { ... }:
 {
   flake.modules.homeManager."programs.swayidle" =
-    { config, pkgs, ... }:
+    { pkgs, ... }:
     let
       # Use absolute paths so systemd user services don't depend on PATH ordering.
-      swaylockPixelate = "${config.home.homeDirectory}/.nix-profile/bin/swaylock-pixelate";
       swaymsg = "${pkgs.sway}/bin/swaymsg";
       systemctl = "${pkgs.systemd}/bin/systemctl";
       sleep = "${pkgs.coreutils}/bin/sleep";

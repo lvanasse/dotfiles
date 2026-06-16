@@ -36,12 +36,15 @@ let
       username,
       modules,
       extraModules ? [ ],
+      nixpkgsInput ? inputs.nixpkgs,
+      homeManagerInput ? inputs.home-manager,
+      sharedHomeModules ? [ inputs.plasma-manager.homeModules.plasma-manager ],
     }:
     let
       nixosModules = getModules config.flake.modules.nixos modules;
       hmModules = getModules config.flake.modules.homeManager modules;
     in
-    inputs.nixpkgs.lib.nixosSystem {
+    nixpkgsInput.lib.nixosSystem {
       inherit system;
       specialArgs = {
         inherit inputs username;
@@ -62,7 +65,7 @@ let
         inputs.nix-flatpak.nixosModules.nix-flatpak
         inputs.nix-gc-env.nixosModules.default
         inputs.agenix.nixosModules.default
-        inputs.home-manager.nixosModules.home-manager
+        homeManagerInput.nixosModules.home-manager
         (
           { ... }:
           {
@@ -81,9 +84,7 @@ let
                   config = nixpkgsConfig;
                 };
               };
-              sharedModules = [
-                inputs.plasma-manager.homeModules.plasma-manager
-              ];
+              sharedModules = sharedHomeModules;
             };
           }
         )
@@ -98,13 +99,16 @@ let
       modules,
       extraModules ? [ ],
       username ? config.flake.lib.username,
+      nixpkgsInput ? inputs.nixpkgs,
+      homeManagerInput ? inputs.home-manager,
+      sharedHomeModules ? [ inputs.plasma-manager.homeModules.plasma-manager ],
       ...
     }:
     let
       hmModules = getModules config.flake.modules.homeManager modules;
     in
-    inputs.home-manager.lib.homeManagerConfiguration {
-      pkgs = import inputs.nixpkgs {
+    homeManagerInput.lib.homeManagerConfiguration {
+      pkgs = import nixpkgsInput {
         inherit system overlays;
         config = nixpkgsConfig;
       };
@@ -116,9 +120,7 @@ let
         inputs.agenix.homeManagerModules.default
       ]
       ++ hmModules
-      ++ [
-        inputs.plasma-manager.homeModules.plasma-manager
-      ]
+      ++ sharedHomeModules
       ++ extraModules;
     };
 

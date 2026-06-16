@@ -1,4 +1,4 @@
-{ inputs, ... }:
+{ ... }:
 {
   flake.modules.homeManager."programs.calendar" =
     {
@@ -8,8 +8,6 @@
     }:
     let
       homeDir = config.home.homeDirectory;
-      caldavPasswordAge = "${inputs.secrets}/calendar/infomaniak-caldav-password.age";
-      hasCaldavPassword = builtins.pathExists caldavPasswordAge;
       caldavPasswordPath = "${homeDir}/.config/calendar/infomaniak-caldav-password";
     in
     {

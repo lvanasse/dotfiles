@@ -168,7 +168,10 @@
       systemd.services.docker-health-api = {
         description = "Docker health status API";
         wantedBy = [ "multi-user.target" ];
-        after = [ "docker.service" "network.target" ];
+        after = [
+          "docker.service"
+          "network.target"
+        ];
         wants = [ "docker.service" ];
         path = with pkgs; [
           bash

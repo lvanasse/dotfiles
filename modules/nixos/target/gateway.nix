@@ -27,11 +27,13 @@ in
       inputs,
       pkgs,
       username,
-      config,
       ...
     }:
     let
-      lanCidr = "${lanAddress}/${toString lanPrefixLength}";
+      gatewayKernelPackages =
+        (import inputs.gateway-unstable {
+          system = pkgs.stdenv.hostPlatform.system;
+        }).linuxPackages_6_18;
       pcLeaseAddress = "192.168.0.100";
       serverLeaseAddress = "192.168.0.50";
       apLeaseAddress = "192.168.0.2";
@@ -54,9 +56,8 @@ in
         users.users.${username}.initialPassword = "changeme";
 
         # Headless gateway defaults.
-        # Use the release kernel on infrastructure hosts instead of the
-        # globally configured unstable kernel.
-        boot.kernelPackages = lib.mkForce pkgs.linuxPackages;
+        # Match the kernel from the last known-good 25.11 gateway generation.
+        boot.kernelPackages = lib.mkForce gatewayKernelPackages;
         boot.loader.systemd-boot.enable = true;
         boot.loader.efi.canTouchEfiVariables = true;
         services.fstrim.enable = true;

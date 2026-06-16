@@ -1,4 +1,9 @@
-{ config, lib, ... }:
+{
+  config,
+  inputs,
+  lib,
+  ...
+}:
 let
   defaultUsername = config.flake.lib.username;
   system = "x86_64-linux";
@@ -31,6 +36,9 @@ let
     gateway = {
       nixos = true;
       modules = [ "target.gateway" ];
+      nixpkgsInput = inputs.gateway-nixpkgs;
+      homeManagerInput = inputs.gateway-home-manager;
+      sharedHomeModules = [ ];
     };
   };
 
@@ -40,6 +48,10 @@ let
       username = defaultUsername;
       inherit hostname system;
       modules = target.modules;
+      nixpkgsInput = target.nixpkgsInput or inputs.nixpkgs;
+      homeManagerInput = target.homeManagerInput or inputs.home-manager;
+      sharedHomeModules =
+        target.sharedHomeModules or [ inputs.plasma-manager.homeModules.plasma-manager ];
     };
 
   mkHome =
@@ -47,6 +59,10 @@ let
     config.flake.lib.mkHomeConfiguration {
       inherit system;
       modules = target.modules;
+      nixpkgsInput = target.nixpkgsInput or inputs.nixpkgs;
+      homeManagerInput = target.homeManagerInput or inputs.home-manager;
+      sharedHomeModules =
+        target.sharedHomeModules or [ inputs.plasma-manager.homeModules.plasma-manager ];
     };
 
 in

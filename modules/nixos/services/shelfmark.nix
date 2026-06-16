@@ -51,59 +51,59 @@ in
           coreutils
         ];
         script = ''
-          set -euo pipefail
+                    set -euo pipefail
 
-          mkdir -p /run/shelfmark
-          tmp_env="$(mktemp /run/shelfmark/shelfmark.env.XXXXXX)"
+                    mkdir -p /run/shelfmark
+                    tmp_env="$(mktemp /run/shelfmark/shelfmark.env.XXXXXX)"
 
-          printf '%s\n' \
-            'QBITTORRENT_URL=http://192.168.0.50:8081' \
-            'QBITTORRENT_CATEGORY=books' \
-            'QBITTORRENT_CATEGORY_AUDIOBOOK=audiobook' \
-            'QBITTORRENT_DOWNLOAD_DIR=/downloads' \
-            'PROWLARR_ENABLED=false' \
-            'PROWLARR_TORRENT_CLIENT=qbittorrent' \
-            > "$tmp_env"
+                    printf '%s\n' \
+                      'QBITTORRENT_URL=http://192.168.0.50:8081' \
+                      'QBITTORRENT_CATEGORY=books' \
+                      'QBITTORRENT_CATEGORY_AUDIOBOOK=audiobook' \
+                      'QBITTORRENT_DOWNLOAD_DIR=/downloads' \
+                      'PROWLARR_ENABLED=false' \
+                      'PROWLARR_TORRENT_CLIENT=qbittorrent' \
+                      > "$tmp_env"
 
-          if [ -r "${arrSecretsPath}" ]; then
-            ${pythonWithYaml}/bin/python3 - "${arrSecretsPath}" >> "$tmp_env" <<'PY'
-import pathlib
-import sys
-import yaml
+                    if [ -r "${arrSecretsPath}" ]; then
+                      ${pythonWithYaml}/bin/python3 - "${arrSecretsPath}" >> "$tmp_env" <<'PY'
+          import pathlib
+          import sys
+          import yaml
 
-secrets_path = pathlib.Path(sys.argv[1])
-data = yaml.safe_load(secrets_path.read_text(encoding="utf-8")) or {}
+          secrets_path = pathlib.Path(sys.argv[1])
+          data = yaml.safe_load(secrets_path.read_text(encoding="utf-8")) or {}
 
-mapping = {
-    "QBITTORRENT_USER": "QBITTORRENT_USERNAME",
-    "QBITTORRENT_PASS": "QBITTORRENT_PASSWORD",
-}
+          mapping = {
+              "QBITTORRENT_USER": "QBITTORRENT_USERNAME",
+              "QBITTORRENT_PASS": "QBITTORRENT_PASSWORD",
+          }
 
-for source_key, env_key in mapping.items():
-    value = data.get(source_key)
-    if value:
-        print(f"{env_key}={value}")
-PY
-          fi
+          for source_key, env_key in mapping.items():
+              value = data.get(source_key)
+              if value:
+                  print(f"{env_key}={value}")
+          PY
+                    fi
 
-          if [ -r "${prowlarrConfigPath}" ]; then
-            ${pkgs.python3}/bin/python3 - "${prowlarrConfigPath}" >> "$tmp_env" <<'PY'
-import pathlib
-import sys
-import xml.etree.ElementTree as ET
+                    if [ -r "${prowlarrConfigPath}" ]; then
+                      ${pkgs.python3}/bin/python3 - "${prowlarrConfigPath}" >> "$tmp_env" <<'PY'
+          import pathlib
+          import sys
+          import xml.etree.ElementTree as ET
 
-config_path = pathlib.Path(sys.argv[1])
-api_key = (ET.parse(config_path).getroot().findtext("ApiKey") or "").strip()
+          config_path = pathlib.Path(sys.argv[1])
+          api_key = (ET.parse(config_path).getroot().findtext("ApiKey") or "").strip()
 
-if api_key:
-    print("PROWLARR_ENABLED=true")
-    print("PROWLARR_URL=http://192.168.0.50:9696")
-    print(f"PROWLARR_API_KEY={api_key}")
-PY
-          fi
+          if api_key:
+              print("PROWLARR_ENABLED=true")
+              print("PROWLARR_URL=http://192.168.0.50:9696")
+              print(f"PROWLARR_API_KEY={api_key}")
+          PY
+                    fi
 
-          chmod 0400 "$tmp_env"
-          mv "$tmp_env" "${shelfmarkEnvPath}"
+                    chmod 0400 "$tmp_env"
+                    mv "$tmp_env" "${shelfmarkEnvPath}"
         '';
       };
 

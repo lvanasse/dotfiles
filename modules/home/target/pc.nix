@@ -20,11 +20,18 @@
         };
       };
     in
-{
-  xdg.configFile."spotifyd/spotifyd.conf".source = spotifydConfig;
+    {
+      xdg.configFile."spotifyd/spotifyd.conf".source = spotifydConfig;
 
-  # PC-specific Sway output layout (host-only)
-  wayland.windowManager.sway.extraConfig = lib.mkAfter ''
+      # RX 580 exposes VA-API decode for H.264/HEVC but not VP9/AV1.
+      # Prefer codecs that can actually use hardware decode on this host.
+      programs.firefox.profiles.default.settings = {
+        "media.av1.enabled" = false;
+        "media.mediasource.vp9.enabled" = false;
+      };
+
+      # PC-specific Sway output layout (host-only)
+      wayland.windowManager.sway.extraConfig = lib.mkAfter ''
         # Displays/workspaces (from nwg-displays)
         include ${config.home.homeDirectory}/.config/sway/outputs
         include ${config.home.homeDirectory}/.config/sway/workspaces
@@ -33,21 +40,21 @@
         workspace 4 output DP-2
       '';
 
-  # Ensure Yeti microphone input level is set around 70% on login
-  # Uses pactl via PipeWire-Pulse; matches sources with "Yeti" in description
-  systemd.user.services.yeti-mic-volume =
-    let
-      setYeti = pkgs.writeShellApplication {
-        name = "set-yeti-mic-volume";
-        runtimeInputs = [
-          pkgs.pulseaudio
-          pkgs.jq
-          pkgs.coreutils
-          pkgs.gawk
-          pkgs.gnugrep
-          pkgs.gnused
-        ];
-        text = ''
+      # Ensure Yeti microphone input level is set around 70% on login
+      # Uses pactl via PipeWire-Pulse; matches sources with "Yeti" in description
+      systemd.user.services.yeti-mic-volume =
+        let
+          setYeti = pkgs.writeShellApplication {
+            name = "set-yeti-mic-volume";
+            runtimeInputs = [
+              pkgs.pulseaudio
+              pkgs.jq
+              pkgs.coreutils
+              pkgs.gawk
+              pkgs.gnugrep
+              pkgs.gnused
+            ];
+            text = ''
               #!/usr/bin/env bash
               set -euo pipefail
 
@@ -78,48 +85,48 @@
                 pactl set-source-mute @DEFAULT_SOURCE@ 0 || true
                 pactl set-source-volume @DEFAULT_SOURCE@ 70% || true
               fi
-        '';
-      };
-    in
-    {
-      Unit = {
-        Description = "Set Yeti microphone input volume to 70%";
-        After = [
-          "pipewire.service"
-          "pipewire-pulse.service"
-          "graphical-session.target"
-        ];
-        PartOf = [ "graphical-session.target" ];
-      };
-      Install.WantedBy = [
-        "graphical-session.target"
-        "default.target"
-      ];
-      Service = {
-        Type = "oneshot";
-        ExecStart = "${setYeti}/bin/set-yeti-mic-volume";
-      };
-    };
+            '';
+          };
+        in
+        {
+          Unit = {
+            Description = "Set Yeti microphone input volume to 70%";
+            After = [
+              "pipewire.service"
+              "pipewire-pulse.service"
+              "graphical-session.target"
+            ];
+            PartOf = [ "graphical-session.target" ];
+          };
+          Install.WantedBy = [
+            "graphical-session.target"
+            "default.target"
+          ];
+          Service = {
+            Type = "oneshot";
+            ExecStart = "${setYeti}/bin/set-yeti-mic-volume";
+          };
+        };
 
-  systemd.user.services.spotifyd = {
-    Unit = {
-      Description = "spotifyd, a Spotify Connect background daemon";
-      After = [
-        "pipewire.service"
-        "pipewire-pulse.service"
-        "graphical-session.target"
-      ];
-      PartOf = [ "graphical-session.target" ];
-    };
-    Install.WantedBy = [
-      "graphical-session.target"
-      "default.target"
-    ];
-    Service = {
-      ExecStart = "${pkgs.spotifyd}/bin/spotifyd --no-daemon --cache-path %h/.cache/spotifyd --config-path %h/.config/spotifyd/spotifyd.conf";
-      Restart = "always";
-      RestartSec = 12;
-    };
-  };
+      systemd.user.services.spotifyd = {
+        Unit = {
+          Description = "spotifyd, a Spotify Connect background daemon";
+          After = [
+            "pipewire.service"
+            "pipewire-pulse.service"
+            "graphical-session.target"
+          ];
+          PartOf = [ "graphical-session.target" ];
+        };
+        Install.WantedBy = [
+          "graphical-session.target"
+          "default.target"
+        ];
+        Service = {
+          ExecStart = "${pkgs.spotifyd}/bin/spotifyd --no-daemon --cache-path %h/.cache/spotifyd --config-path %h/.config/spotifyd/spotifyd.conf";
+          Restart = "always";
+          RestartSec = 12;
+        };
+      };
     };
 }

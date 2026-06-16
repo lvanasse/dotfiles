@@ -58,8 +58,8 @@ Git forge dependencies.
      ivy
      lsp
      (treemacs :variables treemacs-use-follow-mode t)
-     c-c++
-     claude-code
+     (c-c++ :variables c-c++-enable-clang-support t)
+-    claude-code
      cmake
      (docker :variables docker-dockerfile-backend 'lsp)
      (mu4e :variables
@@ -90,7 +90,8 @@ Git forge dependencies.
    dotspacemacs-excluded-packages '(forge)))
 #+end_src
 
-* Init
+*
+Init
 
 Core Spacemacs settings applied before any layer loads.  These control the
 editing style, theme, startup banner, and other framework-level options.

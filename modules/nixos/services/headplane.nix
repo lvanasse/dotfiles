@@ -4,12 +4,13 @@ let
 in
 {
   flake.modules.nixos."services.headplane" =
-    { lib, pkgs, ... }:
+    { pkgs, ... }:
     let
       hasHeadplaneConfigOverride = builtins.pathExists headplaneConfigOverride;
       appDataRoot = "/mnt/data3/appdata/headplane";
-      defaultCookieSecret =
-        builtins.substring 0 32 (builtins.hashString "sha256" "headplane-cookie-secret");
+      defaultCookieSecret = builtins.substring 0 32 (
+        builtins.hashString "sha256" "headplane-cookie-secret"
+      );
       generatedConfig = pkgs.writeText "headplane-config.yaml" ''
         server:
           host: "0.0.0.0"
@@ -22,10 +23,7 @@ in
           url: "http://192.168.0.50:8080"
       '';
       headplaneConfigPath =
-        if hasHeadplaneConfigOverride then
-          toString headplaneConfigOverride
-        else
-          generatedConfig;
+        if hasHeadplaneConfigOverride then toString headplaneConfigOverride else generatedConfig;
     in
     {
       virtualisation.oci-containers.containers.headplane = {

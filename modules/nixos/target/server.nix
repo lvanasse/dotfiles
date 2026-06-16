@@ -1,7 +1,12 @@
 { lib, ... }:
 {
   flake.modules.nixos."target.config.server" =
-    { inputs, username, pkgs, ... }:
+    {
+      inputs,
+      username,
+      pkgs,
+      ...
+    }:
     let
       wakePcLan = pkgs.writeShellApplication {
         name = "wake-pc-lan";
@@ -39,7 +44,10 @@
         interfaces.enp1s0 = {
           useDHCP = true;
         };
-        nameservers = [ "1.1.1.1" "9.9.9.9" ];
+        nameservers = [
+          "1.1.1.1"
+          "9.9.9.9"
+        ];
       };
 
       # Headless server settings
@@ -73,7 +81,10 @@
       # Firewall - trust tailscale and allow LAN access on enp1s0
       networking.firewall = {
         enable = true;
-        trustedInterfaces = [ "tailscale0" "docker0" ];
+        trustedInterfaces = [
+          "tailscale0"
+          "docker0"
+        ];
         allowedTCPPorts = lib.mkForce [ ];
         allowedUDPPorts = lib.mkForce [ ];
         interfaces.enp1s0.allowedTCPPorts = lib.mkForce [

@@ -47,8 +47,10 @@
 
       # Symlink tcl & tk data under a common parent so PyInstaller can find both
       # (Nix splits them into separate store paths, which breaks PyInstaller's path derivation)
-      home.file.".local/share/tcltk/lib/${pkgs.tcl.libPrefix}".source = "${pkgs.tcl}/lib/${pkgs.tcl.libPrefix}";
-      home.file.".local/share/tcltk/lib/${pkgs.tk.libPrefix}".source = "${pkgs.tk}/lib/${pkgs.tk.libPrefix}";
+      home.file.".local/share/tcltk/lib/${pkgs.tcl.libPrefix}".source =
+        "${pkgs.tcl}/lib/${pkgs.tcl.libPrefix}";
+      home.file.".local/share/tcltk/lib/${pkgs.tk.libPrefix}".source =
+        "${pkgs.tk}/lib/${pkgs.tk.libPrefix}";
 
       home.sessionVariables = {
         EDITOR = "vim";

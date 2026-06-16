@@ -64,7 +64,7 @@ run_user_config='(progn
     nil))'
 
 echo "[1/5] Loading Spacemacs init with the target dotfile"
-run_elisp "(princ \"init-loaded\")"
+run_elisp '(princ "init-loaded")'
 echo
 
 echo "[2/5] Checking expected native layer bindings"

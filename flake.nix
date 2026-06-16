@@ -60,6 +60,14 @@
     # Additional package sources
     "nixpkgs-unstable".url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     "nixpkgs-2505".url = "github:NixOS/nixpkgs/nixos-25.05";
+    # Keep the gateway on its last known-good 25.11 package set while the
+    # remaining hosts follow the current release.
+    gateway-nixpkgs.url = "github:NixOS/nixpkgs/0c88e1f2bdb93d5999019e99cb0e61e1fe2af4c5";
+    gateway-unstable.url = "github:NixOS/nixpkgs/68a8af93ff4297686cb68880845e61e5e2e41d92";
+    gateway-home-manager = {
+      url = "github:nix-community/home-manager/0d02ec1d0a05f88ef9e74b516842900c41f0f2fe";
+      inputs.nixpkgs.follows = "gateway-nixpkgs";
+    };
 
     # Tooling
     treefmt-nix = {

@@ -1,4 +1,4 @@
-{ lib, pkgs, ... }:
+{ lib, ... }:
 {
   flake.modules.nixos."services.snapraid" =
     { pkgs, ... }:

@@ -10,10 +10,7 @@
     let
       # Prefer jira-cli-go (ankitpokhrel/jira-cli). Fallback to go-jira if needed.
       jiraPkg =
-        if pkgs ? unstable && pkgs.unstable ? jira-cli-go then
-          pkgs.unstable.jira-cli-go
-        else
-          pkgs.go-jira;
+        if pkgs ? unstable && pkgs.unstable ? jira-cli-go then pkgs.unstable.jira-cli-go else pkgs.go-jira;
 
       # Runtime wrapper that injects JIRA_API_TOKEN from the decrypted secret for
       # every shell invocation (not just fish).

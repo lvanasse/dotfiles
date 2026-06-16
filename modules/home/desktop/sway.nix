@@ -115,8 +115,7 @@ in
           # Start background, tray, and Waybar
           startup = [
             {
-              command =
-                "${pkgs.dbus}/bin/dbus-update-activation-environment --systemd PATH XDG_DATA_DIRS WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE";
+              command = "${pkgs.bash}/bin/bash -lc '${pkgs.dbus}/bin/dbus-update-activation-environment --systemd PATH XDG_DATA_DIRS DISPLAY WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE && ${pkgs.systemd}/bin/systemctl --user restart xdg-desktop-portal.service'";
               always = true;
             }
             {
@@ -132,8 +131,7 @@ in
               always = true;
             }
             {
-              command =
-                "${pkgs.bash}/bin/bash -lc 'if ${pkgs.procps}/bin/pgrep -x waybar >/dev/null 2>&1; then ${pkgs.procps}/bin/pkill -USR2 -x waybar; else exec ${pkgs.waybar}/bin/waybar -c ${config.home.homeDirectory}/.config/waybar/config-sway.jsonc -s ${config.home.homeDirectory}/.config/waybar/style-sway.css; fi'";
+              command = "${pkgs.bash}/bin/bash -lc 'if ${pkgs.procps}/bin/pgrep -x waybar >/dev/null 2>&1; then ${pkgs.procps}/bin/pkill -USR2 -x waybar; else exec ${pkgs.waybar}/bin/waybar -c ${config.home.homeDirectory}/.config/waybar/config-sway.jsonc -s ${config.home.homeDirectory}/.config/waybar/style-sway.css; fi'";
               always = true;
             }
             {
@@ -202,8 +200,7 @@ in
               "${mod}+Shift+r" = "exec swaymsg reload";
               "Ctrl+${mod}+r" = "restart";
               "${mod}+Shift+e" = "exec swaynag -t warning -m 'Exit Sway?' -b 'Yes, exit' 'swaymsg exit'";
-              "Ctrl+Shift+e" =
-                "exec swaynag -t warning -m 'Exit Sway?' -b 'Yes, exit' 'swaymsg exit'";
+              "Ctrl+Shift+e" = "exec swaynag -t warning -m 'Exit Sway?' -b 'Yes, exit' 'swaymsg exit'";
 
               # Session
               "${mod}+Shift+x" = "exec swaylock-pixelate";

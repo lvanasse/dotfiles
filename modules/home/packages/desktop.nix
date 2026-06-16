@@ -94,10 +94,12 @@
           nitrogen
 
           # Text helpers
-          (aspellWithDicts (dicts: with dicts; [
-            en
-            fr
-          ]))
+          (aspellWithDicts (
+            dicts: with dicts; [
+              en
+              fr
+            ]
+          ))
 
           # System tools
           wget

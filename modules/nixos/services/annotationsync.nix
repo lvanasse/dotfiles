@@ -8,42 +8,42 @@
       credentialsPath = "${appDataRoot}/webdav.env";
       listenAddress = "0.0.0.0:8085";
       startScript = pkgs.writeShellScript "annotationsync-webdav-start" ''
-        set -euo pipefail
+                set -euo pipefail
 
-        mkdir -p "${appDataRoot}" "${annotationsRoot}"
+                mkdir -p "${appDataRoot}" "${annotationsRoot}"
 
-        if [ ! -s "${credentialsPath}" ]; then
-          generate_password() {
-            local password
-            while true; do
-              password="$(${pkgs.coreutils}/bin/head -c 48 /dev/urandom \
-                | ${pkgs.coreutils}/bin/base64 \
-                | ${pkgs.coreutils}/bin/tr -dc 'A-Za-z0-9' \
-                | ${pkgs.coreutils}/bin/head -c 24)"
-              if [ "''${#password}" -ge 24 ]; then
-                printf '%s' "$password"
-                return 0
-              fi
-            done
-          }
+                if [ ! -s "${credentialsPath}" ]; then
+                  generate_password() {
+                    local password
+                    while true; do
+                      password="$(${pkgs.coreutils}/bin/head -c 48 /dev/urandom \
+                        | ${pkgs.coreutils}/bin/base64 \
+                        | ${pkgs.coreutils}/bin/tr -dc 'A-Za-z0-9' \
+                        | ${pkgs.coreutils}/bin/head -c 24)"
+                      if [ "''${#password}" -ge 24 ]; then
+                        printf '%s' "$password"
+                        return 0
+                      fi
+                    done
+                  }
 
-          umask 077
-          cat > "${credentialsPath}" <<EOF
-ANNOTATIONSYNC_WEBDAV_USER=annotationsync
-ANNOTATIONSYNC_WEBDAV_PASS=$(generate_password)
-EOF
-        fi
+                  umask 077
+                  cat > "${credentialsPath}" <<EOF
+        ANNOTATIONSYNC_WEBDAV_USER=annotationsync
+        ANNOTATIONSYNC_WEBDAV_PASS=$(generate_password)
+        EOF
+                fi
 
-        set -a
-        . "${credentialsPath}"
-        set +a
+                set -a
+                . "${credentialsPath}"
+                set +a
 
-        export RCLONE_CONFIG=/dev/null
+                export RCLONE_CONFIG=/dev/null
 
-        exec ${pkgs.rclone}/bin/rclone serve webdav "${annotationsRoot}" \
-          --addr "${listenAddress}" \
-          --user "$ANNOTATIONSYNC_WEBDAV_USER" \
-          --pass "$ANNOTATIONSYNC_WEBDAV_PASS"
+                exec ${pkgs.rclone}/bin/rclone serve webdav "${annotationsRoot}" \
+                  --addr "${listenAddress}" \
+                  --user "$ANNOTATIONSYNC_WEBDAV_USER" \
+                  --pass "$ANNOTATIONSYNC_WEBDAV_PASS"
       '';
     in
     {

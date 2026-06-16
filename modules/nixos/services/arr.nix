@@ -455,15 +455,23 @@ in
             child.wait_with_output()
         }
       '';
-      qBittorrentAlwaysSeed = pkgs.runCommand "qbittorrent-always-seed" { nativeBuildInputs = [ pkgs.rustc pkgs.stdenv.cc ]; } ''
-        mkdir -p "$out/bin"
-        cp ${qBittorrentAlwaysSeedSource} qbittorrent-always-seed.rs
-        ${pkgs.rustc}/bin/rustc \
-          --edition=2021 \
-          -C opt-level=2 \
-          qbittorrent-always-seed.rs \
-          -o "$out/bin/qbittorrent-always-seed"
-      '';
+      qBittorrentAlwaysSeed =
+        pkgs.runCommand "qbittorrent-always-seed"
+          {
+            nativeBuildInputs = [
+              pkgs.rustc
+              pkgs.stdenv.cc
+            ];
+          }
+          ''
+            mkdir -p "$out/bin"
+            cp ${qBittorrentAlwaysSeedSource} qbittorrent-always-seed.rs
+            ${pkgs.rustc}/bin/rustc \
+              --edition=2021 \
+              -C opt-level=2 \
+              qbittorrent-always-seed.rs \
+              -o "$out/bin/qbittorrent-always-seed"
+          '';
     in
     {
       systemd.tmpfiles.rules = [

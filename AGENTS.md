@@ -5,10 +5,12 @@
 This repository uses a flake-based NixOS/Home Manager setup with `flake-parts` and `import-tree`.
 
 Dendritic layout:
+
 - `modules/` contains reusable modules that self-register under `flake.modules.*`.
 - `hosts/` contains host-specific configs that are explicitly registered in `hosts/default.nix`.
 
 Module naming patterns:
+
 - `profile.*` for bundles (for example `profile.workstation`, `profile.server`)
 - `desktop.*` for desktop stacks
 - `services.*` for services
@@ -51,13 +53,15 @@ Module naming patterns:
 ## Adding Hosts and Services
 
 Adding a host:
+
 1. Create `hosts/<hostname>/` with `<hostname>.nix`, `home.nix`, and generated `hardware-configuration.nix`.
-2. Register it in `hosts/default.nix` under both host matrix and `flake.modules.nixos/homeManager."host.<hostname>"`.
+1. Register it in `hosts/default.nix` under both host matrix and `flake.modules.nixos/homeManager."host.<hostname>"`.
 
 Adding a service module:
+
 1. Create `modules/nixos/services/<service>.nix`.
-2. Register as `flake.modules.nixos."services.<service>"`.
-3. Include it from the relevant profile module.
+1. Register as `flake.modules.nixos."services.<service>"`.
+1. Include it from the relevant profile module.
 
 ## Commit Guidelines
 

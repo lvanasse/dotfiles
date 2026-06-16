@@ -4,7 +4,12 @@ let
 in
 {
   flake.modules.nixos."services.linkwarden" =
-    { config, lib, pkgs, ... }:
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
       hasLinkwardenEnv = builtins.pathExists linkwardenEnvAge;
       appDataRoot = "/mnt/data3/appdata/linkwarden";
@@ -72,16 +77,15 @@ in
           "linkwarden-postgres"
           "linkwarden-meilisearch"
         ];
-        environment =
-          {
-            MEILI_HOST = "http://linkwarden-meilisearch:7700";
-            NEXTAUTH_URL = "https://linkwarden.ludovicvanasse.com/api/v1/auth";
-          }
-          // lib.optionalAttrs (!hasLinkwardenEnv) {
-            DATABASE_URL = "postgresql://postgres@linkwarden-postgres:5432/postgres";
-            NEXTAUTH_SECRET = defaultNextAuthSecret;
-            MEILI_MASTER_KEY = defaultMeiliKey;
-          };
+        environment = {
+          MEILI_HOST = "http://linkwarden-meilisearch:7700";
+          NEXTAUTH_URL = "https://linkwarden.ludovicvanasse.com/api/v1/auth";
+        }
+        // lib.optionalAttrs (!hasLinkwardenEnv) {
+          DATABASE_URL = "postgresql://postgres@linkwarden-postgres:5432/postgres";
+          NEXTAUTH_SECRET = defaultNextAuthSecret;
+          MEILI_MASTER_KEY = defaultMeiliKey;
+        };
         environmentFiles = lib.optional hasLinkwardenEnv config.age.secrets."linkwarden-env".path;
         volumes = [ "${appDataRoot}/data:/data/data" ];
         ports = [ "3000:3000" ];

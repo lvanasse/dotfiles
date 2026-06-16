@@ -11,7 +11,8 @@ in
       hasVaultwardenEnvAge = builtins.pathExists vaultwardenEnvAge;
       hasVaultwardenEnvPlainRepo = builtins.pathExists vaultwardenEnvPlainRepo;
       hasVaultwardenEnvPlainOverride = builtins.pathExists vaultwardenEnvPlainOverride;
-      hasVaultwardenEnv = hasVaultwardenEnvAge || hasVaultwardenEnvPlainRepo || hasVaultwardenEnvPlainOverride;
+      hasVaultwardenEnv =
+        hasVaultwardenEnvAge || hasVaultwardenEnvPlainRepo || hasVaultwardenEnvPlainOverride;
       vaultwardenEnvPath =
         if hasVaultwardenEnvAge then
           config.age.secrets."vaultwarden-env".path

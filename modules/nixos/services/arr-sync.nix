@@ -1,4 +1,4 @@
-{ config, inputs, lib, pkgs, ... }:
+{ inputs, lib, ... }:
 let
   arrSecretsAge = "${inputs.secrets}/server/arr-secrets.yml.age";
   arrSecretsPlainRepo = "${inputs.secrets}/server/arr-secrets.yml";
@@ -192,10 +192,7 @@ in
     { config, pkgs, ... }:
     let
       secretsPath =
-        if hasAgeSecrets then
-          config.age.secrets."arr-secrets".path
-        else
-          "/etc/arr-secrets.yml";
+        if hasAgeSecrets then config.age.secrets."arr-secrets".path else "/etc/arr-secrets.yml";
     in
     {
       system.activationScripts.arrSecretsPathCleanup.text = ''
@@ -215,11 +212,7 @@ in
       };
 
       environment.etc."arr-secrets.yml" = lib.mkIf hasPlainSecrets {
-        source =
-          if hasPlainSecretsRepo then
-            arrSecretsPlainRepo
-          else
-            arrSecretsPlainOverride;
+        source = if hasPlainSecretsRepo then arrSecretsPlainRepo else arrSecretsPlainOverride;
         mode = "0400";
       };
 

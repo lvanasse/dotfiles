@@ -3,8 +3,9 @@
   flake.modules.nixos."services.audiobookshelf" =
     { pkgs, ... }:
     let
-      appDataRoot = "/mnt/data3/appdata/audiobookshelf";
+      appDataRoot = "/mnt/ssd/appdata/docker/audiobookshelf";
       audiobookLibraryRoot = "/mnt/storage/data/media/audiobooks";
+      podcastLibraryRoot = "/mnt/storage/data/media/podcasts";
       normalizeSingleFileAudiobooks = pkgs.writeShellScript "normalize-single-file-audiobooks" ''
         set -euo pipefail
 
@@ -143,6 +144,8 @@
         "d ${appDataRoot}/metadata 0775 99 100 -"
         "d ${audiobookLibraryRoot} 0775 99 100 -"
         "z ${audiobookLibraryRoot} 0775 99 100 -"
+        "d ${podcastLibraryRoot} 0775 99 100 -"
+        "z ${podcastLibraryRoot} 0775 99 100 -"
       ];
 
       virtualisation.oci-containers.containers.audiobookshelf = {
@@ -152,6 +155,7 @@
         };
         volumes = [
           "${audiobookLibraryRoot}:/audiobooks"
+          "${podcastLibraryRoot}:/podcasts"
           "${appDataRoot}/metadata:/metadata"
           "${appDataRoot}/config:/config"
         ];
@@ -164,13 +168,13 @@
 
       systemd.services.docker-audiobookshelf = {
         requires = [
-          "mnt-data3.mount"
+          "mnt-ssd.mount"
           "mnt-storage.mount"
           "audiobookshelf-normalize-single-file-books.service"
         ];
         wants = [ "audiobookshelf-normalize-single-file-books-watch.service" ];
         after = [
-          "mnt-data3.mount"
+          "mnt-ssd.mount"
           "mnt-storage.mount"
           "audiobookshelf-normalize-single-file-books.service"
           "audiobookshelf-normalize-single-file-books-watch.service"

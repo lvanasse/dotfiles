@@ -27,7 +27,7 @@ in
           toString vaultwardenBackupEnvPlainOverride
         else
           toString vaultwardenBackupEnvPlainRepo;
-      sourceRoot = "/mnt/data3/appdata/vaultwarden";
+      sourceRoot = "/mnt/ssd/appdata/docker/vaultwarden";
       stateRoot = "/var/lib/vaultwarden-kdrive-backup";
       snapshotRoot = "${stateRoot}/snapshot";
       restoreRoot = "${stateRoot}/restore-test";
@@ -148,10 +148,10 @@ in
       systemd.services.restic-backups-vaultwarden-kdrive = lib.mkIf hasVaultwardenBackupEnv {
         environment.RCLONE_CONFIG = rcloneConfigPath;
         requires = [
-          "mnt-data3.mount"
+          "mnt-ssd.mount"
         ];
         after = [
-          "mnt-data3.mount"
+          "mnt-ssd.mount"
         ];
         postStop = lib.mkAfter (updateStatusScript "backup");
         path = with pkgs; [
@@ -167,11 +167,11 @@ in
       systemd.services.vaultwarden-kdrive-restore-test = lib.mkIf hasVaultwardenBackupEnv {
         description = "Weekly Vaultwarden restore smoke test";
         after = [
-          "mnt-data3.mount"
+          "mnt-ssd.mount"
           "network-online.target"
         ];
         requires = [
-          "mnt-data3.mount"
+          "mnt-ssd.mount"
         ];
         wants = [ "network-online.target" ];
         path = with pkgs; [

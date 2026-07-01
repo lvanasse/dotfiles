@@ -3,8 +3,8 @@
   flake.modules.nixos."services.ebooks" =
     { pkgs, ... }:
     let
-      appDataRoot = "/mnt/data3/appdata/calibre-web-automated";
-      ingestRoot = "/mnt/storage/data/books/ingest";
+      appDataRoot = "/mnt/ssd/appdata/docker/cwa";
+      ingestRoot = "/mnt/ssd/scratch/imports/cwa";
       libraryRoot = "/mnt/storage/data/books/library";
     in
     {
@@ -30,6 +30,7 @@
         };
         volumes = [
           "${appDataRoot}/config:/config"
+          "${ingestRoot}:/import"
           "${ingestRoot}:/cwa-book-ingest"
           "${libraryRoot}:/calibre-library"
           "${appDataRoot}/plugins:/config/.config/calibre/plugins"
@@ -40,11 +41,11 @@
 
       systemd.services.docker-calibre-web-automated = {
         requires = [
-          "mnt-data3.mount"
+          "mnt-ssd.mount"
           "mnt-storage.mount"
         ];
         after = [
-          "mnt-data3.mount"
+          "mnt-ssd.mount"
           "mnt-storage.mount"
         ];
       };
@@ -70,7 +71,7 @@
         script = ''
           set -euo pipefail
 
-          db="/mnt/data3/appdata/calibre-web-automated/config/app.db"
+          db="${appDataRoot}/config/app.db"
 
           if [ ! -f "$db" ]; then
             echo "[cwa-kosync-enable] app.db not found at $db; skipping"

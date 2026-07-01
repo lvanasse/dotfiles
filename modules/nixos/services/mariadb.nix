@@ -7,6 +7,7 @@ in
     { config, lib, ... }:
     let
       hasMariaDbEnv = builtins.pathExists mariadbEnvAge;
+      appDataRoot = "/mnt/ssd/appdata/docker/mariadb";
     in
     {
       age.secrets = lib.mkIf hasMariaDbEnv {
@@ -34,9 +35,18 @@ in
         };
         environmentFiles = lib.optional hasMariaDbEnv config.age.secrets."mariadb-env".path;
         volumes = [
-          "/mnt/storage/appdata/mariadb:/config"
+          "${appDataRoot}:/config"
         ];
         ports = [ "3306:3306" ];
+      };
+
+      systemd.tmpfiles.rules = [
+        "d ${appDataRoot} 0775 99 100 -"
+      ];
+
+      systemd.services.docker-mariadb = {
+        requires = [ "mnt-ssd.mount" ];
+        after = [ "mnt-ssd.mount" ];
       };
 
       networking.firewall.allowedTCPPorts = [ 3306 ];

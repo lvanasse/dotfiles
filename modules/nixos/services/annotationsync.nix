@@ -3,7 +3,7 @@
   flake.modules.nixos."services.annotationsync" =
     { pkgs, ... }:
     let
-      appDataRoot = "/mnt/data3/appdata/annotationsync";
+      appDataRoot = "/mnt/ssd/appdata/docker/annotationsync";
       annotationsRoot = "/mnt/storage/data/books/annotationsync";
       credentialsPath = "${appDataRoot}/webdav.env";
       listenAddress = "0.0.0.0:8085";
@@ -57,11 +57,11 @@
         description = "AnnotationSync WebDAV endpoint";
         wantedBy = [ "multi-user.target" ];
         requires = [
-          "mnt-data3.mount"
+          "mnt-ssd.mount"
           "mnt-storage.mount"
         ];
         after = [
-          "mnt-data3.mount"
+          "mnt-ssd.mount"
           "mnt-storage.mount"
           "network.target"
         ];

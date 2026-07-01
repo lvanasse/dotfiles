@@ -11,7 +11,7 @@
           UMASK = "022";
         };
         volumes = [
-          "/mnt/data3/appdata/nextcloud:/config"
+          "/mnt/ssd/appdata/docker/nextcloud:/config"
           "/mnt/storage/nextcloud:/data"
         ];
         ports = [ "444:443" ];
@@ -19,11 +19,11 @@
 
       systemd.services.docker-nextcloud = {
         requires = [
-          "mnt-data3.mount"
+          "mnt-ssd.mount"
           "mnt-storage.mount"
         ];
         after = [
-          "mnt-data3.mount"
+          "mnt-ssd.mount"
           "mnt-storage.mount"
         ];
       };

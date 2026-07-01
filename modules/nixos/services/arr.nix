@@ -14,13 +14,13 @@ let
     "docker-calibre"
   ];
   appDataRoots = {
-    sonarr = "/mnt/data3/appdata/sonarr";
-    radarr = "/mnt/data3/appdata/radarr";
-    bazarr = "/mnt/data3/appdata/bazarr";
-    lidarr = "/mnt/data3/appdata/lidarr";
-    prowlarr = "/mnt/data3/appdata/prowlarr";
-    jellyseerr = "/mnt/data3/appdata/jellyseerr";
-    qbittorrent = "/mnt/storage/appdata/qbittorrent";
+    sonarr = "/mnt/ssd/appdata/docker/sonarr";
+    radarr = "/mnt/ssd/appdata/docker/radarr";
+    bazarr = "/mnt/ssd/appdata/docker/bazarr";
+    lidarr = "/mnt/ssd/appdata/docker/lidarr";
+    prowlarr = "/mnt/ssd/appdata/docker/prowlarr";
+    jellyseerr = "/mnt/ssd/appdata/docker/jellyseerr";
+    qbittorrent = "/mnt/ssd/appdata/docker/qbittorrent";
   };
 in
 {
@@ -41,8 +41,8 @@ in
           "/etc/arr-secrets.yml";
       qBittorrentBooksCategoryPath = "/downloads/books";
       qBittorrentAudiobookCategoryPath = "/downloads/audiobook";
-      qBittorrentConfigPath = "/mnt/storage/appdata/qbittorrent/qBittorrent/qBittorrent.conf";
-      qBittorrentCategoriesPath = "/mnt/storage/appdata/qbittorrent/qBittorrent/categories.json";
+      qBittorrentConfigPath = "${appDataRoots.qbittorrent}/qBittorrent/qBittorrent.conf";
+      qBittorrentCategoriesPath = "${appDataRoots.qbittorrent}/qBittorrent/categories.json";
       qBittorrentMamConfig = pkgs.writeText "qbittorrent-mam-config.py" ''
         import configparser
         import json
@@ -482,8 +482,8 @@ in
         "d ${appDataRoots.prowlarr} 0775 99 100 -"
         "d ${appDataRoots.jellyseerr} 0775 99 100 -"
         "d ${appDataRoots.qbittorrent} 0775 99 100 -"
-        "d /mnt/storage/data/torrents/books 0775 99 100 -"
-        "d /mnt/storage/data/torrents/audiobook 0775 99 100 -"
+        "d /mnt/ssd/scratch/downloads/books 0775 99 100 -"
+        "d /mnt/ssd/scratch/downloads/audiobook 0775 99 100 -"
       ];
 
       # Sonarr - TV shows
@@ -495,9 +495,9 @@ in
           UMASK = "022";
         };
         volumes = [
-          "/mnt/data3/appdata/sonarr:/config"
+          "${appDataRoots.sonarr}:/config"
           "/mnt/storage/data:/data"
-          "/mnt/storage/data/torrents:/downloads"
+          "/mnt/ssd/scratch/downloads:/downloads"
         ];
         ports = [ "8989:8989" ];
       };
@@ -511,9 +511,9 @@ in
           UMASK = "022";
         };
         volumes = [
-          "/mnt/data3/appdata/radarr:/config"
+          "${appDataRoots.radarr}:/config"
           "/mnt/storage/data:/data"
-          "/mnt/storage/data/torrents:/downloads"
+          "/mnt/ssd/scratch/downloads:/downloads"
         ];
         ports = [ "7878:7878" ];
       };
@@ -527,7 +527,7 @@ in
           UMASK = "022";
         };
         volumes = [
-          "/mnt/data3/appdata/bazarr:/config"
+          "${appDataRoots.bazarr}:/config"
           "/mnt/storage/data:/data"
         ];
         ports = [ "6767:6767" ];
@@ -542,9 +542,9 @@ in
           UMASK = "022";
         };
         volumes = [
-          "/mnt/data3/appdata/lidarr:/config"
+          "${appDataRoots.lidarr}:/config"
           "/mnt/storage/data:/data"
-          "/mnt/storage/data/torrents:/downloads"
+          "/mnt/ssd/scratch/downloads:/downloads"
         ];
         ports = [ "8686:8686" ];
       };
@@ -558,7 +558,7 @@ in
           UMASK = "022";
         };
         volumes = [
-          "/mnt/data3/appdata/prowlarr:/config"
+          "${appDataRoots.prowlarr}:/config"
         ];
         ports = [ "9696:9696" ];
       };
@@ -573,7 +573,7 @@ in
           UMASK = "022";
         };
         volumes = [
-          "/mnt/data3/appdata/jellyseerr:/app/config"
+          "${appDataRoots.jellyseerr}:/app/config"
         ];
         ports = [ "5055:5055" ];
       };
@@ -589,10 +589,9 @@ in
           TORRENTING_PORT = "59793";
         };
         volumes = [
-          "/mnt/storage/appdata/qbittorrent:/config"
+          "${appDataRoots.qbittorrent}:/config"
           "/mnt/storage/data:/data"
-          "/mnt/storage/data/torrents:/data/torrents"
-          "/mnt/storage/data/torrents:/downloads"
+          "/mnt/ssd/scratch/downloads:/downloads"
         ];
         extraOptions = [
           "--label=com.centurylinklabs.watchtower.enable=false"
@@ -636,11 +635,11 @@ in
       systemd.services =
         (lib.genAttrs storageBackedUnits (_: {
           requires = [
-            "mnt-data3.mount"
+            "mnt-ssd.mount"
             "mnt-storage.mount"
           ];
           after = [
-            "mnt-data3.mount"
+            "mnt-ssd.mount"
             "mnt-storage.mount"
           ];
         }))

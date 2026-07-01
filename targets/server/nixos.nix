@@ -5,6 +5,7 @@
     flakeModules.nixos."services.ssh"
     flakeModules.nixos."services.ssh-keys"
     flakeModules.nixos."services.docker"
+    flakeModules.nixos."services.ssd-fast"
     flakeModules.nixos."services.snapraid"
     flakeModules.nixos."services.mergerfs"
     flakeModules.nixos."services.jellyfin"

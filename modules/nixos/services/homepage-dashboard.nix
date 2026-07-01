@@ -86,6 +86,12 @@
               }
               {
                 resources = {
+                  label = "SSD";
+                  disk = "/mnt/ssd";
+                };
+              }
+              {
+                resources = {
                   label = "Data1";
                   disk = "/mnt/data1";
                 };

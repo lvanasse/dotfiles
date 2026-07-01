@@ -41,21 +41,21 @@ in
         };
         environmentFiles = lib.optional hasVaultwardenEnv vaultwardenEnvPath;
         volumes = [
-          "/mnt/data3/appdata/vaultwarden:/data"
+          "/mnt/ssd/appdata/docker/vaultwarden:/data"
         ];
         ports = [ "4743:80" ];
       };
 
       systemd.tmpfiles.rules = [
-        "d /mnt/data3/appdata/vaultwarden 0750 root root -"
+        "d /mnt/ssd/appdata/docker/vaultwarden 0750 root root -"
       ];
 
       systemd.services.docker-vaultwarden = {
         requires = [
-          "mnt-data3.mount"
+          "mnt-ssd.mount"
         ];
         after = [
-          "mnt-data3.mount"
+          "mnt-ssd.mount"
         ];
       };
 

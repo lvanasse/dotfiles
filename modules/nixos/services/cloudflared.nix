@@ -34,7 +34,7 @@ in
       };
 
       systemd.tmpfiles.rules = [
-        "d /mnt/data3/appdata/cloudflared 0755 root root -"
+        "d /mnt/ssd/appdata/docker/cloudflared 0755 root root -"
       ];
 
       virtualisation.oci-containers.containers.cloudflared = {
@@ -51,7 +51,7 @@ in
         };
         environmentFiles = lib.optional hasCloudflaredEnv cloudflaredEnvPath;
         volumes = [
-          "/mnt/data3/appdata/cloudflared:/appdata"
+          "/mnt/ssd/appdata/docker/cloudflared:/appdata"
         ];
         ports = [ "46495:46495" ];
       };
@@ -59,11 +59,11 @@ in
       systemd.services.docker-cloudflared = {
         requires = [
           "docker.service"
-          "mnt-data3.mount"
+          "mnt-ssd.mount"
         ];
         after = [
           "docker.service"
-          "mnt-data3.mount"
+          "mnt-ssd.mount"
         ];
       };
 

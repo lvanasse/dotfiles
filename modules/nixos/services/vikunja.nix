@@ -24,7 +24,7 @@ in
           toString vikunjaEnvPlainOverride
         else
           toString vikunjaEnvPlainRepo;
-      appDataRoot = "/mnt/data3/appdata/vikunja";
+      appDataRoot = "/mnt/ssd/appdata/docker/vikunja";
       defaultDbPassword = builtins.hashString "sha256" "vikunja-db-password";
       defaultJwtSecret = builtins.hashString "sha256" "vikunja-jwt-secret";
     in
@@ -105,21 +105,21 @@ in
         docker-vikunja-postgres = {
           requires = [
             "docker-network-vikunja.service"
-            "mnt-data3.mount"
+            "mnt-ssd.mount"
           ];
           after = [
             "docker-network-vikunja.service"
-            "mnt-data3.mount"
+            "mnt-ssd.mount"
           ];
         };
         docker-vikunja = {
           requires = [
             "docker-network-vikunja.service"
-            "mnt-data3.mount"
+            "mnt-ssd.mount"
           ];
           after = [
             "docker-network-vikunja.service"
-            "mnt-data3.mount"
+            "mnt-ssd.mount"
           ];
           startLimitIntervalSec = 0;
           serviceConfig = {

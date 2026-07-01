@@ -17,12 +17,12 @@ in
           toString arrSecretsPlainOverride
         else
           toString arrSecretsPlainRepo;
-      appDataRoot = "/mnt/data3/appdata/shelfmark";
-      booksIngestRoot = "/mnt/storage/data/books/ingest";
+      appDataRoot = "/mnt/ssd/appdata/docker/shelfmark";
+      booksIngestRoot = "/mnt/ssd/scratch/imports/cwa";
       audiobookLibraryRoot = "/mnt/storage/data/media/audiobooks";
-      torrentsRoot = "/mnt/storage/data/torrents";
-      cwaConfigRoot = "/mnt/data3/appdata/calibre-web-automated/config";
-      prowlarrConfigPath = "/mnt/data3/appdata/prowlarr/config.xml";
+      torrentsRoot = "/mnt/ssd/scratch/downloads";
+      cwaConfigRoot = "/mnt/ssd/appdata/docker/cwa/config";
+      prowlarrConfigPath = "/mnt/ssd/appdata/docker/prowlarr/config.xml";
       shelfmarkEnvPath = "/run/shelfmark/shelfmark.env";
       pythonWithYaml = pkgs.python3.withPackages (ps: [ ps.pyyaml ]);
     in
@@ -35,11 +35,11 @@ in
       systemd.services.shelfmark-env = {
         description = "Generate Shelfmark runtime environment";
         requires = [
-          "mnt-data3.mount"
+          "mnt-ssd.mount"
           "mnt-storage.mount"
         ];
         after = [
-          "mnt-data3.mount"
+          "mnt-ssd.mount"
           "mnt-storage.mount"
         ];
         serviceConfig = {
@@ -138,12 +138,12 @@ in
 
       systemd.services.docker-shelfmark = {
         requires = [
-          "mnt-data3.mount"
+          "mnt-ssd.mount"
           "mnt-storage.mount"
           "shelfmark-env.service"
         ];
         after = [
-          "mnt-data3.mount"
+          "mnt-ssd.mount"
           "mnt-storage.mount"
           "shelfmark-env.service"
         ];

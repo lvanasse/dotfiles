@@ -7,7 +7,7 @@ in
     { pkgs, ... }:
     let
       hasHeadplaneConfigOverride = builtins.pathExists headplaneConfigOverride;
-      appDataRoot = "/mnt/data3/appdata/headplane";
+      appDataRoot = "/mnt/ssd/appdata/docker/headplane";
       defaultCookieSecret = builtins.substring 0 32 (
         builtins.hashString "sha256" "headplane-cookie-secret"
       );
@@ -39,8 +39,8 @@ in
       };
 
       systemd.services.docker-headplane = {
-        requires = [ "mnt-data3.mount" ];
-        after = [ "mnt-data3.mount" ];
+        requires = [ "mnt-ssd.mount" ];
+        after = [ "mnt-ssd.mount" ];
       };
 
       networking.firewall.allowedTCPPorts = [ 3001 ];

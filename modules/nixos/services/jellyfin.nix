@@ -2,6 +2,13 @@
 {
   flake.modules.nixos."services.jellyfin" =
     { ... }:
+    let
+      appDataRoot = "/mnt/ssd/appdata/docker/jellyfin";
+      transcodesRoot = "/mnt/ssd/scratch/transcodes/jellyfin";
+      hotMediaRoot = "/mnt/ssd/scratch/hot-media";
+      moviesRoot = "/mnt/storage/data/media/movies";
+      showsRoot = "/mnt/storage/data/media/tv";
+    in
     {
       virtualisation.oci-containers.containers.jellyfin = {
         image = "lscr.io/linuxserver/jellyfin:latest";
@@ -12,8 +19,13 @@
           JELLYFIN_PublishedServerUrl = "https://jellyfin.ludovicvanasse.com";
         };
         volumes = [
-          "/mnt/data3/appdata/jellyfin:/config"
+          "${appDataRoot}/config:/config"
+          "${appDataRoot}/cache:/cache"
+          "${transcodesRoot}:/transcodes"
           "/mnt/storage/data:/data"
+          "${moviesRoot}:/media/Movies:ro"
+          "${showsRoot}:/media/Shows:ro"
+          "${hotMediaRoot}:/hot-media:ro"
         ];
         ports = [
           "8096:8096"
@@ -34,11 +46,11 @@
 
       systemd.services.docker-jellyfin = {
         requires = [
-          "mnt-data3.mount"
+          "mnt-ssd.mount"
           "mnt-storage.mount"
         ];
         after = [
-          "mnt-data3.mount"
+          "mnt-ssd.mount"
           "mnt-storage.mount"
         ];
       };

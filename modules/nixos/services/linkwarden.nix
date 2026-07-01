@@ -12,7 +12,7 @@ in
     }:
     let
       hasLinkwardenEnv = builtins.pathExists linkwardenEnvAge;
-      appDataRoot = "/mnt/data3/appdata/linkwarden";
+      appDataRoot = "/mnt/ssd/appdata/docker/linkwarden";
       defaultNextAuthSecret = builtins.hashString "sha256" "linkwarden-nextauth-secret";
       defaultMeiliKey = builtins.hashString "sha256" "linkwarden-meili-key";
     in
@@ -99,31 +99,31 @@ in
         docker-linkwarden-postgres = {
           requires = [
             "docker-network-linkwarden.service"
-            "mnt-data3.mount"
+            "mnt-ssd.mount"
           ];
           after = [
             "docker-network-linkwarden.service"
-            "mnt-data3.mount"
+            "mnt-ssd.mount"
           ];
         };
         docker-linkwarden-meilisearch = {
           requires = [
             "docker-network-linkwarden.service"
-            "mnt-data3.mount"
+            "mnt-ssd.mount"
           ];
           after = [
             "docker-network-linkwarden.service"
-            "mnt-data3.mount"
+            "mnt-ssd.mount"
           ];
         };
         docker-linkwarden = {
           requires = [
             "docker-network-linkwarden.service"
-            "mnt-data3.mount"
+            "mnt-ssd.mount"
           ];
           after = [
             "docker-network-linkwarden.service"
-            "mnt-data3.mount"
+            "mnt-ssd.mount"
           ];
         };
       };

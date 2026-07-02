@@ -88,5 +88,21 @@
       # Ensure the wallpaper file is present in the user's home
       home.file.".local/share/wallpapers/1458678242783.jpg".source =
         ../../../wallpapers/1458678242783.jpg;
+
+      systemd.user.services.plasma-session-environment = {
+        Unit = {
+          Description = "Refresh Plasma session environment";
+          PartOf = [ "plasma-workspace.target" ];
+          Before = [ "xdg-desktop-autostart.target" ];
+        };
+
+        Service = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+          ExecStart = "${pkgs.bash}/bin/bash -lc '${pkgs.systemd}/bin/systemctl --user stop sway-session.target 2>/dev/null || true; ${pkgs.systemd}/bin/systemctl --user unset-environment SWAYSOCK I3SOCK; ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd PATH XDG_DATA_DIRS XDG_CONFIG_DIRS DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE DESKTOP_SESSION KDE_FULL_SESSION KDE_SESSION_VERSION; ${pkgs.systemd}/bin/systemctl --user restart xdg-desktop-portal.service 2>/dev/null || true'";
+        };
+
+        Install.WantedBy = [ "plasma-workspace.target" ];
+      };
     };
 }

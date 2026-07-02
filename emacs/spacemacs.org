@@ -1210,7 +1210,7 @@ Format-on-save is enabled via =nixfmt=.
           (:expr ,(format "import <nixpkgs> { system = \"%s\"; }"
                           (my/nixd--nix-system)))
          :formatting
-         (:command ["nixfmt"])
+         (:command ["nixfmt" "-"])
          :options
          (:nixos
           (:expr ,(my/nixd-flake-expr root "nixosConfigurations.pc.options"))

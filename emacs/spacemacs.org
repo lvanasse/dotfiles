@@ -1215,12 +1215,11 @@ Format-on-save is enabled via =nixfmt=.
          :formatting
          (:command ["nixfmt" "-"])
          :options
+         ;; Keep nixd on concrete option trees that this flake actually exports.
          (:nixos
           (:expr ,(my/nixd-flake-expr root "nixosConfigurations.pc.options"))
           :home-manager
-          (:expr ,(my/nixd-flake-expr root "homeConfigurations.\"ludovic@pc\".options"))
-          :flake-parts
-          (:expr ,(my/nixd-flake-expr root "debug.options")))))))
+          (:expr ,(my/nixd-flake-expr root "homeConfigurations.\"ludovic@pc\".options")))))))
     (when (require 'eglot nil t)
       (eglot-ensure))
     (when (fboundp 'company-mode)
@@ -1229,8 +1228,8 @@ Format-on-save is enabled via =nixfmt=.
                 company-minimum-prefix-length 1)
     (when (boundp 'company-backends)
       (setq-local company-backends '(company-capf)))
-    (when (fboundp 'nix-format-before-save)
-      (add-hook 'before-save-hook #'nix-format-before-save nil t)))
+    (when (fboundp 'eglot-format-buffer)
+      (add-hook 'before-save-hook #'eglot-format-buffer nil t)))
 
   (use-package nix-mode
     :mode "\\.nix\\'"

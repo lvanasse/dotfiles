@@ -73,6 +73,8 @@ run_elisp "(progn
   (require 'core-keybindings)
   (dolist (entry '((\"SPC a a C\" . my/copilot-cli)
                    (\"SPC '\" . spacemacs/default-pop-shell)
+                   (\"SPC b t\" . multi-vterm)
+                   (\"SPC b T\" . multi-vterm-dedicated-toggle)
                    (\"SPC a e m\" . my/mu4e-open-inbox)
                    (\"SPC a e c\" . my/mu4e-compose-new)
                    (\"SPC a e l\" . my/open-mail-irc-layout)

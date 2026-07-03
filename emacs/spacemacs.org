@@ -33,9 +33,9 @@ The layers are organized as:
 - *Languages*: C/C++ (clangd), Claude Code, CMake, Docker, Markdown, Nix,
   PDF, Python (pyright), YAML, ERC (IRC), Rust, Shell
 - *Communication*: =mu4e= (email), =erc= (IRC), =slack=, =spotify=
-- *Tools*: =tabs= (centaur-tabs), =shell= (vterm), =shell-scripts=
+- *Tools*: =tabs= (centaur-tabs), =shell= (vterm/multi-vterm), =shell-scripts=
 
-Additional packages (=gruvbox-theme=, =vterm=, =clipetty=, etc.) are
+Additional packages (=gruvbox-theme=, =vterm=, =multi-vterm=, =clipetty=, etc.) are
 installed outside layers.  =forge= is excluded to avoid pulling in heavy
 Git forge dependencies.
 
@@ -86,7 +86,7 @@ Git forge dependencies.
      (shell :variables shell-default-shell 'vterm)
      shell-scripts
    )
-   dotspacemacs-additional-packages '(gruvbox-theme vterm clipetty all-the-icons nerd-icons counsel-spotify bitbake-ts-mode nix-mode json-mode org-caldav gcmh flyspell-lazy copilot-chat devcontainer visual-fill-column)
+   dotspacemacs-additional-packages '(gruvbox-theme vterm multi-vterm clipetty all-the-icons nerd-icons counsel-spotify bitbake-ts-mode nix-mode json-mode org-caldav gcmh flyspell-lazy copilot-chat devcontainer visual-fill-column)
    dotspacemacs-excluded-packages '(forge)))
 #+end_src
 
@@ -560,7 +560,7 @@ same Nerd Font mail glyphs as Waybar.
 ** Shell / vterm
 
 Detect the Fish shell from several candidate paths (Nix profile, system
-path) and configure vterm, multi-term, and the =$SHELL= environment
+path) and configure vterm, multi-vterm, multi-term, and the =$SHELL= environment
 variable.  Also redirect =M-x shell= to vterm so we never get a
 =TERM=dumb= buffer.
 
@@ -576,6 +576,7 @@ variable.  Also redirect =M-x shell= to vterm so we never get a
             explicit-shell-file-name fish
             vterm-shell fish
             vterm-max-scrollback 10000
+            multi-vterm-dedicated-window-height-percent 30
             multi-term-program fish)
       (setenv "SHELL" fish)))
 
@@ -647,7 +648,8 @@ AI tools, remote access, and the view prefix.
 #+begin_src emacs-lisp
   (spacemacs/set-leader-keys
     "'" 'spacemacs/default-pop-shell
-    "bt" 'vterm)
+    "bt" 'multi-vterm
+    "bT" 'multi-vterm-dedicated-toggle)
 
   (spacemacs/declare-prefix "b t" "terminal")
 
@@ -1132,6 +1134,7 @@ Markdown, and Dockerfiles.
   ;; Add Markdown detection
   (add-to-list 'auto-mode-alist '("\\.md\\'" . markdown-mode))
   (add-to-list 'auto-mode-alist '("\\.markdown\\'" . markdown-mode))
+  (setq markdown-command "__MARKDOWN_BIN__")
 
   ;; Markdown performance: gate expensive features on buffer size.
   (defun my/markdown-performance-setup ()

@@ -35,6 +35,7 @@ let
             "__MU_BIN__"
             "__ISYNC_BIN__"
             "__MSMTP_BIN__"
+            "__MARKDOWN_BIN__"
             "__SPACEMACS_STARTUP_BANNER__"
           ]
           [
@@ -44,6 +45,7 @@ let
             "${pkgs.mu}/bin/mu"
             "${pkgs.isync}/bin/mbsync"
             "${pkgs.msmtp}/bin/msmtp"
+            "${lib.getExe pkgs.discount}"
             "${spacemacsRoot}/spacemacs-home-buffer.jpeg"
           ]
           spacemacsTemplate;

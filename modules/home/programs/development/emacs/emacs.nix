@@ -95,6 +95,7 @@
             gcmh
             gruvbox-theme
             vterm
+            multi-vterm
             clipetty
             alert
             all-the-icons

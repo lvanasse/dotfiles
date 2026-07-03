@@ -88,7 +88,7 @@ run_elisp '(progn
     (dotspacemacs/user-init))
   (when (fboundp (quote dotspacemacs/user-config))
     (dotspacemacs/user-config))
-  (dolist (feature (quote (erc slack centaur-tabs all-the-icons nerd-icons markdown-mode dockerfile-mode nix-mode vterm)))
+  (dolist (feature (quote (erc slack centaur-tabs all-the-icons nerd-icons markdown-mode dockerfile-mode nix-mode vterm multi-vterm)))
     (unless (require feature nil t)
       (princ (format "missing feature: %S\n" feature))
       (kill-emacs 1))

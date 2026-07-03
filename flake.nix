@@ -54,7 +54,6 @@
       url = "github:nix-community/nix-vscode-extensions";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    nix-openclaw.url = "github:openclaw/nix-openclaw";
     llm-agents.url = "github:numtide/llm-agents.nix";
 
     # Additional package sources

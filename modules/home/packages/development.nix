@@ -26,6 +26,18 @@
           collection-latexextra
           ;
       };
+      nixfmtCompat = pkgs.writeShellScriptBin "nixfmt" ''
+        if [ "$#" -eq 0 ]; then
+          exec ${pkgs.nixfmt}/bin/nixfmt -
+        fi
+
+        exec ${pkgs.nixfmt}/bin/nixfmt "$@"
+      '';
+      clangDriverBins = pkgs.runCommandLocal "clang-driver-bins" { } ''
+        mkdir -p "$out/bin"
+        ln -s ${pkgs.clang}/bin/clang "$out/bin/clang"
+        ln -s ${pkgs.clang}/bin/clang++ "$out/bin/clang++"
+      '';
     in
     {
       # Development packages
@@ -43,10 +55,13 @@
           nixd
           act
           unstable.vscode
+          clangDriverBins
           clang-tools
           basedpyright
           python3
           bash-language-server
+          taplo
+          lua-language-server
           yaml-language-server
           cmake-language-server
           dockerfile-language-server
@@ -56,6 +71,8 @@
           shfmt
           yamllint
           bear
+          meson
+          ninja
 
           # Build tools
           gnumake
@@ -92,7 +109,7 @@
           (devcontainer.override { docker = docker_29; })
 
           # Nix tools
-          nixfmt
+          nixfmtCompat
 
           # Libraries
           ncurses

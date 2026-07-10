@@ -48,5 +48,17 @@
         ];
         settings.StartupWMClass = "vesktop";
       };
+
+      xdg.configFile."autostart/vesktop.desktop".text = ''
+        [Desktop Entry]
+        Type=Application
+        Name=Vesktop
+        Comment=Vesktop autostart
+        Exec=${config.home.homeDirectory}/.local/bin/vesktop --start-minimized
+        StartupNotify=false
+        Terminal=false
+        Icon=vesktop
+        Categories=Network;InstantMessaging;
+      '';
     };
 }

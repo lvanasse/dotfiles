@@ -138,6 +138,10 @@ in
       "$source_dir"/ "$target_dir"/
 
     chmod -R u+w "$target_dir" 2>/dev/null || true
+
+    mkdir -p "$target_dir/tree-sitter"
+    ln -sfn ${lib.escapeShellArg "${pkgs.tree-sitter-grammars.tree-sitter-bitbake}/parser"} \
+      "$target_dir/tree-sitter/libtree-sitter-bitbake.so"
   '';
 
   systemdUserServices.spacemacs = {

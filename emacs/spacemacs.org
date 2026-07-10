@@ -17,6 +17,7 @@ tangling, just as before.
 A comment header so that the generated file identifies its origin.
 
 #+begin_src emacs-lisp
+;; -*- lexical-binding: nil; -*-
 ;; Template rendered by modules/home/programs/development/emacs.nix.
 #+end_src
 
@@ -31,7 +32,8 @@ The layers are organized as:
 - *Completion*: =auto-completion= (with snippets), =spell-checking=,
   =syntax-checking=, =ivy=, =lsp=, =treemacs=
 - *Languages*: C/C++ (clangd), Claude Code, CMake, Docker, Markdown, Nix,
-  PDF, Python (pyright), YAML, ERC (IRC), Rust, Shell
+  PDF, Python (pyright), YAML, ERC (IRC), Rust, Shell, plus embedded-adjacent
+  file formats (TOML, Meson, Device Tree, Kconfig, Lua)
 - *Communication*: =mu4e= (email), =erc= (IRC), =slack=, =spotify=
 - *Tools*: =tabs= (centaur-tabs), =shell= (vterm/multi-vterm), =shell-scripts=
 
@@ -59,7 +61,7 @@ Git forge dependencies.
      lsp
      (treemacs :variables treemacs-use-follow-mode t)
      (c-c++ :variables c-c++-enable-clang-support t)
--    claude-code
+     claude-code
      cmake
      (docker :variables docker-dockerfile-backend 'lsp)
      (mu4e :variables
@@ -86,7 +88,7 @@ Git forge dependencies.
      (shell :variables shell-default-shell 'vterm)
      shell-scripts
    )
-   dotspacemacs-additional-packages '(gruvbox-theme vterm multi-vterm clipetty all-the-icons nerd-icons counsel-spotify bitbake-ts-mode nix-mode json-mode org-caldav gcmh flyspell-lazy copilot-chat devcontainer visual-fill-column)
+   dotspacemacs-additional-packages '(gruvbox-theme vterm multi-vterm clipetty all-the-icons nerd-icons counsel-spotify bitbake-ts-mode nix-mode json-mode toml-mode meson-mode dts-mode kconfig-mode lua-mode org-caldav gcmh flyspell-lazy copilot-chat devcontainer visual-fill-column)
    dotspacemacs-excluded-packages '(forge)))
 #+end_src
 
@@ -165,6 +167,9 @@ seamless appearance.
   ;; Use plist deserialization for lsp-mode (faster than hash-tables).
   (setenv "LSP_USE_PLISTS" "true")
   (setq lsp-use-plists t)
+  (when (boundp 'treesit-extra-load-path)
+    (add-to-list 'treesit-extra-load-path
+                 (expand-file-name "tree-sitter" user-emacs-directory)))
 
   ;; Startup and LSP defaults tuned for interactive work rather than cold-start demos.
   (setq gc-cons-threshold most-positive-fixnum
@@ -198,12 +203,49 @@ seamless appearance.
     (set-fringe-mode 4))
   (when (fboundp 'tab-bar-mode)
     (tab-bar-mode -1))
+  ;; Emacs 31 can leave these Gnus faces in a reverse inheritance chain before
+  ;; gruvbox loads.  Reset them immediately before every theme load so gruvbox
+  ;; can install its own non-cyclic inheritance.
+  (defun my/prepare-gruvbox-theme-faces (&rest _)
+    (dolist (face '(gnus-group-news-low gnus-group-news-low-empty))
+      (when (facep face)
+        (set-face-attribute face nil :inherit nil))))
+  (my/prepare-gruvbox-theme-faces)
+  (advice-add 'load-theme :before #'my/prepare-gruvbox-theme-faces)
   (when (boundp 'native-comp-async-report-warnings-errors)
     (setq native-comp-async-report-warnings-errors 'silent))
   (when (boundp 'comp-async-report-warnings-errors)
     (setq comp-async-report-warnings-errors 'silent))
+  ;; MELPA packages can be noisy under Emacs 31 while Spacemacs installs and
+  ;; byte/native-compiles them during startup.  Keep the startup frame focused
+  ;; on real load errors instead of third-party compiler lint.
+  (setq byte-compile-warnings nil)
+  (when (boundp 'native-comp-warning-on-missing-source)
+    (setq native-comp-warning-on-missing-source nil))
   (when (boundp 'warning-suppress-types)
     (add-to-list 'warning-suppress-types '(native-compiler)))
+  (when (boundp 'warning-suppress-log-types)
+    (add-to-list 'warning-suppress-log-types '(native-compiler)))
+  ;; Client frames can fall back to the transient ` *server*' buffer after
+  ;; killing the visited file, which leaves no Evil leader bindings. Replace
+  ;; that buffer with a normal scratch buffer in the same frame.
+  (defun my/server-buffer-fallback-to-scratch ()
+    (when (bound-and-true-p server-buffer-clients)
+      (let ((frame (selected-frame)))
+        (run-at-time
+         0 nil
+         (lambda (target-frame)
+           (when (frame-live-p target-frame)
+             (with-selected-frame target-frame
+               (let ((buffer (window-buffer (selected-window))))
+                 (when (equal (buffer-name buffer) " *server*")
+                   (switch-to-buffer (spacemacs//get-scratch-buffer-create)))))))
+         frame))))
+  (defun my/server-visit-setup-buffer-fallback ()
+    (when buffer-file-name
+      (add-hook 'kill-buffer-hook #'my/server-buffer-fallback-to-scratch nil t)))
+  (with-eval-after-load 'server
+    (add-hook 'server-visit-hook #'my/server-visit-setup-buffer-fallback))
   (add-to-list 'default-frame-alist '(internal-border-width . 0)))
 #+end_src
 
@@ -215,8 +257,9 @@ logical feature area.
 
 ** General settings
 
-Whitespace display (trailing whitespace and tab marks) and frame-title
-suppression for a cleaner tiling WM experience.
+Whitespace display (trailing whitespace and tab marks), frame-title
+suppression for a cleaner tiling WM experience, and a few embedded-focused
+mode associations that Spacemacs does not cover out of the box.
 
 #+begin_src emacs-lisp
 (defun dotspacemacs/user-config ()
@@ -1046,6 +1089,18 @@ survives normal narrow-window pruning.
                   :after #'my/restore-spacemacs-home-spaceline))
     (my/restore-spacemacs-home-spaceline))
 
+  (defun my/spaceline-safe-state-face ()
+    "Return a valid Spacemacs state face even when `evil-state' is nil."
+    (let* ((state (cond
+                   ((eq evil-state 'operator) evil-previous-state)
+                   ((symbolp evil-state) evil-state)
+                   (t 'normal)))
+           (face (intern (format "spacemacs-%s-face" (symbol-name state)))))
+      (cond
+       ((facep face) face)
+       ((facep 'spacemacs-normal-face) 'spacemacs-normal-face)
+       (t 'mode-line))))
+
   (defun my/apply-gruvbox-modeline ()
     "Apply gruvbox-dark-hard faces to the modeline.
 Do NOT rebuild the spaceline theme — let Spacemacs handle segments
@@ -1098,15 +1153,66 @@ Only override the face colours."
     (my/apply-gruvbox-modeline)
     (my/restore-spacemacs-home-spaceline))
 
+  (defun my/apply-gruvbox-which-key-faces (&rest _)
+    "Keep the SPC/Which-Key popup on the gruvbox-dark-hard palette."
+    (dolist (face '(which-key-key-face
+                    which-key-command-description-face
+                    which-key-group-description-face
+                    which-key-local-map-description-face
+                    which-key-note-face
+                    which-key-separator-face
+                    which-key-special-key-face
+                    which-key-highlighted-command-face
+                    which-key-docstring-face
+                    tooltip))
+      (when (facep face)
+        (set-face-attribute face nil :background "#1d2021")))
+    (when (facep 'which-key-key-face)
+      (set-face-attribute 'which-key-key-face nil
+                          :foreground "#d3869b" :weight 'bold))
+    (when (facep 'which-key-special-key-face)
+      (set-face-attribute 'which-key-special-key-face nil
+                          :foreground "#d3869b" :weight 'bold))
+    (when (facep 'which-key-command-description-face)
+      (set-face-attribute 'which-key-command-description-face nil
+                          :foreground "#fabd2f"))
+    (when (facep 'which-key-local-map-description-face)
+      (set-face-attribute 'which-key-local-map-description-face nil
+                          :foreground "#fabd2f"))
+    (when (facep 'which-key-group-description-face)
+      (set-face-attribute 'which-key-group-description-face nil
+                          :foreground "#fb4934" :weight 'bold))
+    (when (facep 'which-key-separator-face)
+      (set-face-attribute 'which-key-separator-face nil
+                          :foreground "#7c6f64"))
+    (when (facep 'which-key-note-face)
+      (set-face-attribute 'which-key-note-face nil
+                          :foreground "#928374"))
+    (when (facep 'which-key-docstring-face)
+      (set-face-attribute 'which-key-docstring-face nil
+                          :foreground "#928374"))
+    (when (facep 'which-key-highlighted-command-face)
+      (set-face-attribute 'which-key-highlighted-command-face nil
+                          :background "#3c3836" :foreground "#fabd2f"))
+    (when (facep 'tooltip)
+      (set-face-attribute 'tooltip nil
+                          :background "#1d2021" :foreground "#ebdbb2")))
+
   ;; Apply after spaceline compiles (catches Spacemacs's late byte-compilation).
   (with-eval-after-load 'spaceline
+    (setq spaceline-highlight-face-func #'my/spaceline-safe-state-face)
     (advice-add 'spaceline-compile :after #'my/refresh-spaceline-modeline)
     (my/prioritize-mu4e-alert-spaceline-segment))
+  (with-eval-after-load 'which-key
+    (my/apply-gruvbox-which-key-faces))
   ;; Also apply on a short timer in case advice misses the first compile.
   (run-with-timer 3 nil #'my/refresh-spaceline-modeline)
+  (run-with-timer 3 nil #'my/apply-gruvbox-which-key-faces)
   ;; Re-apply after any theme change.
   (advice-add 'load-theme :after
-              (lambda (&rest _) (run-with-timer 0.5 nil #'my/refresh-spaceline-modeline)))
+              (lambda (&rest _)
+                (run-with-timer 0.5 nil #'my/refresh-spaceline-modeline)
+                (run-with-timer 0.5 nil #'my/apply-gruvbox-which-key-faces)))
 #+end_src
 
 ** Programming modes
@@ -1131,6 +1237,18 @@ Markdown, and Dockerfiles.
   (add-to-list 'auto-mode-alist '("\\.mk\\'" . makefile-gmake-mode))
   (add-to-list 'auto-mode-alist '("Makefile\\." . makefile-gmake-mode))
 
+  ;; Embedded projects often mix TOML, Meson, Device Tree, Kconfig, and Lua.
+  (add-to-list 'auto-mode-alist '("\\.toml\\'" . toml-mode))
+  (add-to-list 'auto-mode-alist '("meson\\.build\\'" . meson-mode))
+  (add-to-list 'auto-mode-alist '("meson_options\\.txt\\'" . meson-mode))
+  (add-to-list 'auto-mode-alist '("\\.dts\\'" . dts-mode))
+  (add-to-list 'auto-mode-alist '("\\.dtsi\\'" . dts-mode))
+  (add-to-list 'auto-mode-alist '("\\.overlay\\'" . dts-mode))
+  (add-to-list 'auto-mode-alist '("Kconfig\\(\\..*\\)?\\'" . kconfig-mode))
+  (add-to-list 'auto-mode-alist '("\\.defconfig\\'" . kconfig-mode))
+  (add-to-list 'auto-mode-alist '("defconfig\\'" . kconfig-mode))
+  (add-to-list 'auto-mode-alist '("\\.lua\\'" . lua-mode))
+
   ;; Add Markdown detection
   (add-to-list 'auto-mode-alist '("\\.md\\'" . markdown-mode))
   (add-to-list 'auto-mode-alist '("\\.markdown\\'" . markdown-mode))
@@ -1151,6 +1269,14 @@ Markdown, and Dockerfiles.
   (add-to-list 'auto-mode-alist '("Dockerfile\\'" . dockerfile-mode))
   (add-hook 'dockerfile-mode-hook #'lsp-deferred)
   (add-hook 'dockerfile-mode-hook #'company-mode)
+  (add-hook 'sh-mode-hook #'lsp-deferred)
+  (add-hook 'sh-mode-hook #'company-mode)
+  (add-hook 'python-mode-hook #'lsp-deferred)
+  (add-hook 'python-mode-hook #'company-mode)
+  (add-hook 'toml-mode-hook #'lsp-deferred)
+  (add-hook 'toml-mode-hook #'company-mode)
+  (add-hook 'lua-mode-hook #'lsp-deferred)
+  (add-hook 'lua-mode-hook #'company-mode)
 #+end_src
 
 ** BitBake / Yocto
@@ -1174,9 +1300,7 @@ present in this snapshot, so we handle this manually.
 
 ** Nix editing (nixd + eglot)
 
-Nix editing uses =eglot= with the =nixd= language server.  It provides
-completion for NixOS options, Home Manager options, and flake-parts
-options — all resolved from the current project's flake.
+Nix editing uses =eglot= with the =nixd= language server.
 
 Format-on-save is enabled via =nixfmt=.
 
@@ -1194,42 +1318,34 @@ Format-on-save is enabled via =nixfmt=.
     (list "nixd"
           "--nixpkgs-expr"
           (format "import <nixpkgs> { system = \"%s\"; }"
-                  (my/nixd--nix-system))
-          "--nixos-options-expr" "{}"))
+                  (my/nixd--nix-system))))
 
-  (defun my/nixd-project-root ()
-    (when-let* ((project (project-current nil)))
-      (expand-file-name (project-root project))))
-
-  (defun my/nixd-flake-expr (root attr)
-    (format "(builtins.getFlake (builtins.toString %s)).%s" root attr))
+  (defun my/nix-format-before-save ()
+    "Format the current Nix buffer locally with nixfmt.
+Avoid routing save through `eglot-format-buffer', since a wedged `nixd'
+request can block `before-save-hook' and make `C-x C-s' feel stuck."
+    (when (fboundp 'nix-format-buffer)
+      (nix-format-buffer)))
 
   (defun my/nix-mode-setup ()
-    (when-let* ((root (my/nixd-project-root)))
-      (setq-local
-       eglot-workspace-configuration
-       `(:nixd
-         (:nixpkgs
-          (:expr ,(format "import <nixpkgs> { system = \"%s\"; }"
-                          (my/nixd--nix-system)))
-         :formatting
-         (:command ["nixfmt" "-"])
-         :options
-         ;; Keep nixd on concrete option trees that this flake actually exports.
-         (:nixos
-          (:expr ,(my/nixd-flake-expr root "nixosConfigurations.pc.options"))
-          :home-manager
-          (:expr ,(my/nixd-flake-expr root "homeConfigurations.\"ludovic@pc\".options")))))))
+    (setq-local
+     eglot-workspace-configuration
+     `(:nixd
+       (:nixpkgs
+        (:expr ,(format "import <nixpkgs> { system = \"%s\"; }"
+                        (my/nixd--nix-system)))
+       :formatting
+       (:command ["nixfmt" "-"]))))
     (when (require 'eglot nil t)
       (eglot-ensure))
     (when (fboundp 'company-mode)
       (company-mode 1))
-    (setq-local company-idle-delay 0.2
-                company-minimum-prefix-length 1)
+    (setq-local company-idle-delay 0.2)
+    (setq-local company-minimum-prefix-length 1)
     (when (boundp 'company-backends)
       (setq-local company-backends '(company-capf)))
-    (when (fboundp 'eglot-format-buffer)
-      (add-hook 'before-save-hook #'eglot-format-buffer nil t)))
+    (remove-hook 'before-save-hook #'eglot-format-buffer t)
+    (add-hook 'before-save-hook #'my/nix-format-before-save nil t))
 
   (use-package nix-mode
     :mode "\\.nix\\'"
@@ -1889,17 +2005,27 @@ Performance and feature settings for LSP clients:
     (setq lsp-idle-delay 0.5
           lsp-log-io nil
           lsp-enable-on-type-formatting nil
-          lsp-headerline-breadcrumb-enable t
+          lsp-headerline-breadcrumb-enable nil
           lsp-enable-symbol-highlighting t
           lsp-enable-file-watchers nil))
+
+  (defun my/c-c++-prefer-lsp-diagnostics ()
+    "Use LSP diagnostics as the single source of truth in C/C++ buffers."
+    (when (and (bound-and-true-p lsp-mode)
+               (bound-and-true-p flycheck-mode)
+               (derived-mode-p 'c-mode 'c++-mode))
+      (setq-local flycheck-checker 'lsp)
+      (setq-local flycheck-disabled-checkers
+                  '(c/c++-gcc c/c++-clang c/c++-cppcheck))))
+
+  (add-hook 'lsp-managed-mode-hook #'my/c-c++-prefer-lsp-diagnostics)
 
   (with-eval-after-load 'lsp-clangd
     (setq lsp-clients-clangd-args
           '("--background-index"
             "--clang-tidy"
             "--completion-style=detailed"
-            "--header-insertion=iwyu"
-            "--query-driver=/nix/store/*/bin/*gcc,/nix/store/*/bin/*g++,/nix/store/*/bin/*clang,/nix/store/*/bin/*clang++,/usr/bin/*gcc,/usr/bin/*g++,/usr/bin/*clang,/usr/bin/*clang++,/opt/*/bin/*gcc,/opt/*/bin/*g++")))
+            "--header-insertion=never")))
 
   (with-eval-after-load 'lsp-pyright
     (setq lsp-pyright-langserver-command "basedpyright-langserver"
@@ -1925,7 +2051,9 @@ covers =.cmake= files).
   (with-eval-after-load 'treemacs
     ;; Treemacs ships a CMake icon for `.cmake` files but not for the
     ;; canonical `CMakeLists.txt` filename, so add that explicit mapping.
-    (when (fboundp 'treemacs-define-custom-icon)
+    (when (and (fboundp 'treemacs-define-custom-icon)
+               (boundp 'treemacs-icons-hash)
+               (hash-table-p treemacs-icons-hash))
       (treemacs-define-custom-icon (treemacs-icon-for-mode 'cmake-mode)
                                    "cmakelists.txt"))
     (treemacs-follow-mode t)

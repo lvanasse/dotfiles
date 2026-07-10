@@ -1,7 +1,7 @@
 { ... }:
 {
   flake.modules.nixos."desktop.audio" =
-    { ... }:
+    { pkgs, ... }:
     {
       # Audio configuration with PipeWire
 
@@ -18,5 +18,9 @@
         alsa.support32Bit = true;
         pulse.enable = true;
       };
+
+      environment.systemPackages = with pkgs; [
+        headsetcontrol
+      ];
     };
 }

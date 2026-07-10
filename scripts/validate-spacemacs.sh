@@ -161,4 +161,11 @@ run_elisp "(progn
                                          (format \"%S\" mode-line-format))))
         (kill-emacs 1)))))"
 
+echo "[bonus] Checking Spaceline redisplay fallback when evil-state is nil"
+run_elisp "(progn
+  ${run_user_config}
+  (require (quote spaceline-config))
+  (let ((evil-state nil))
+    (princ (format \"nil-state mode-line => %s\\n\" (spaceline-ml-main)))))"
+
 echo "Spacemacs validation passed."

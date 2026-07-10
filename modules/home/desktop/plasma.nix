@@ -89,6 +89,18 @@
       home.file.".local/share/wallpapers/1458678242783.jpg".source =
         ../../../wallpapers/1458678242783.jpg;
 
+      xdg.configFile =
+        lib.genAttrs
+          [
+            "systemd/user/drkonqi-coredump-launcher.socket"
+            "systemd/user/drkonqi-coredump-launcher@.service"
+            "systemd/user/drkonqi-coredump-pickup.service"
+            "systemd/user/drkonqi-sentry-postman.path"
+          ]
+          (_: {
+            source = config.lib.file.mkOutOfStoreSymlink "/dev/null";
+          });
+
       systemd.user.services.plasma-session-environment = {
         Unit = {
           Description = "Refresh Plasma session environment";

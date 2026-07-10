@@ -17,6 +17,10 @@
         "${homeDir}/.ssh/id_ed25519_personal"
         "${homeDir}/.ssh/id_ed25519_work"
       ];
+      programs.git.settings.user = {
+        name = "Ludovic Vanasse";
+        email = "ludovic.vanasse@vention.cc";
+      };
       age.secrets = lib.optionalAttrs hasPersonalKeyAge {
         "ssh-id-ed25519-personal" = {
           file = personalKeyAge;

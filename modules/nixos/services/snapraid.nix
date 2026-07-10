@@ -8,6 +8,7 @@
       statusPath = "${apiRoot}/status.json";
       quiesceUnits = [
         "audiobookshelf-normalize-single-file-books-watch.service"
+        "annotationsync-webdav.service"
         "docker-actual.service"
         "docker-audiobookshelf.service"
         "docker-bazarr.service"
@@ -75,25 +76,38 @@
         status_path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
         PY
       '';
-      quiesceWritersScript = action: ''
-        echo "snapraid: ${action}ping stateful services on protected disks"
+      quiesceStatePath = field: "${stateRoot}/${field}-quiesced-units";
+      quiesceWritersScript = field: ''
+        state_file="${quiesceStatePath field}"
+        rm -f "$state_file"
+        : > "$state_file"
+        echo "snapraid: stopping stateful services on protected disks"
         for unit in ${lib.concatStringsSep " " (map lib.escapeShellArg quiesceUnits)}; do
-          if ${pkgs.systemd}/bin/systemctl --system list-unit-files "$unit" >/dev/null 2>&1; then
-            ${pkgs.systemd}/bin/systemctl --system ${action} "$unit"
+          if ${pkgs.systemd}/bin/systemctl --system list-unit-files "$unit" >/dev/null 2>&1 \
+            && ${pkgs.systemd}/bin/systemctl --system is-active --quiet "$unit"; then
+            printf '%s\n' "$unit" >> "$state_file"
+            ${pkgs.systemd}/bin/systemctl --system stop "$unit"
           fi
         done
       '';
       resumeWritersAndUpdateStatusScript = field: extra: ''
+        state_file="${quiesceStatePath field}"
         resume_failed=0
-        for unit in ${lib.concatStringsSep " " (map lib.escapeShellArg quiesceUnits)}; do
-          if ${pkgs.systemd}/bin/systemctl --system list-unit-files "$unit" >/dev/null 2>&1; then
+        if [ -f "$state_file" ]; then
+          while IFS= read -r unit; do
+            [ -n "$unit" ] || continue
             if ! ${pkgs.systemd}/bin/systemctl --system start "$unit"; then
+              echo "snapraid: warning: failed to restart $unit" >&2
               resume_failed=1
             fi
-          fi
-        done
+          done < "$state_file"
+          rm -f "$state_file"
+        fi
         ${updateStatusScript field extra}
-        exit "$resume_failed"
+        if [ "$resume_failed" -ne 0 ]; then
+          echo "snapraid: one or more quiesced services failed to restart" >&2
+        fi
+        exit 0
       '';
     in
     {
@@ -162,7 +176,7 @@
       };
 
       systemd.services.snapraid-sync = {
-        preStart = quiesceWritersScript "stop";
+        preStart = quiesceWritersScript "sync";
         postStop = resumeWritersAndUpdateStatusScript "sync" "{}";
         serviceConfig = {
           ReadWritePaths = [ stateRoot ];
@@ -171,7 +185,7 @@
       };
 
       systemd.services.snapraid-scrub = {
-        preStart = quiesceWritersScript "stop";
+        preStart = quiesceWritersScript "scrub";
         postStop = resumeWritersAndUpdateStatusScript "scrub" ''{"plan": "10%", "olderThanDays": 7}'';
         serviceConfig = {
           ReadWritePaths = [ stateRoot ];

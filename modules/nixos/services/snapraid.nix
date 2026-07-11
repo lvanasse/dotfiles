@@ -18,6 +18,7 @@
         "docker-headplane.service"
         "docker-jellyfin.service"
         "docker-jellyseerr.service"
+        "docker-kitchenowl.service"
         "docker-lidarr.service"
         "docker-linkwarden-meilisearch.service"
         "docker-linkwarden-postgres.service"

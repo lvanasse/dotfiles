@@ -361,6 +361,15 @@
                     };
                   }
                   {
+                    KitchenOwl = {
+                      href = "http://${serverAddress}:8086";
+                      description = "Recipes and groceries";
+                      server = "local";
+                      container = "kitchenowl";
+                      showStats = true;
+                    };
+                  }
+                  {
                     Vaultwarden = {
                       href = "http://${serverTailscaleHost}:4743";
                       description = "Passwords";

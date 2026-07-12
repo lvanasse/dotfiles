@@ -52,6 +52,7 @@
           onlyoffice-desktopeditors
           calibre
           koreader
+          evince
           xournalpp
           gnome-calculator
           bitwarden-desktop

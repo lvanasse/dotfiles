@@ -53,18 +53,15 @@ in
           xdg-desktop-portal-wlr
           xdg-desktop-portal-gtk
         ];
-        # Avoid xdg-desktop-portal 1.17+ warning when no default is declared.
-        config.common.default = "*";
+        config.sway = {
+          default = [
+            "wlr"
+            "gtk"
+          ];
+          "org.freedesktop.impl.portal.Screenshot" = "wlr";
+          "org.freedesktop.impl.portal.ScreenCast" = "wlr";
+        };
       };
-
-      # Ensure xdg-desktop-portal routes screencast/screenshot to the wlr backend.
-      # Use mkForce to avoid duplicate [preferred] sections from merged definitions.
-      xdg.configFile."xdg-desktop-portal/sway-portals.conf".text = lib.mkForce ''
-        [preferred]
-        default=wlr;gtk
-        org.freedesktop.impl.portal.Screenshot=wlr
-        org.freedesktop.impl.portal.ScreenCast=wlr
-      '';
 
       # Force a known chooser for xdg-desktop-portal-wlr (avoids missing PATH issues).
       xdg.configFile."xdg-desktop-portal-wlr/config".text = ''
@@ -105,7 +102,19 @@ in
 
       wayland.windowManager.sway = {
         enable = true;
-        systemd.enable = true;
+        systemd = {
+          enable = true;
+          variables = [
+            "WAYLAND_DISPLAY"
+            "SWAYSOCK"
+            "XDG_CURRENT_DESKTOP"
+            "XDG_SESSION_DESKTOP"
+            "XDG_SESSION_TYPE"
+            "NIXOS_OZONE_WL"
+            "XCURSOR_THEME"
+            "XCURSOR_SIZE"
+          ];
+        };
         wrapperFeatures.gtk = true;
 
         config = {
@@ -115,7 +124,7 @@ in
           # Start background, tray, and Waybar
           startup = [
             {
-              command = "${pkgs.bash}/bin/bash -lc '${pkgs.dbus}/bin/dbus-update-activation-environment --systemd PATH XDG_DATA_DIRS DISPLAY WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE && ${pkgs.systemd}/bin/systemctl --user restart xdg-desktop-portal.service'";
+              command = "${pkgs.bash}/bin/bash -lc '${pkgs.systemd}/bin/systemctl --user unset-environment DISPLAY DESKTOP_SESSION KDE_FULL_SESSION KDE_SESSION_VERSION; export GDK_BACKEND=wayland; ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd PATH XDG_DATA_DIRS XDG_CONFIG_DIRS WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE GDK_BACKEND; ${pkgs.systemd}/bin/systemctl --user restart xdg-desktop-portal.service'";
               always = true;
             }
             {

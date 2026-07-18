@@ -20,9 +20,9 @@
         "docker-jellyseerr.service"
         "docker-kitchenowl.service"
         "docker-lidarr.service"
+        "docker-linkwarden.service"
         "docker-linkwarden-meilisearch.service"
         "docker-linkwarden-postgres.service"
-        "docker-linkwarden.service"
         "docker-mariadb.service"
         "docker-mousehole.service"
         "docker-nextcloud.service"
@@ -32,8 +32,8 @@
         "docker-shelfmark.service"
         "docker-sonarr.service"
         "docker-vaultwarden.service"
-        "docker-vikunja-postgres.service"
         "docker-vikunja.service"
+        "docker-vikunja-postgres.service"
       ];
       writeDefaultStatus = ''
                 mkdir -p "${apiRoot}"
@@ -156,6 +156,7 @@
           ".Trash-*/"
           # Transient SQLite/runtime artifacts that frequently change during sync
           "/appdata/*/Sentry/"
+          "/appdata/*/MediaCover/"
           "*.db-wal"
           "*.db-shm"
           "*.db-journal"

@@ -15,7 +15,27 @@
         executable = true;
         text = ''
           #!/bin/sh
-          exec "$HOME/.local/bin/spacemacsclient" -t -a "" "$@"
+          if [ "$#" -eq 0 ]; then
+            exec spacemacsclient -t -a "" --eval '(switch-to-buffer "*scratch*")'
+          fi
+
+          exec spacemacsclient -t -a "" "$@"
+        '';
+      };
+
+      home.file.".local/bin/space" = {
+        executable = true;
+        text = ''
+          #!/bin/sh
+          exec "$HOME/.local/bin/term-emacs" "$@"
+        '';
+      };
+
+      home.file.".local/bin/semacs" = {
+        executable = true;
+        text = ''
+          #!/bin/sh
+          exec "$HOME/.local/bin/term-emacs" "$@"
         '';
       };
     };

@@ -51,6 +51,7 @@
           github.vscode-pull-request-github
           tomoki1207.pdf
           wharflab.tally
+          anthropic.claude-code
         ];
         profiles.default.userSettings = {
           "github.copilot.enable"."*" = false;

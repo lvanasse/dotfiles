@@ -49,6 +49,7 @@
           yocto-project.yocto-bitbake
           eamodio.gitlens
           github.vscode-pull-request-github
+          tomoki1207.pdf
           wharflab.tally
         ];
         profiles.default.userSettings = {

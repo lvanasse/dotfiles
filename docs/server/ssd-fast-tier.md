@@ -34,8 +34,8 @@ sudo nix --experimental-features "nix-command flakes" run github:nix-community/d
 Do not delete existing appdata during the first switch.
 
 1. Provision the SSD with Disko if needed.
-2. Stop the affected containers.
-3. Copy old appdata into the new SSD roots, preserving ownership and metadata:
+1. Stop the affected containers.
+1. Copy old appdata into the new SSD roots, preserving ownership and metadata:
 
 ```bash
 sudo rsync -aHAX --numeric-ids /mnt/data3/appdata/jellyfin/ /mnt/ssd/appdata/docker/jellyfin/config/
@@ -71,10 +71,10 @@ sudo rsync -aHAX --numeric-ids /old/path/ /mnt/ssd/appdata/docker/<service>/
 ```
 
 4. Verify ownership and permissions, especially services running as `99:100`.
-5. Switch the NixOS config.
-6. Run `nixos-rebuild switch`.
-7. Start containers and verify the services.
-8. Only after successful service verification, remove old appdata.
+1. Switch the NixOS config.
+1. Run `nixos-rebuild switch`.
+1. Start containers and verify the services.
+1. Only after successful service verification, remove old appdata.
 
 ## Placement Policy
 
@@ -95,7 +95,7 @@ Do not back up:
 Priority on the 500 GB SSD:
 
 1. Docker appdata, config, and databases.
-2. Jellyfin, Audiobookshelf, and CWA metadata.
-3. Jellyfin transcodes.
-4. Downloads, imports, and conversions.
-5. Hot-media cache only if there is enough free space.
+1. Jellyfin, Audiobookshelf, and CWA metadata.
+1. Jellyfin transcodes.
+1. Downloads, imports, and conversions.
+1. Hot-media cache only if there is enough free space.

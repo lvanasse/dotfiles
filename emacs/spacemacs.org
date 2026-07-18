@@ -778,6 +778,21 @@ workspace."
           devcontainer-term-shell "bash"
           devcontainer-execute-outside-container
           '("grep" "rg" "ag" "git" "ls" "find"))
+
+    ;; `devcontainer--container-metadata' expects the
+    ;; `devcontainer.metadata' image label to be a JSON array. Some images use a
+    ;; single JSON object instead, which otherwise breaks remote-user lookup.
+    (defun devcontainer--container-metadata ()
+      "Retrieve the devcontainer's metadata when it is available."
+      (and-let* ((metadata-json
+                  (devcontainer--inspect-container
+                   "{{index .Config.Labels \"devcontainer.metadata\"}}"))
+                 ((length> metadata-json 0))
+                 (parsed (json-parse-string metadata-json :object-type 'alist)))
+        (if (vectorp parsed)
+            (seq-reduce #'append parsed nil)
+          parsed)))
+
     (devcontainer-mode 1))
 
   (spacemacs/set-leader-keys
@@ -2007,7 +2022,24 @@ Performance and feature settings for LSP clients:
           lsp-enable-on-type-formatting nil
           lsp-headerline-breadcrumb-enable nil
           lsp-enable-symbol-highlighting t
-          lsp-enable-file-watchers nil))
+          lsp-enable-file-watchers nil)
+
+    ;; Use clangd inside TRAMP containers so remote C/C++ projects resolve
+    ;; their in-container SDKs, toolchains, and compile_commands.json.
+    (lsp-register-client
+     (make-lsp-client
+      :new-connection
+      (lsp-tramp-connection
+       (lambda ()
+         (cons "/usr/local/bin/clangd"
+               '("--background-index"
+                 "--clang-tidy"
+                 "--completion-style=detailed"
+                 "--header-insertion=iwyu"
+                 "--query-driver=/opt/ti/tiarmclang/*/bin/*,/usr/bin/*gcc,/usr/bin/*g++,/usr/bin/*clang,/usr/bin/*clang++"))))
+      :major-modes '(c-mode c-ts-mode c++-mode c++-ts-mode objc-mode objc-ts-mode cuda-mode)
+      :remote? t
+      :server-id 'clangd-remote)))
 
   (defun my/c-c++-prefer-lsp-diagnostics ()
     "Use LSP diagnostics as the single source of truth in C/C++ buffers."

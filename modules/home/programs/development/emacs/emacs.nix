@@ -110,6 +110,7 @@
             flyspell-lazy
             copilot-chat
             mcp
+            devcontainer
             nerd-icons
             pdf-tools
             slack

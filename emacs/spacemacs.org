@@ -312,10 +312,19 @@ mode associations that Spacemacs does not cover out of the box.
     (global-so-long-mode 1))
 
   ;; Pretty Org mode display
+  (setq-default org-use-sub-superscripts '{}
+                org-export-with-sub-superscripts '{}
+                org-pretty-entities-include-sub-superscripts nil)
   (setq org-startup-indented t
         org-hide-emphasis-markers t
-        org-pretty-entities t
+        org-pretty-entities nil
         org-ellipsis " ▾")
+  (defun my/org-disable-implicit-sub-superscripts ()
+    "Require braces for Org subscript/superscript markup."
+    (setq-local org-use-sub-superscripts '{}
+                org-export-with-sub-superscripts '{}
+                org-pretty-entities-include-sub-superscripts nil))
+  (add-hook 'org-mode-hook #'my/org-disable-implicit-sub-superscripts)
   (add-hook 'org-mode-hook #'visual-line-mode)
   (setq org-superstar-headline-bullets-list
         '(?◉ ?○ ?◆ ?◇ ?▶ ?▷))
@@ -487,6 +496,8 @@ ControlMaster settings from =~/.ssh/config= managed by Home Manager.
   (setq tramp-default-method "ssh"
         tramp-use-ssh-controlmaster-options t
         tramp-verbose 1)
+  (with-eval-after-load 'tramp
+    (tramp-register-file-name-handlers))
 #+end_src
 
 ** Identity

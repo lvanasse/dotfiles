@@ -226,26 +226,37 @@ seamless appearance.
     (add-to-list 'warning-suppress-types '(native-compiler)))
   (when (boundp 'warning-suppress-log-types)
     (add-to-list 'warning-suppress-log-types '(native-compiler)))
-  ;; Client frames can fall back to the transient ` *server*' buffer after
-  ;; killing the visited file, which leaves no Evil leader bindings. Replace
-  ;; that buffer with a normal scratch buffer in the same frame.
-  (defun my/server-buffer-fallback-to-scratch ()
-    (when (bound-and-true-p server-buffer-clients)
-      (let ((frame (selected-frame)))
-        (run-at-time
-         0 nil
-         (lambda (target-frame)
-           (when (frame-live-p target-frame)
-             (with-selected-frame target-frame
-               (let ((buffer (window-buffer (selected-window))))
-                 (when (equal (buffer-name buffer) " *server*")
-                   (switch-to-buffer (spacemacs//get-scratch-buffer-create)))))))
-         frame))))
-  (defun my/server-visit-setup-buffer-fallback ()
-    (when buffer-file-name
-      (add-hook 'kill-buffer-hook #'my/server-buffer-fallback-to-scratch nil t)))
-  (with-eval-after-load 'server
-    (add-hook 'server-visit-hook #'my/server-visit-setup-buffer-fallback))
+  ;; Client frames can fall back to a transient buffer with no Evil leader
+  ;; bindings after killing the visited file. Replace that state with a
+  ;; normal scratch buffer in the same frame.
+  (defun my/normalize-fallback-buffer (&optional buffer)
+    (with-current-buffer (or buffer (current-buffer))
+      (unless (eq major-mode 'text-mode)
+        (text-mode))))
+  (defun my/show-fallback-scratch-buffer ()
+    (let ((buffer (get-buffer-create "*scratch*")))
+      (switch-to-buffer buffer)
+      (my/normalize-fallback-buffer buffer)
+      buffer))
+  (defun my/bad-fallback-buffer-p (buffer)
+    (with-current-buffer buffer
+      (or (equal (buffer-name buffer) " *server*")
+          (and (equal (buffer-name buffer) "*scratch*")
+               (eq major-mode 'fundamental-mode)))))
+  (defun my/repair-buffer-fallback-after-kill ()
+    (let ((frame (selected-frame)))
+      (run-at-time
+       0 nil
+       (lambda (target-frame)
+         (when (frame-live-p target-frame)
+           (with-selected-frame target-frame
+             (let ((buffer (window-buffer (selected-window))))
+               (when (my/bad-fallback-buffer-p buffer)
+                 (my/show-fallback-scratch-buffer))))))
+       frame)))
+  ;; Some kill paths do not go through `server-visit-hook' once a frame is
+  ;; already alive, so repair bad fallback buffers after any buffer kill.
+  (add-hook 'kill-buffer-hook #'my/repair-buffer-fallback-after-kill)
   (add-to-list 'default-frame-alist '(internal-border-width . 0)))
 #+end_src
 
@@ -415,8 +426,8 @@ right side of the frame.  The buffer name and regexp are used by
 ** GC and startup hooks
 
 After startup, =gcmh= manages garbage collection (only collecting during
-idle time with a 64 MB threshold).  Transient buffers (*scratch*,
-*Messages*, *info*) are removed after a short delay to keep the home view
+idle time with a 64 MB threshold).  Transient buffers (*Messages*, *info*)
+are removed after a short delay to keep the home view
 clean.
 
 #+begin_src emacs-lisp
@@ -1292,6 +1303,27 @@ Markdown, and Dockerfiles.
   (add-hook 'toml-mode-hook #'company-mode)
   (add-hook 'lua-mode-hook #'lsp-deferred)
   (add-hook 'lua-mode-hook #'company-mode)
+  (defun my/format-buffer ()
+    "Format the current buffer using the best available formatter."
+    (interactive)
+    (cond
+     ((derived-mode-p 'nix-mode)
+      (my/nix-format-before-save))
+     ((fboundp 'lsp-format-buffer)
+      (lsp-format-buffer))
+     ((fboundp 'eglot-format-buffer)
+      (eglot-format-buffer))
+     ((fboundp 'rust-format-buffer)
+      (rust-format-buffer))
+     (t
+      (user-error "No formatter configured for %s" major-mode))))
+  (dolist (mode '(python-mode sh-mode dockerfile-mode toml-mode lua-mode nix-mode rust-mode))
+    (spacemacs/set-leader-keys-for-major-mode mode
+      "f" #'my/format-buffer))
+  (with-eval-after-load 'company
+    ;; Use Company for manual completion in buffers where it is active instead
+    ;; of Spacemacs' default dabbrev/hippie expansion on `M-/`.
+    (define-key company-mode-map (kbd "C-SPC") #'company-complete))
 #+end_src
 
 ** BitBake / Yocto
@@ -1632,12 +1664,13 @@ live session name like `rs.spotifyd.instance10084` directly."
 ** Startup buffer cleanup
 
 Remove transient buffers after the initial home buffer has been displayed.
-If these buffers are created again later (e.g. by opening *scratch*
-manually), they behave normally.
+Keep `*scratch*` intact because Spacemacs/perspective treat it as a special
+buffer, and recreating it later through ordinary fallback paths can lose the
+expected major mode and state.
 
 #+begin_src emacs-lisp
   (defconst my/startup-buffers-to-remove
-    '("*scratch*" "*Messages*" "*info*")
+    '("*Messages*" "*info*")
     "Buffers to remove once after startup to keep the home view clean.")
 
   (defun my/remove-startup-buffers ()

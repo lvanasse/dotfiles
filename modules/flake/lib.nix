@@ -19,7 +19,7 @@ let
     config.flake.overlays.agenixFromInput
     inputs.nix-vscode-extensions.overlays.default
     inputs.emacs-overlay.overlays.default
-    inputs.llm-agents.overlays.default
+    inputs.llm-agents.overlays.shared-nixpkgs
     config.flake.overlays.sonarlintHashFix
     inputs.nixgl.overlay
   ];

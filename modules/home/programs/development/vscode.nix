@@ -73,6 +73,13 @@
           "chat.viewSessions.orientation" = "stacked";
           "clangd.detectExtensionConflicts" = false;
           "editor.renderWhitespace" = "all";
+          "github.copilot.enable" = {
+            "*" = false;
+          };
+          "github.copilot.editor.enableAutoCompletions" = false;
+          "github.copilot.inlineSuggest.enable" = false;
+          "github.copilot.nextEditSuggestions.enabled" = false;
+          "github.copilot.renameSuggestions.triggerAutomatically" = false;
 
           # LaTeX Workshop: in-editor PDF preview and tidy build dir
           "latex-workshop.view.pdf.viewer" = "tab";

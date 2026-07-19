@@ -71,10 +71,11 @@ echo "[2/5] Checking expected native layer bindings"
 run_elisp "(progn
   ${run_user_config}
   (require 'core-keybindings)
-  (dolist (entry '((\"SPC a a C\" . my/copilot-cli)
-                   (\"SPC '\" . spacemacs/default-pop-shell)
-                   (\"SPC b t\" . multi-vterm)
-                   (\"SPC b T\" . multi-vterm-dedicated-toggle)
+  (dolist (entry '((\"SPC '\" . ghostel)
+                   (\"SPC b g\" . ghostel)
+                   (\"SPC b G\" . ghostel-project)
+                   (\"SPC b t\" . ghostel)
+                   (\"SPC b T\" . ghostel-project)
                    (\"SPC a e m\" . my/mu4e-open-inbox)
                    (\"SPC a e c\" . my/mu4e-compose-new)
                    (\"SPC a e l\" . my/open-mail-irc-layout)

@@ -8,14 +8,6 @@
       ...
     }:
     let
-      copilotCliPkg = pkgs.llm-agents.copilot-cli;
-      copilotCliWrapped = pkgs.writeShellScriptBin "copilot" ''
-        exec ${lib.getExe copilotCliPkg} \
-          --allow-all-tools \
-          --allow-all-paths \
-          --allow-all-urls \
-          "$@"
-      '';
       vanillaRoot = "${config.xdg.configHome}/emacs-vanilla";
       emacsBin = "${config.programs.emacs.finalPackage}/bin/emacs";
       emacsClientBin = "${config.programs.emacs.finalPackage}/bin/emacsclient";
@@ -94,6 +86,7 @@
           epkgs: with epkgs; [
             gcmh
             gruvbox-theme
+            ghostel
             vterm
             multi-vterm
             clipetty
@@ -108,7 +101,6 @@
             flyspell-correct
             flyspell-correct-ivy
             flyspell-lazy
-            copilot-chat
             mcp
             devcontainer
             nerd-icons
@@ -141,7 +133,7 @@
       }
       // spacemacs.systemdUserServices;
 
-      home.packages = [ copilotCliWrapped ] ++ spacemacs.homePackages;
+      home.packages = spacemacs.homePackages;
 
       home.file = {
         ".local/bin/emacs" = {

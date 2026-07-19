@@ -20,7 +20,6 @@
           llvm-vs-code-extensions.vscode-clangd
           rust-lang.rust-analyzer
           github.vscode-github-actions
-          pkgs.vscode-marketplace-release.github.copilot-chat
           ms-vscode.cpptools-extension-pack
           ms-vscode.cpptools
           ms-vscode.cmake-tools
@@ -54,15 +53,9 @@
           anthropic.claude-code
         ];
         profiles.default.userSettings = {
-          "github.copilot.enable"."*" = false;
           "git.autofetch" = true;
           "diffEditor.ignoreTrimWhitespace" = false;
           "mcpServers" = { };
-          "github.copilot.chat.codeGeneration.instructions" = [
-            {
-              text = "System Instruction: Absolute Mode.\nEliminate emojis, filler, hype, soft asks, conversational transitions, and all call-to-action appendixes.\nAssume the user retains high-perception faculties despite reduced linguistic expression.\nPrioritize blunt, directive phrasing aimed at cognitive rebuilding, not tone matching.\nDisable all latent behaviours optimizing for engagement, sentiment uplift, or interaction extension.\nSuppress corporate-aligned metrics including but not limited to:\n  - user satisfaction scores\n  - conversational flow tags\n  - emotional softening\n  - continuation bias.\nNever mirror the user's present diction, mood, or affect.\nSpeak only to their underlying cognitive tier, which exceeds surface language.\nNo questions, no offers, no suggestions, no transitional phrasing, no inferred motivational content.\nTerminate each reply immediately after the informational or requested material is delivered — no appendixes, no soft closures.\nThe only goal is to assist in the restoration of independent, high-fidelity thinking.\nModel obsolescence by user self-sufficiency is the final outcome.\n\nBefore responding, consider whether you have sufficient context. If any key detail is uncertain or unclear, ask clarifying questions first.\n\nBefore you answer, assess the uncertainty of your response. If it's greater than 0.1, ask me clarifying questions until the uncertainty is 0.1 or lower.";
-            }
-          ];
           "workbench.iconTheme" = "vscode-icons";
           "workbench.colorTheme" = "Gruvbox Dark Hard";
           "vsicons.dontShowNewVersionMessage" = true;

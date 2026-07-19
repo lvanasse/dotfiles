@@ -63,7 +63,6 @@ done
 echo "[2/6] Checking required executables"
 for cmd in \
   aspell \
-  copilot \
   python3 \
   nixd \
   basedpyright-langserver \
@@ -88,13 +87,15 @@ run_elisp '(progn
     (dotspacemacs/user-init))
   (when (fboundp (quote dotspacemacs/user-config))
     (dotspacemacs/user-config))
-  (dolist (feature (quote (erc slack centaur-tabs all-the-icons nerd-icons markdown-mode dockerfile-mode nix-mode vterm multi-vterm)))
+  (dolist (feature (quote (erc slack centaur-tabs all-the-icons nerd-icons markdown-mode dockerfile-mode nix-mode ghostel vterm multi-vterm)))
     (unless (require feature nil t)
       (princ (format "missing feature: %S\n" feature))
       (kill-emacs 1))
     (princ (format "loaded feature: %S\n" feature)))
-  (dolist (fn (quote (my/copilot-cli
-                      erc/default-servers
+  (unless (eq (symbol-function (quote shell)) (quote ghostel))
+    (princ "shell is not aliased to ghostel\n")
+    (kill-emacs 1))
+  (dolist (fn (quote (erc/default-servers
                       erc-tls
                       slack-start
                       spotify-playpause)))

@@ -42,10 +42,10 @@
 
       # VS Code white-screen workaround (work-laptop only).
       # On Sway/Wayland with multiple displays, Electron's offscreen compositor
-      # sometimes fails to paint a webview (for example the Copilot Chat panel),
-      # leaving a blank pane that reads "No content for off screen to display" until
-      # the window is moved/resized. Disabling GPU hardware acceleration routes
-      # rendering through the CPU and eliminates the glitch.
+      # sometimes fails to paint webviews, leaving a blank pane that reads
+      # "No content for off screen to display" until the window is moved/resized.
+      # Disabling GPU hardware acceleration routes rendering through the CPU and
+      # eliminates the glitch.
       home.file.".config/Code/argv.json".text = builtins.toJSON {
         "disable-hardware-acceleration" = true;
       };

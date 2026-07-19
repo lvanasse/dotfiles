@@ -35,9 +35,9 @@ The layers are organized as:
   PDF, Python (pyright), YAML, ERC (IRC), Rust, Shell, plus embedded-adjacent
   file formats (TOML, Meson, Device Tree, Kconfig, Lua)
 - *Communication*: =mu4e= (email), =erc= (IRC), =slack=, =spotify=
-- *Tools*: =tabs= (centaur-tabs), =shell= (vterm/multi-vterm), =shell-scripts=
+- *Tools*: =tabs= (centaur-tabs), =shell=, =ghostel=, =shell-scripts=
 
-Additional packages (=gruvbox-theme=, =vterm=, =multi-vterm=, =clipetty=, etc.) are
+Additional packages (=gruvbox-theme=, =ghostel=, =vterm=, =multi-vterm=, =clipetty=, etc.) are
 installed outside layers.  =forge= is excluded to avoid pulling in heavy
 Git forge dependencies.
 
@@ -85,10 +85,10 @@ Git forge dependencies.
      (tabs :variables
            tabs-icons t
            tabs-auto-hide nil)
-     (shell :variables shell-default-shell 'vterm)
+     shell
      shell-scripts
    )
-   dotspacemacs-additional-packages '(gruvbox-theme vterm multi-vterm clipetty all-the-icons nerd-icons counsel-spotify bitbake-ts-mode nix-mode json-mode toml-mode meson-mode dts-mode kconfig-mode lua-mode org-caldav gcmh flyspell-lazy copilot-chat devcontainer visual-fill-column)
+   dotspacemacs-additional-packages '(gruvbox-theme ghostel vterm multi-vterm clipetty all-the-icons nerd-icons counsel-spotify bitbake-ts-mode nix-mode json-mode toml-mode meson-mode dts-mode kconfig-mode lua-mode org-caldav gcmh flyspell-lazy devcontainer visual-fill-column)
    dotspacemacs-excluded-packages '(forge)))
 #+end_src
 
@@ -360,6 +360,30 @@ mail indicator renders the same glyphs inside GUI Emacs frames.
   (add-hook 'after-make-frame-functions #'my/setup-nerd-font-symbols)
 
   (set-face-attribute 'fringe nil :background "#1d2021")
+
+  (with-eval-after-load 'ghostel
+    (set-face-attribute 'ghostel-default nil
+                        :foreground "#ebdbb2"
+                        :background "#1d2021"
+                        :family "JetBrainsMono Nerd Font Mono"
+                        :height 105)
+    (set-face-attribute 'ghostel-color-black nil :foreground "#1d2021")
+    (set-face-attribute 'ghostel-color-red nil :foreground "#fb4934")
+    (set-face-attribute 'ghostel-color-green nil :foreground "#b8bb26")
+    (set-face-attribute 'ghostel-color-yellow nil :foreground "#fabd2f")
+    (set-face-attribute 'ghostel-color-blue nil :foreground "#83a598")
+    (set-face-attribute 'ghostel-color-magenta nil :foreground "#d3869b")
+    (set-face-attribute 'ghostel-color-cyan nil :foreground "#8ec07c")
+    (set-face-attribute 'ghostel-color-white nil :foreground "#ebdbb2")
+    (set-face-attribute 'ghostel-color-bright-black nil :foreground "#928374")
+    (set-face-attribute 'ghostel-color-bright-red nil :foreground "#fb4934")
+    (set-face-attribute 'ghostel-color-bright-green nil :foreground "#b8bb26")
+    (set-face-attribute 'ghostel-color-bright-yellow nil :foreground "#fabd2f")
+    (set-face-attribute 'ghostel-color-bright-blue nil :foreground "#83a598")
+    (set-face-attribute 'ghostel-color-bright-magenta nil :foreground "#d3869b")
+    (set-face-attribute 'ghostel-color-bright-cyan nil :foreground "#8ec07c")
+    (set-face-attribute 'ghostel-color-bright-white nil :foreground "#fbf1c7")
+    (ghostel-sync-theme))
 #+end_src
 
 ** Startup buffer customization
@@ -394,42 +418,6 @@ Spotify secrets, etc.) only when they exist on disk.
   (defun my/load-private-elisp (path)
     (when (file-readable-p path)
       (load path nil 'nomessage)))
-#+end_src
-
-** Copilot CLI
-
-The GitHub Copilot CLI integration.  Opens a dedicated vterm panel on the
-right side of the frame.  The buffer name and regexp are used by
-=display-buffer-alist= to control placement.  Invoked with =SPC a a C=.
-
-#+begin_src emacs-lisp
-  (defconst my/copilot-cli-buffer-name "*Copilot CLI*"
-    "Buffer name for the dedicated Copilot CLI panel.")
-
-  (defconst my/copilot-cli-buffer-regexp "^\\*Copilot CLI\\*$"
-    "Match the dedicated Copilot CLI buffer.")
-
-  (defun my/copilot-cli ()
-    (interactive)
-    (let ((copilot-program (executable-find "copilot")))
-      (unless copilot-program
-        (user-error
-         "The `copilot` CLI is not installed in this profile; run Home Manager switch and restart Emacs."))
-      (unless (fboundp 'vterm)
-        (user-error "vterm is unavailable; run Home Manager switch and restart Emacs"))
-      (let* ((default-directory
-               (or (and buffer-file-name (file-name-directory buffer-file-name))
-                   default-directory))
-             (buffer (get-buffer my/copilot-cli-buffer-name))
-             (live-process (and buffer (get-buffer-process buffer))))
-        (if live-process
-            (display-buffer buffer)
-          (vterm my/copilot-cli-buffer-name)
-          (setq buffer (current-buffer))
-          (vterm-send-string copilot-program)
-          (vterm-send-return))
-        (when-let ((window (get-buffer-window buffer t)))
-          (select-window window)))))
 #+end_src
 
 ** GC and startup hooks
@@ -622,12 +610,12 @@ same Nerd Font mail glyphs as Waybar.
   ;; (my/start-mail-unread-count-refresh)
 #+end_src
 
-** Shell / vterm
+** Shell / terminals
 
 Detect the Fish shell from several candidate paths (Nix profile, system
-path) and configure vterm, multi-vterm, multi-term, and the =$SHELL= environment
-variable.  Also redirect =M-x shell= to vterm so we never get a
-=TERM=dumb= buffer.
+path) and configure Ghostel, vterm, multi-vterm, multi-term, and the =$SHELL=
+environment variable.  Ghostel is the preferred terminal entry point, so
+=SPC '= and =M-x shell= open Ghostel instead of vterm.
 
 #+begin_src emacs-lisp
   (let* ((fish-candidates (list
@@ -639,86 +627,39 @@ variable.  Also redirect =M-x shell= to vterm so we never get a
     (when fish
       (setq shell-file-name fish
             explicit-shell-file-name fish
+            ghostel-shell fish
             vterm-shell fish
             vterm-max-scrollback 10000
             multi-vterm-dedicated-window-height-percent 30
             multi-term-program fish)
       (setenv "SHELL" fish)))
 
-  ;; Redirect M-x shell to vterm so we never get TERM=dumb.
-  (defalias 'shell 'vterm)
-#+end_src
+  (with-eval-after-load 'ghostel
+    (setq ghostel-shell-integration t
+          ghostel-buffer-name "*terminal*"
+          ghostel-max-scrollback (* 16 1024 1024)
+          ghostel-module-auto-install 'ask))
 
-** Copilot CLI display rules
-
-Place the Copilot CLI buffer in a side window on the right, taking 45% of
-the frame width.  The =no-delete-other-windows= parameter prevents
-=C-x 1= from killing the panel.
-
-#+begin_src emacs-lisp
-  (add-to-list
-   'display-buffer-alist
-   `(,my/copilot-cli-buffer-regexp
-     (display-buffer-in-side-window)
-     (side . right)
-     (slot . 1)
-     (window-width . 0.45)
-     (preserve-size . (t . nil))
-     (window-parameters . ((no-delete-other-windows . t)))))
-#+end_src
-
-** Copilot Chat (native Emacs buffer)
-
-=copilot-chat= provides a fully scrollable Copilot chat interface
-inside a native Emacs org-mode buffer.  Unlike the vterm-based CLI
-(which uses the terminal alternate screen), this buffer supports
-normal Emacs scrolling, search, and yank.
-
-- =SPC a a h= opens the chat buffer (mnemonic: "h" for help/chat).
-- =C-c C-c= or =C-c RET= sends the prompt from the input area.
-- =SPC a a e= explain selected region.
-- =SPC a a r= review selected region.
-- =SPC a a f= fix selected region.
-- =SPC a a t= generate tests for selected region.
-
-The vterm CLI (=SPC a a C=) remains available for agentic tasks.
-
-#+begin_src emacs-lisp
-  (with-eval-after-load 'copilot-chat
-    (customize-set-variable 'copilot-chat-frontend 'org)
-    (customize-set-variable 'copilot-chat-backend 'curl)
-
-    ;; Ensure prompt-mode keybindings (C-c C-c / C-c RET to send) work in the
-    ;; base buffer even when polymode fails to switch to the inner indirect buffer.
-    (add-hook 'copilot-chat-org-poly-mode-hook #'copilot-chat-prompt-mode))
-
-  (spacemacs/set-leader-keys
-    "a a h" 'copilot-chat-display
-    "a a e" 'copilot-chat-explain
-    "a a r" 'copilot-chat-review
-    "a a f" 'copilot-chat-fix
-    "a a t" 'copilot-chat-test
-    "a a o" 'copilot-chat-optimize
-    "a a d" 'copilot-chat-doc
-    "a a b" 'copilot-chat-add-current-buffer
-    "a a B" 'copilot-chat-del-current-buffer
-    "a a R" 'copilot-chat-reset)
+  ;; Prefer Ghostel for plain terminal entry points.
+  (defalias 'shell 'ghostel)
 #+end_src
 
 ** Keybindings — core
 
-Leader-key bindings for shell access, vterm, and prefix declarations for
-AI tools, remote access, and the view prefix.
+Leader-key bindings for Ghostel terminal access and prefix declarations
+for remote access and the view prefix.
 
 #+begin_src emacs-lisp
   (spacemacs/set-leader-keys
-    "'" 'spacemacs/default-pop-shell
-    "bt" 'multi-vterm
-    "bT" 'multi-vterm-dedicated-toggle)
+    "'" 'ghostel
+    "bg" 'ghostel
+    "bG" 'ghostel-project
+    "bt" 'ghostel
+    "bT" 'ghostel-project)
 
+  (spacemacs/declare-prefix "b g" "ghostel")
   (spacemacs/declare-prefix "b t" "terminal")
 
-  (spacemacs/declare-prefix "a a" "ai")
   (spacemacs/declare-prefix "a r" "remote")
   (spacemacs/declare-prefix "a r d" "devcontainer")
   (define-key spacemacs-default-map (kbd "v") nil)
@@ -757,8 +698,6 @@ Plain `find-file` with TRAMP syntax remains fully supported."
     (find-file target))
 
   (spacemacs/set-leader-keys
-    "a a C" #'my/copilot-cli
-    "a a c" #'my/copilot-cli
     "a r f" #'my/find-remote-file
     "a c i e" #'my/irc-dispatch
     "a c i D" #'my/open-mail-irc-layout

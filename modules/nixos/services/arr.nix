@@ -499,6 +499,9 @@ in
           "/mnt/storage/data:/data"
           "/mnt/ssd/scratch/downloads:/downloads"
         ];
+        extraOptions = [
+          "--label=com.centurylinklabs.watchtower.enable=false"
+        ];
         ports = [ "8989:8989" ];
       };
 
@@ -515,6 +518,9 @@ in
           "/mnt/storage/data:/data"
           "/mnt/ssd/scratch/downloads:/downloads"
         ];
+        extraOptions = [
+          "--label=com.centurylinklabs.watchtower.enable=false"
+        ];
         ports = [ "7878:7878" ];
       };
 
@@ -529,6 +535,9 @@ in
         volumes = [
           "${appDataRoots.bazarr}:/config"
           "/mnt/storage/data:/data"
+        ];
+        extraOptions = [
+          "--label=com.centurylinklabs.watchtower.enable=false"
         ];
         ports = [ "6767:6767" ];
       };
@@ -546,6 +555,9 @@ in
           "/mnt/storage/data:/data"
           "/mnt/ssd/scratch/downloads:/downloads"
         ];
+        extraOptions = [
+          "--label=com.centurylinklabs.watchtower.enable=false"
+        ];
         ports = [ "8686:8686" ];
       };
 
@@ -559,6 +571,9 @@ in
         };
         volumes = [
           "${appDataRoots.prowlarr}:/config"
+        ];
+        extraOptions = [
+          "--label=com.centurylinklabs.watchtower.enable=false"
         ];
         ports = [ "9696:9696" ];
       };
@@ -574,6 +589,9 @@ in
         };
         volumes = [
           "${appDataRoots.jellyseerr}:/app/config"
+        ];
+        extraOptions = [
+          "--label=com.centurylinklabs.watchtower.enable=false"
         ];
         ports = [ "5055:5055" ];
       };
@@ -613,6 +631,9 @@ in
         };
         volumes = [
           "/mnt/storage/data/media/books/calibre_library/calibre_libary:/config"
+        ];
+        extraOptions = [
+          "--label=com.centurylinklabs.watchtower.enable=false"
         ];
         ports = [
           "8780:8080"

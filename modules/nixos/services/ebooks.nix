@@ -6,6 +6,17 @@
       appDataRoot = "/mnt/ssd/appdata/docker/cwa";
       ingestRoot = "/mnt/ssd/scratch/imports/cwa";
       libraryRoot = "/mnt/storage/data/books/library";
+      cwaInitPatch = pkgs.writeShellScript "cwa-init-patch" ''
+        sed -i \
+          -e 's/timeout \$safety_timeout python3/timeout \$safety_timeout s6-setuidgid abc python3/g' \
+          -e 's/elif len(request.files.getlist("btn-upload")):/elif any(request.files.getlist(field) for field in request.files if field.startswith("btn-upload")):/' \
+          -e 's/        for requested_file in request.files.getlist("btn-upload"):/        for requested_file in [item for field in sorted(request.files) if field.startswith("btn-upload") for item in request.files.getlist(field)]:/' \
+          /etc/s6-overlay/s6-rc.d/cwa-ingest-service/run \
+          /app/calibre-web-automated/cps/editbooks.py
+        sed -i '/for requested_file in \[item for field in sorted(request.files)/a\            if not requested_file or not requested_file.filename:\n                continue' \
+          /app/calibre-web-automated/cps/editbooks.py
+        sqlite3 /config/app.db 'UPDATE settings SET mail_size = 1024 * 1024 * 1024;' || true
+      '';
     in
     {
       systemd.tmpfiles.rules = [
@@ -34,6 +45,7 @@
           "${ingestRoot}:/cwa-book-ingest"
           "${libraryRoot}:/calibre-library"
           "${appDataRoot}/plugins:/config/.config/calibre/plugins"
+          "${cwaInitPatch}:/custom-cont-init.d/10-dotfiles-cwa-patch.sh:ro"
         ];
         ports = [ "8083:8083" ];
         extraOptions = [ "--label=com.centurylinklabs.watchtower.enable=true" ];

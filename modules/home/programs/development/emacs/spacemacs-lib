@@ -142,6 +142,10 @@ in
     mkdir -p "$target_dir/tree-sitter"
     ln -sfn ${lib.escapeShellArg "${pkgs.tree-sitter-grammars.tree-sitter-bitbake}/parser"} \
       "$target_dir/tree-sitter/libtree-sitter-bitbake.so"
+    ln -sfn ${lib.escapeShellArg "${pkgs.tree-sitter-grammars.tree-sitter-markdown}/parser"} \
+      "$target_dir/tree-sitter/libtree-sitter-markdown.so"
+    ln -sfn ${lib.escapeShellArg "${pkgs.tree-sitter-grammars.tree-sitter-markdown-inline}/parser"} \
+      "$target_dir/tree-sitter/libtree-sitter-markdown-inline.so"
   '';
 
   systemdUserServices.spacemacs = {

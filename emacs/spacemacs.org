@@ -1225,9 +1225,26 @@ Markdown, and Dockerfiles.
   (add-to-list 'auto-mode-alist '("defconfig\\'" . kconfig-mode))
   (add-to-list 'auto-mode-alist '("\\.lua\\'" . lua-mode))
 
+  ;; Prefer the Emacs 31 tree-sitter Markdown mode when both split parsers are
+  ;; available; otherwise keep the mature markdown-mode fallback.
+  (require 'treesit nil t)
+  (when (locate-library "markdown-ts-mode")
+    (autoload 'markdown-ts-mode "markdown-ts-mode"
+      "Major mode for editing Markdown using tree-sitter." t))
+  (defun my/markdown-mode ()
+    "Open Markdown with tree-sitter support when this Emacs can use it."
+    (if (and (fboundp 'markdown-ts-mode)
+             (fboundp 'treesit-available-p)
+             (treesit-available-p)
+             (fboundp 'treesit-ready-p)
+             (ignore-errors (treesit-ready-p 'markdown t))
+             (ignore-errors (treesit-ready-p 'markdown-inline t)))
+        (markdown-ts-mode)
+      (markdown-mode)))
+
   ;; Add Markdown detection
-  (add-to-list 'auto-mode-alist '("\\.md\\'" . markdown-mode))
-  (add-to-list 'auto-mode-alist '("\\.markdown\\'" . markdown-mode))
+  (add-to-list 'auto-mode-alist '("\\.md\\'" . my/markdown-mode))
+  (add-to-list 'auto-mode-alist '("\\.markdown\\'" . my/markdown-mode))
   (setq markdown-command "__MARKDOWN_BIN__")
 
   ;; Markdown performance: gate expensive features on buffer size.
@@ -1242,6 +1259,7 @@ Markdown, and Dockerfiles.
     (when (> (buffer-size) (* 64 1024))
       (display-line-numbers-mode -1)))
   (add-hook 'markdown-mode-hook #'my/markdown-performance-setup)
+  (add-hook 'markdown-ts-mode-hook #'my/markdown-performance-setup)
   (add-to-list 'auto-mode-alist '("Dockerfile\\'" . dockerfile-mode))
   (add-hook 'dockerfile-mode-hook #'lsp-deferred)
   (add-hook 'dockerfile-mode-hook #'company-mode)

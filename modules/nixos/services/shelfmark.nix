@@ -25,6 +25,48 @@ in
       prowlarrConfigPath = "/mnt/ssd/appdata/docker/prowlarr/config.xml";
       shelfmarkEnvPath = "/run/shelfmark/shelfmark.env";
       pythonWithYaml = pkgs.python3.withPackages (ps: [ ps.pyyaml ]);
+      shelfmarkEntrypoint = pkgs.writeTextFile {
+        name = "shelfmark-entrypoint";
+        executable = true;
+        text = ''
+          #!/bin/bash
+          set -euo pipefail
+
+          /app/.venv/bin/python <<'PY'
+          from pathlib import Path
+
+          source_path = Path("/app/shelfmark/release_sources/prowlarr/source.py")
+          source = source_path.read_text(encoding="utf-8")
+          indent = " " * 20
+          continuation = " " * 24
+          original = "\n".join([
+              f"{indent}indexer_query = (",
+              f"{continuation}enriched_query",
+              f"{continuation}if indexer_id in enriched_indexer_ids_set and enriched_query",
+              f"{continuation}else query",
+              f"{indent})",
+          ])
+          patched = "\n".join([
+              f"{indent}use_enriched_query = (",
+              f"{continuation}content_type != \"audiobook\"",
+              f"{continuation}and indexer_id in enriched_indexer_ids_set",
+              f"{continuation}and enriched_query",
+              f"{indent})",
+              f"{indent}indexer_query = enriched_query if use_enriched_query else query",
+          ])
+
+          if original in source:
+              source_path.write_text(source.replace(original, patched, 1), encoding="utf-8")
+              print("[dotfiles] Patched Shelfmark Prowlarr audiobook queries")
+          elif patched in source:
+              print("[dotfiles] Shelfmark Prowlarr audiobook query patch already applied")
+          else:
+              raise SystemExit("Shelfmark Prowlarr source patch context not found")
+          PY
+
+          exec /app/entrypoint.sh "$@"
+        '';
+      };
     in
     {
       systemd.tmpfiles.rules = [
@@ -131,7 +173,9 @@ in
           "${audiobookLibraryRoot}:/audiobooks"
           "${torrentsRoot}:/downloads"
           "${cwaConfigRoot}:/auth:ro"
+          "${shelfmarkEntrypoint}:/app/dotfiles-shelfmark-entrypoint:ro"
         ];
+        cmd = [ "/app/dotfiles-shelfmark-entrypoint" ];
         ports = [ "8084:8084" ];
         extraOptions = [ "--label=com.centurylinklabs.watchtower.enable=true" ];
       };

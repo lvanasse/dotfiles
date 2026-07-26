@@ -44,7 +44,7 @@
           # Media
           vlc
           spotify
-          unstable.spotatui
+          qbz
           kooha
           simplescreenrecorder
 

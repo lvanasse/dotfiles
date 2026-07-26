@@ -71,10 +71,10 @@ echo "[2/5] Checking expected native layer bindings"
 run_elisp "(progn
   ${run_user_config}
   (require 'core-keybindings)
-  (dolist (entry '((\"SPC '\" . ghostel)
+  (dolist (entry '((\"SPC '\" . my/ghostel-new)
                    (\"SPC b g\" . ghostel)
                    (\"SPC b G\" . ghostel-project)
-                   (\"SPC b t\" . ghostel)
+                   (\"SPC b t\" . my/ghostel-new)
                    (\"SPC b T\" . ghostel-project)
                    (\"SPC a e m\" . my/mu4e-open-inbox)
                    (\"SPC a e c\" . my/mu4e-compose-new)

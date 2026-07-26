@@ -24,8 +24,9 @@
           if "$emacsclient_bin" --eval '(daemonp)' >/dev/null 2>&1; then
             daemon_pid="$("$emacsclient_bin" --eval '(emacs-pid)' | tr -d '[:space:]')"
             daemon_ppid="$("$ps_bin" -o ppid= -p "$daemon_pid" 2>/dev/null | tr -d '[:space:]' || true)"
+            user_manager_pid="''${MANAGERPID:-}"
 
-            if [ "$daemon_ppid" = "1" ]; then
+            if [ "$daemon_ppid" = "1" ] || { [ -n "$user_manager_pid" ] && [ "$daemon_ppid" = "$user_manager_pid" ]; }; then
               echo "Stopping existing Emacs daemon pid $daemon_pid before systemd startup"
               "$emacsclient_bin" --eval '(kill-emacs)' >/dev/null 2>&1 || kill "$daemon_pid" >/dev/null 2>&1 || true
 

@@ -615,14 +615,17 @@ same Nerd Font mail glyphs as Waybar.
 Detect the Fish shell from several candidate paths (Nix profile, system
 path) and configure Ghostel, vterm, multi-vterm, multi-term, and the =$SHELL=
 environment variable.  Ghostel is the preferred terminal entry point, so
-=SPC '= and =M-x shell= open Ghostel instead of vterm.
+=SPC '= and =SPC b t= create new Ghostel terminals while =SPC b g= and
+=M-x shell= keep the stable default Ghostel buffer.
 
 #+begin_src emacs-lisp
   (let* ((fish-candidates (list
+                           "__FISH_BIN__"
+                           "/etc/profiles/per-user/ludovic/bin/fish"
+                           "/run/current-system/sw/bin/fish"
                            (executable-find "fish")
                            (expand-file-name "~/.nix-profile/bin/fish")
-                           (expand-file-name "~/.local/state/nix/profile/bin/fish")
-                           "/run/current-system/sw/bin/fish"))
+                           (expand-file-name "~/.local/state/nix/profile/bin/fish")))
          (fish (seq-find #'file-executable-p fish-candidates)))
     (when fish
       (setq shell-file-name fish
@@ -640,21 +643,27 @@ environment variable.  Ghostel is the preferred terminal entry point, so
           ghostel-max-scrollback (* 16 1024 1024)
           ghostel-module-auto-install 'ask))
 
+  (defun my/ghostel-new ()
+    "Create a new Ghostel terminal buffer."
+    (interactive)
+    (let ((ghostel-buffer-name (generate-new-buffer-name "*terminal*")))
+      (ghostel)))
+
   ;; Prefer Ghostel for plain terminal entry points.
   (defalias 'shell 'ghostel)
 #+end_src
 
 ** Keybindings — core
 
-Leader-key bindings for Ghostel terminal access and prefix declarations
-for remote access and the view prefix.
+Leader-key bindings for Ghostel terminal access.  =SPC '= and =SPC b t=
+create new terminal buffers; =SPC b g= keeps the stable default buffer.
 
 #+begin_src emacs-lisp
   (spacemacs/set-leader-keys
-    "'" 'ghostel
+    "'" 'my/ghostel-new
     "bg" 'ghostel
     "bG" 'ghostel-project
-    "bt" 'ghostel
+    "bt" 'my/ghostel-new
     "bT" 'ghostel-project)
 
   (spacemacs/declare-prefix "b g" "ghostel")

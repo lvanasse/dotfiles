@@ -37,7 +37,6 @@
 
     # Applications
     nix-flatpak.url = "github:gmodena/nix-flatpak/?ref=latest";
-    qbz.url = "github:vicrodh/qbz";
 
     # Theming
     stylix = {

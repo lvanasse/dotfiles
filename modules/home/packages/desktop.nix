@@ -1,4 +1,4 @@
-{ inputs, ... }:
+{ ... }:
 {
   flake.modules.homeManager."packages.desktop" =
     {
@@ -24,6 +24,17 @@
         hash = "sha256-gpI8EJRga2Z6HVWCDMAzGqLAHrqhRf4Q2iI43scoHAE=";
       };
 
+      qbzVersion = "2.0.2";
+      qbzAppImage = pkgs.fetchurl {
+        url = "https://github.com/vicrodh/qbz/releases/download/v${qbzVersion}/QBZ_${qbzVersion}_amd64.AppImage";
+        hash = "sha256-Kz3EEbP2tCm4oRXvMYUlnUQn6hjZRG2mQvQzQDhXj9U=";
+      };
+      qbz = pkgs.appimageTools.wrapType2 {
+        pname = "qbz";
+        version = qbzVersion;
+        src = qbzAppImage;
+      };
+
       koreaderDictDir = "${config.home.homeDirectory}/.config/koreader/data/dict";
     in
     {
@@ -44,7 +55,7 @@
           # Media
           vlc
           spotify
-          inputs.qbz.packages.${pkgs.stdenv.hostPlatform.system}.default
+          qbz
           kooha
           simplescreenrecorder
 

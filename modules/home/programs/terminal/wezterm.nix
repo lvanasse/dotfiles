@@ -138,6 +138,7 @@
               enable_tab_bar = false, -- never show the tab/header bar
               use_fancy_tab_bar = false,
               hide_tab_bar_if_only_one_tab = true,
+              window_close_confirmation = 'NeverPrompt',
               -- Disable WezTerm's window title/header; let Sway draw titlebars
               window_decorations = 'NONE',
               -- Minimal symmetric padding; Waybar reserves space via exclusive layer

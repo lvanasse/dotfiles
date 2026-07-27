@@ -128,6 +128,9 @@
           wireshark
           fenix.packages.rust-analyzer
           fenix.toolchain
+
+          saleae-logic-2
+
         ])
         ++ [
           tex # TeX toolchain for LaTeX preview/build

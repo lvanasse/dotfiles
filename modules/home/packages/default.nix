@@ -10,6 +10,7 @@
         config.flake.modules.homeManager."packages.compat"
         config.flake.modules.homeManager."packages.containers"
         config.flake.modules.homeManager."packages.serial"
+        config.flake.modules.homeManager."packages.saleae"
         config.flake.modules.homeManager."packages.gaming"
       ];
     };

@@ -147,6 +147,7 @@
           "/hot-media/"
           "/imports/"
           "/scratch/"
+          "/backups/appdata-pre-ssd-migration-*/"
           "/appdata/*/logs/"
           "/appdata/*/logs.db"
           ".Thumbs.db"

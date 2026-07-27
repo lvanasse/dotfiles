@@ -104,6 +104,18 @@ in
                 available_cores=$(( total_cores - reserve_cores ))
                 [ "''${available_cores}" -lt 1 ] && available_cores=1
 
+                reserve_memory_mib="''${NOHM_RESERVED_MEMORY_MIB:-4096}"
+                case "''${reserve_memory_mib}" in ""|*[!0-9]*) reserve_memory_mib=4096 ;; esac
+                memory_per_core_mib="''${NOHM_MEMORY_PER_CORE_MIB:-4096}"
+                case "''${memory_per_core_mib}" in ""|*[!0-9]*) memory_per_core_mib=4096 ;; esac
+                available_memory_mib="$(awk '/^MemAvailable:/ { print int($2 / 1024); exit }' /proc/meminfo 2>/dev/null || true)"
+                case "''${available_memory_mib}" in ""|*[!0-9]*) available_memory_mib=0 ;; esac
+                if [ "''${available_memory_mib}" -gt "''${reserve_memory_mib}" ]; then
+                  memory_cores=$(( (available_memory_mib - reserve_memory_mib) / memory_per_core_mib ))
+                  [ "''${memory_cores}" -lt 1 ] && memory_cores=1
+                  [ "''${available_cores}" -gt "''${memory_cores}" ] && available_cores="''${memory_cores}"
+                fi
+
                 build_cores="''${NOHM_BUILD_CORES:-auto}"
                 case "''${build_cores}" in ""|auto|*[!0-9]*) build_cores="''${available_cores}" ;; esac
                 [ "''${build_cores}" -lt 1 ] && build_cores=1

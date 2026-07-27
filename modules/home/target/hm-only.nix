@@ -93,12 +93,30 @@
                   max_jobs=1
                 fi
 
+                reserve_memory_mib="''${NOHM_RESERVED_MEMORY_MIB:-4096}"
+                case "''${reserve_memory_mib}" in
+                  ""|*[!0-9]*) reserve_memory_mib=4096 ;;
+                esac
+                memory_per_job_mib="''${NOHM_MEMORY_PER_JOB_MIB:-4096}"
+                case "''${memory_per_job_mib}" in
+                  ""|*[!0-9]*) memory_per_job_mib=4096 ;;
+                esac
+                available_memory_mib="$(awk '/^MemAvailable:/ { print int($2 / 1024); exit }' /proc/meminfo 2>/dev/null || true)"
+                case "''${available_memory_mib}" in
+                  ""|*[!0-9]*) available_memory_mib=0 ;;
+                esac
+                if [ "''${available_memory_mib}" -gt "''${reserve_memory_mib}" ]; then
+                  memory_jobs=$(( (available_memory_mib - reserve_memory_mib) / memory_per_job_mib ))
+                  [ "''${memory_jobs}" -lt 1 ] && memory_jobs=1
+                  [ "''${max_jobs}" -gt "''${memory_jobs}" ] && max_jobs="''${memory_jobs}"
+                fi
+
                 nix_config=$(printf 'max-jobs = %s\ncores = %s' "''${max_jobs}" "''${build_cores}")
                 if [ -n "''${NIX_CONFIG-}" ]; then
                   nix_config="''${nix_config}
         ''${NIX_CONFIG}"
                 fi
-                log_verbose "[cfg] Nix: leaving ''${reserve_cores} machine core(s) free; max-jobs=''${max_jobs}; cores=''${build_cores}"
+                log_verbose "[cfg] Nix: leaving ''${reserve_cores} machine core(s) and ''${reserve_memory_mib} MiB free; max-jobs=''${max_jobs}; cores=''${build_cores}"
 
                 is_home_manager_only_target() {
                   case "''${host}" in

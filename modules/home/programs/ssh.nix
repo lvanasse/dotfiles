@@ -122,12 +122,6 @@ in
             identityAgent = "none";
           };
 
-          "vention 192.168.7.2" = {
-            hostname = "192.168.7.2";
-            user = "vention";
-            pubkeyAuthentication = false;
-          };
-
           # Steam Deck (SteamOS)
           "steamdeck" = {
             hostname = "192.168.0.105";

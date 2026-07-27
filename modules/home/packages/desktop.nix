@@ -1,4 +1,4 @@
-{ ... }:
+{ inputs, ... }:
 {
   flake.modules.homeManager."packages.desktop" =
     {
@@ -44,7 +44,7 @@
           # Media
           vlc
           spotify
-          qbz
+          inputs.qbz.packages.${pkgs.stdenv.hostPlatform.system}.default
           kooha
           simplescreenrecorder
 

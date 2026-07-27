@@ -185,7 +185,6 @@ in
             controlPath = "~/.ssh/master-%r@%h:%p";
             controlPersist = "10m";
             addKeysToAgent = "yes";
-            identityFile = "~/.ssh/id_ed25519_personal";
           };
         };
       };

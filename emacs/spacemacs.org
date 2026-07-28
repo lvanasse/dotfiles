@@ -784,6 +784,8 @@ Plain `find-file` with TRAMP syntax remains fully supported."
     "a c i D" #'my/open-mail-irc-layout
     "a c i j" #'my/erc-join-favorite-channel
     "a c i E" #'erc-tls
+    "<next>" #'centaur-tabs-forward
+    "<prior>" #'centaur-tabs-backward
     "v <right>" #'centaur-tabs-forward
     "v <left>" #'centaur-tabs-backward
     "v n" #'centaur-tabs-forward

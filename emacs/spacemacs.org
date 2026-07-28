@@ -567,6 +567,19 @@ significantly reduces CPU pressure in large buffers.
       (flyspell-lazy-mode 1)))
 #+end_src
 
+** Undo persistence
+
+Spacemacs auto-selects Zstandard compression for =undo-fu-session= when the
+=zstd= executable exists.  On this setup the undo session cache has produced
+plain Lisp files with a =.zst= extension, which then fails when Emacs later
+tries to decompress them.  Store undo sessions uncompressed instead.
+
+#+begin_src emacs-lisp
+  (setq undo-fu-session-compression nil)
+  (with-eval-after-load 'undo-fu-session
+    (setq undo-fu-session-compression nil))
+#+end_src
+
 ** Clipetty (terminal clipboard)
 
 In non-graphical frames (SSH sessions, tmux), enable =clipetty= for

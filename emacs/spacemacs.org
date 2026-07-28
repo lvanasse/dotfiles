@@ -1282,6 +1282,14 @@ Markdown, and Dockerfiles.
   (add-to-list 'auto-mode-alist '("\\.mk\\'" . makefile-gmake-mode))
   (add-to-list 'auto-mode-alist '("Makefile\\." . makefile-gmake-mode))
 
+  ;; Keep C/C++ indentation aligned with the workspace default of 4 spaces.
+  (setq-default c-basic-offset 4)
+  (defun my/c-c++-indentation-setup ()
+    (setq-local c-basic-offset 4
+                tab-width 4
+                indent-tabs-mode nil))
+  (add-hook 'c-mode-common-hook #'my/c-c++-indentation-setup)
+
   ;; Embedded projects often mix TOML, Meson, Device Tree, Kconfig, and Lua.
   (add-to-list 'auto-mode-alist '("\\.toml\\'" . toml-mode))
   (add-to-list 'auto-mode-alist '("meson\\.build\\'" . meson-mode))

@@ -67,8 +67,7 @@ Git forge dependencies.
      (mu4e :variables
             mu4e-installation-path "__MU_SITE_LISP_MU4E__"
             mu4e-enable-notifications t
-            mu4e-enable-mode-line t
-            mu4e-autorun-background-at-startup t)
+            mu4e-enable-mode-line t)
      markdown
      nixos
      pdf
@@ -853,9 +852,6 @@ opens mu4e directly in the Inbox folder.
   (defconst my/mail-irc-layout-name "mail+irc"
     "Name used for the managed mail+IRC layout.")
 
-  (defvar my/mail-irc-bootstrap-done nil
-    "Whether the first GUI-session mail+IRC bootstrap already ran.")
-
   (defun my/mu4e-focus-inbox ()
     "Switch the current mu4e view to Inbox."
     (cond
@@ -999,33 +995,10 @@ on the left, and ERC (Libera Chat) on the right.  Invoked via
     (my/open-mail-irc-layout))
 #+end_src
 
-** Mail bootstrap on first GUI frame
+** Mail layout startup
 
-Automatically open the email layout the first time a graphical frame
-appears (whether via daemon or direct launch).  Subsequent frames leave
-the layout alone.  IRC is available manually via =SPC a c i=.
-
-#+begin_src emacs-lisp
-  (defun my/mail-bootstrap-on-frame (frame)
-    "Bootstrap the managed email layout once for the first GUI FRAME."
-    (when (and (not my/mail-irc-bootstrap-done)
-               (frame-live-p frame)
-               (display-graphic-p frame))
-      (setq my/mail-irc-bootstrap-done t)
-      (run-with-idle-timer
-       0.75
-       nil
-       (lambda (target-frame)
-         (when (frame-live-p target-frame)
-           (select-frame-set-input-focus target-frame)
-           (with-selected-frame target-frame
-             (my/setup-email-layout))))
-       frame)))
-
-  (defun my/bootstrap-mail-for-current-frame ()
-    "Bootstrap the managed email layout for the selected frame when needed."
-    (my/mail-bootstrap-on-frame (selected-frame)))
-#+end_src
+Keep startup on the normal Spacemacs home buffer.  Mail and IRC layouts are
+opened manually via =SPC a e l= or =SPC a c i D=.
 
 ** IRC dispatch
 
@@ -1059,8 +1032,6 @@ or accepts a subcommand:
         (setq unread-command-events (list event))
         (my/erc-open-or-connect)))))
 
-  (add-hook 'emacs-startup-hook #'my/bootstrap-mail-for-current-frame)
-  (add-hook 'after-make-frame-functions #'my/mail-bootstrap-on-frame)
 #+end_src
 
 ** Mode-line (spaceline)
@@ -1984,10 +1955,9 @@ Called before starting the mu server so mu4e can acquire the lock."
 
 Desktop notifications and mode-line display for unread mail.  Uses the
 filtered query defined earlier to only count relevant folders.
-The mu4e layer starts the server in the background at startup
-(=mu4e-autorun-background-at-startup t=) and enables mode-line display
-(=mu4e-enable-mode-line t=).  We only need to override the query and
-formatter.
+The mu4e layer enables mode-line display (=mu4e-enable-mode-line t=), while
+mail itself opens only from explicit commands.  We only need to override the
+query and formatter.
 
 #+begin_src emacs-lisp
   (defvar my/mu4e-alert-mode-line-display-enabled nil

@@ -201,9 +201,9 @@ in
       Quote passwords in authinfo entries when they contain special characters
       (for example a leading `#`), or auth-source may parse them as empty.
 
-      The managed IRC session also auto-connects shortly after Emacs startup.
-      The first GUI frame of each Emacs process bootstraps the combined
-      mail+IRC layout once, then later frames leave it alone.
+      The managed mail+IRC layout opens only when requested from the
+      Spacemacs leader bindings. Startup stays on the normal Spacemacs home
+      buffer.
       Favorite channels stay manual by default instead of autojoining.
       Desktop notifications are sent for direct private messages and channel
       messages containing your current nick. Plain IRC does not provide a

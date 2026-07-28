@@ -111,6 +111,15 @@ let
       find "$quelpa_build_dir" -mindepth 1 -maxdepth 1 \( -type d -o -type f \) -exec rm -rf {} +
     fi
   '';
+  undoFuSessionCleanup = pkgs.writeShellScript "spacemacs-undo-fu-session-cleanup" ''
+    set -eu
+
+    undo_dir=${lib.escapeShellArg "${spacemacsInitDir}/.cache/undo-fu-session"}
+
+    if [ -d "$undo_dir" ]; then
+      ${pkgs.findutils}/bin/find "$undo_dir" -maxdepth 1 -type f -name '*.zst' -delete
+    fi
+  '';
   rsyncBin = "${pkgs.rsync}/bin/rsync";
 in
 {
@@ -163,6 +172,7 @@ in
       ExecStartPre = [
         ""
         "${spacemacsBootstrapCleanup}"
+        "${undoFuSessionCleanup}"
         "${daemonServicePreStart "${spacemacsClientBin}/bin/spacemacsclient"}"
       ];
       ExecStart = "${spacemacsRawBin}/bin/spacemacs-raw --fg-daemon=${spacemacsServerName}";

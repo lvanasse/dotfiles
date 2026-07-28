@@ -404,10 +404,29 @@ mail indicator renders the same glyphs inside GUI Emacs frames.
 
   (set-face-attribute 'fringe nil :background "#1d2021")
 
-  (defface lsp-flycheck-warning-unnecessary
+  (defface my/lsp-flycheck-warning-unnecessary-face
     '((t :inherit font-lock-warning-face))
     "Compatibility face for LSP/Flycheck unnecessary warning diagnostics."
     :group 'faces)
+
+  (defun my/define-lsp-flycheck-warning-unnecessary-level ()
+    "Define the LSP unnecessary-warning Flycheck level when lsp-mode skips it."
+    (when (and (fboundp 'flycheck-define-error-level)
+               (not (get 'lsp-flycheck-warning-unnecessary 'flycheck-error-severity)))
+      (let ((category 'lsp-flycheck-warning-unnecessary-category))
+        (setf (get category 'face) 'my/lsp-flycheck-warning-unnecessary-face
+              (get category 'priority) 100)
+        (flycheck-define-error-level 'lsp-flycheck-warning-unnecessary
+          :severity (get 'warning 'flycheck-error-severity)
+          :compilation-level (get 'warning 'flycheck-compilation-level)
+          :overlay-category category
+          :fringe-bitmap (or (get 'warning 'flycheck-fringe-bitmaps)
+                             (get 'warning 'flycheck-fringe-bitmap-double-arrow))
+          :fringe-face (get 'warning 'flycheck-fringe-face)
+          :error-list-face 'my/lsp-flycheck-warning-unnecessary-face))))
+
+  (with-eval-after-load 'flycheck
+    (my/define-lsp-flycheck-warning-unnecessary-level))
 
   (with-eval-after-load 'ghostel
     (set-face-attribute 'ghostel-default nil

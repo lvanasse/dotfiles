@@ -310,7 +310,43 @@ mode associations that Spacemacs does not cover out of the box.
   ;; Protect against accidentally opening huge/minified files.
   (when (fboundp 'global-so-long-mode)
     (global-so-long-mode 1))
+#+end_src
 
+** Tabs
+
+Keep normal working buffers in a single Centaur Tabs group so switching to
+a terminal does not make the existing tab row appear to vanish.  Internal
+and transient buffers remain hidden to avoid clutter.
+
+#+begin_src emacs-lisp
+  (with-eval-after-load 'centaur-tabs
+    (defconst my/centaur-tabs-visible-special-buffer-regexp
+      "\\`\\*\\(?:terminal\\|ghostel\\|shell\\|eshell\\|vterm\\)"
+      "Special buffers that should remain visible in Centaur Tabs.")
+
+    (defun my/centaur-tabs-buffer-groups ()
+      "Put visible buffers in one shared workspace tab group."
+      '("Workspace"))
+
+    (defun my/centaur-tabs-hide-tab (buffer)
+      "Hide internal BUFFER tabs while keeping useful terminals visible."
+      (let ((name (format "%s" buffer)))
+        (or (centaur-tabs-hide-tab buffer)
+            (string-prefix-p " " name)
+            (and (string-prefix-p "*" name)
+                 (not (string-match-p
+                       my/centaur-tabs-visible-special-buffer-regexp
+                       name))))))
+
+    (setq centaur-tabs-buffer-groups-function #'my/centaur-tabs-buffer-groups
+          centaur-tabs-hide-tab-function #'my/centaur-tabs-hide-tab)
+    (clrhash centaur-tabs-hide-hash)
+    (centaur-tabs-headline-match))
+#+end_src
+
+** Org mode
+
+#+begin_src emacs-lisp
   ;; Pretty Org mode display
   (setq-default org-use-sub-superscripts '{}
                 org-export-with-sub-superscripts '{}
@@ -615,8 +651,9 @@ same Nerd Font mail glyphs as Waybar.
 Detect the Fish shell from several candidate paths (Nix profile, system
 path) and configure Ghostel, vterm, multi-vterm, multi-term, and the =$SHELL=
 environment variable.  Ghostel is the preferred terminal entry point, so
-=SPC '= and =SPC b t= create new Ghostel terminals while =SPC b g= and
-=M-x shell= keep the stable default Ghostel buffer.
+=SPC '= keeps Spacemacs' standard popup shell behavior, =SPC b t= creates a
+new full terminal buffer, and =SPC b g= keeps the stable default Ghostel
+buffer.
 
 #+begin_src emacs-lisp
   (let* ((fish-candidates (list
@@ -649,18 +686,19 @@ environment variable.  Ghostel is the preferred terminal entry point, so
     (let ((ghostel-buffer-name (generate-new-buffer-name "*terminal*")))
       (ghostel)))
 
-  ;; Prefer Ghostel for plain terminal entry points.
-  (defalias 'shell 'ghostel)
+  ;; Keep Spacemacs' own shell entry points unchanged; Ghostel lives under
+  ;; explicit leader bindings below.
 #+end_src
 
 ** Keybindings — core
 
-Leader-key bindings for Ghostel terminal access.  =SPC '= and =SPC b t=
-create new terminal buffers; =SPC b g= keeps the stable default buffer.
+Leader-key bindings for Ghostel terminal access.  =SPC '= keeps the standard
+Spacemacs popup shell, =SPC b t= creates a new full terminal buffer, and
+=SPC b g= keeps the stable default buffer.
 
 #+begin_src emacs-lisp
   (spacemacs/set-leader-keys
-    "'" 'my/ghostel-new
+    "'" 'spacemacs/default-pop-shell
     "bg" 'ghostel
     "bG" 'ghostel-project
     "bt" 'my/ghostel-new

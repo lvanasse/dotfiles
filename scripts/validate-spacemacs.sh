@@ -71,7 +71,7 @@ echo "[2/5] Checking expected native layer bindings"
 run_elisp "(progn
   ${run_user_config}
   (require 'core-keybindings)
-  (dolist (entry '((\"SPC '\" . my/ghostel-new)
+  (dolist (entry '((\"SPC '\" . spacemacs/default-pop-shell)
                    (\"SPC b g\" . ghostel)
                    (\"SPC b G\" . ghostel-project)
                    (\"SPC b t\" . my/ghostel-new)
@@ -98,6 +98,18 @@ run_elisp "(progn
 echo "[3/5] Checking tab navigation bindings"
 run_elisp "(progn
   ${run_user_config}
+  (require 'centaur-tabs)
+  (princ (format \"centaur-tabs-buffer-groups-function => %S\\n\"
+                 centaur-tabs-buffer-groups-function))
+  (princ (format \"centaur-tabs-hide-tab-function => %S\\n\"
+                 centaur-tabs-hide-tab-function))
+  (unless (and (eq centaur-tabs-buffer-groups-function
+                   (quote my/centaur-tabs-buffer-groups))
+               (equal (my/centaur-tabs-buffer-groups)
+                      (quote (\"Workspace\")))
+               (eq centaur-tabs-hide-tab-function
+                   (quote my/centaur-tabs-hide-tab)))
+    (kill-emacs 1))
   (let* ((legacy-tabs
           '((\"g t\" evil-normal-state-map
              (spacemacs/tabs-forward centaur-tabs-forward tab-next))

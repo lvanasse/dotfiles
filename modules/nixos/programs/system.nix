@@ -96,6 +96,7 @@ in
                 nproc_bin="${pkgs.coreutils}/bin/nproc"
                 nix_bin="${pkgs.nix}/bin/nix"
                 ssh_bin="${pkgs.openssh}/bin/ssh"
+                systemctl_bin="${pkgs.systemd}/bin/systemctl"
 
                 # --- Compute parallelism ---
                 reserve_cores="''${NOHM_RESERVED_CORES:-2}"
@@ -139,7 +140,19 @@ in
                 # --- Determine steps ---
                 is_remote() { [ -n "''${target_host}" ]; }
                 should_validate_spacemacs() {
-                  case "''${host}" in pc|laptop|hm-only) return 0 ;; *) return 1 ;; esac
+                  case "''${host}" in pc|laptop|hm-only|work-laptop) return 0 ;; *) return 1 ;; esac
+                }
+                restart_spacemacs_daemon() {
+                  should_validate_spacemacs || return 0
+
+                  step "Restart Spacemacs daemon"
+                  cmd "systemctl --user restart spacemacs.service"
+                  if "$systemctl_bin" --user restart spacemacs.service; then
+                    ok "Spacemacs daemon"
+                  else
+                    fail "Spacemacs daemon"
+                    exit 1
+                  fi
                 }
                 verify_remote_target() {
                   [ -n "''${target_host}" ] || return 0
@@ -171,6 +184,7 @@ in
                   if env NIX_CONFIG="''${nix_config}" "$hm_bin" switch \
                     --flake "''${flake_dir}#${username}@''${host}" -b "''${bext}" 2>&1 | filter_noise; then
                     ok "Home Manager"
+                    restart_spacemacs_daemon
                   else
                     fail "Home Manager"
                     exit 1

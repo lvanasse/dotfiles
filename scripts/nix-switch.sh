@@ -50,9 +50,16 @@ cd "$FLAKE_DIR"
 
 should_validate_spacemacs() {
   case "$HOST" in
-  pc | laptop | hm-only) return 0 ;;
+  pc | laptop | hm-only | work-laptop) return 0 ;;
   *) return 1 ;;
   esac
+}
+
+restart_spacemacs_daemon() {
+  should_validate_spacemacs || return 0
+
+  log_cmd "[restart]" "systemctl --user restart spacemacs.service"
+  systemctl --user restart spacemacs.service
 }
 
 is_home_manager_only_target() {
@@ -148,6 +155,7 @@ rm -f "$HOME/.local/share/applications/mimeapps.list" 2>/dev/null || true
 BEXT="${HM_BACKUP_EXT:-hm-$(date +%Y%m%d-%H%M%S)}"
 log_cmd "[1/2]" "home-manager switch --flake ${FLAKE_DIR}#${USERNAME}@${HOST} -b ${BEXT}"
 NIX_CONFIG="${NIX_WRAPPER_CONFIG}" home-manager switch --flake "${FLAKE_DIR}#${USERNAME}@${HOST}" -b "${BEXT}"
+restart_spacemacs_daemon
 
 # Step 2: NixOS or post-switch tasks
 if is_nixos && ! is_home_manager_only_target; then

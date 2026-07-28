@@ -110,6 +110,10 @@ editing style, theme, startup banner, and other framework-level options.
    dotspacemacs-elpa-https t
    dotspacemacs-verify-spacelpa-archives nil
    dotspacemacs-themes '(gruvbox-dark-hard)
+   dotspacemacs-default-font '("JetBrainsMono Nerd Font Mono"
+                               :size 9.0
+                               :weight normal
+                               :width normal)
    dotspacemacs-colorize-cursor-according-to-state t
    dotspacemacs-mode-line-theme '(spacemacs :separator utf-8 :separator-scale 1.0)
    dotspacemacs-display-default-layout nil
@@ -397,12 +401,17 @@ mail indicator renders the same glyphs inside GUI Emacs frames.
 
   (set-face-attribute 'fringe nil :background "#1d2021")
 
+  (defface lsp-flycheck-warning-unnecessary
+    '((t :inherit font-lock-warning-face))
+    "Compatibility face for LSP/Flycheck unnecessary warning diagnostics."
+    :group 'faces)
+
   (with-eval-after-load 'ghostel
     (set-face-attribute 'ghostel-default nil
                         :foreground "#ebdbb2"
                         :background "#1d2021"
                         :family "JetBrainsMono Nerd Font Mono"
-                        :height 105)
+                        :height 90)
     (set-face-attribute 'ghostel-color-black nil :foreground "#1d2021")
     (set-face-attribute 'ghostel-color-red nil :foreground "#fb4934")
     (set-face-attribute 'ghostel-color-green nil :foreground "#b8bb26")
@@ -711,6 +720,15 @@ Spacemacs popup shell, =SPC b t= creates a new full terminal buffer, and
   (spacemacs/declare-prefix "a r d" "devcontainer")
   (define-key spacemacs-default-map (kbd "v") nil)
   (spacemacs/declare-prefix "v" "view")
+
+  (defun my/spacemacs-layouts-transient-state ()
+    "Open Spacemacs' layouts transient state as an explicit command."
+    (interactive)
+    (if (fboundp 'spacemacs/layouts-transient-state/body)
+        (call-interactively #'spacemacs/layouts-transient-state/body)
+      (user-error "Spacemacs layouts transient state is not loaded")))
+
+  (spacemacs/set-leader-keys "l" 'my/spacemacs-layouts-transient-state)
 #+end_src
 
 ** TRAMP helper and keybindings

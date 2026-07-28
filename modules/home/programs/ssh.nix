@@ -131,6 +131,18 @@ in
             identityAgent = "none";
           };
 
+          # Vention lab machines normally use password auth. Do not offer the
+          # local agent keys first, or OpenSSH can hit the server's
+          # MaxAuthTries limit before it reaches the password prompt.
+          "192.168.103.*" = {
+            user = "vention";
+            pubkeyAuthentication = false;
+            passwordAuthentication = true;
+            preferredAuthentications = "password,keyboard-interactive";
+            identitiesOnly = true;
+            identityAgent = "none";
+          };
+
           # Personal GitHub account
           "github-personal" = {
             hostname = "github.com";

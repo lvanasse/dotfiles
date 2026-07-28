@@ -196,7 +196,11 @@ seamless appearance.
         scroll-margin 2
         auto-window-vscroll nil)
   (setq-default cursor-type '(hbar . 3)
-                line-spacing 2)
+                line-spacing 2
+                indent-tabs-mode nil
+                tab-width 4
+                standard-indent 4
+                evil-shift-width 4)
   (menu-bar-mode -1)
   (tool-bar-mode -1)
   (scroll-bar-mode -1)

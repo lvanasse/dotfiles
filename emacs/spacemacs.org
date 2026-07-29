@@ -168,9 +168,16 @@ seamless appearance.
             (lambda ()
               (setq file-name-handler-alist my/file-name-handler-alist-backup)))
 
-  ;; Use plist deserialization for lsp-mode (faster than hash-tables).
+  ;; Use plist deserialization for lsp-mode (faster than hash-tables), but keep
+  ;; language servers out of formatting decisions unless explicitly requested.
   (setenv "LSP_USE_PLISTS" "true")
-  (setq lsp-use-plists t)
+  (setq lsp-use-plists t
+        lsp-enable-indentation nil
+        lsp-enable-on-type-formatting nil
+        lsp-before-save-edits nil
+        lsp-completion-provider :capf
+        lsp-idle-delay 0.35
+        lsp-pyright-langserver-command "basedpyright-langserver")
   (when (boundp 'treesit-extra-load-path)
     (add-to-list 'treesit-extra-load-path
                  (expand-file-name "tree-sitter" user-emacs-directory)))
@@ -234,37 +241,85 @@ seamless appearance.
     (add-to-list 'warning-suppress-types '(native-compiler)))
   (when (boundp 'warning-suppress-log-types)
     (add-to-list 'warning-suppress-log-types '(native-compiler)))
+  (require 'seq)
   ;; Client frames can fall back to a transient buffer with no Evil leader
-  ;; bindings after killing the visited file. Replace that state with a
-  ;; normal scratch buffer in the same frame.
+  ;; bindings after killing the visited file. Replace that state with another
+  ;; real editing buffer, or a normal scratch buffer as a last resort.
   (defun my/normalize-fallback-buffer (&optional buffer)
     (with-current-buffer (or buffer (current-buffer))
       (unless (eq major-mode 'text-mode)
         (text-mode))))
+
   (defun my/show-fallback-scratch-buffer ()
     (let ((buffer (get-buffer-create "*scratch*")))
       (switch-to-buffer buffer)
       (my/normalize-fallback-buffer buffer)
       buffer))
+
+  (defun my/interactive-buffer-p (buffer)
+    "Return non-nil when BUFFER is a sensible post-kill destination."
+    (when (buffer-live-p buffer)
+      (with-current-buffer buffer
+        (or buffer-file-name
+            (and (buffer-base-buffer)
+                 (buffer-file-name (buffer-base-buffer)))
+            (derived-mode-p 'dired-mode)
+            (string-match-p
+             "\\`\\*\\(?:terminal\\|ghostel\\|shell\\|eshell\\|vterm\\)"
+             (buffer-name buffer))))))
+
+  (defun my/post-kill-replacement-buffer (&optional killed-buffer)
+    "Return a live buffer to focus after KILLED-BUFFER is gone."
+    (seq-find (lambda (buffer)
+                (and (not (eq buffer killed-buffer))
+                     (my/interactive-buffer-p buffer)))
+              (buffer-list)))
+
   (defun my/bad-fallback-buffer-p (buffer)
     (with-current-buffer buffer
-      (or (equal (buffer-name buffer) " *server*")
+      (or (not (my/interactive-buffer-p buffer))
+          (equal (buffer-name buffer) " *server*")
           (and (equal (buffer-name buffer) "*scratch*")
                (eq major-mode 'fundamental-mode)))))
-  (defun my/repair-buffer-fallback-after-kill ()
+
+  (defun my/restore-input-state-after-buffer-kill ()
+    "Reset transient input state after buffer deletion."
+    (setq overriding-local-map nil
+          overriding-terminal-local-map nil)
+    (deactivate-mark)
+    (when (and (fboundp 'evil-normal-state)
+               (not (minibufferp)))
+      (evil-normal-state)))
+
+  (defun my/repair-window-after-buffer-kill (window killed-buffer)
+    "Repair WINDOW when it lands on a bad buffer after KILLED-BUFFER is gone."
+    (when (window-live-p window)
+      (with-selected-window window
+        (let ((buffer (window-buffer window)))
+          (when (my/bad-fallback-buffer-p buffer)
+            (let ((replacement (my/post-kill-replacement-buffer killed-buffer)))
+              (if replacement
+                  (switch-to-buffer replacement)
+                (my/show-fallback-scratch-buffer)))
+            (my/restore-input-state-after-buffer-kill))))))
+
+  (defun my/repair-buffer-fallback-after-kill (&optional killed-buffer)
     (let ((frame (selected-frame)))
       (run-at-time
        0 nil
-       (lambda (target-frame)
+       (lambda (target-frame target-buffer)
          (when (frame-live-p target-frame)
            (with-selected-frame target-frame
-             (let ((buffer (window-buffer (selected-window))))
-               (when (my/bad-fallback-buffer-p buffer)
-                 (my/show-fallback-scratch-buffer))))))
-       frame)))
+             (dolist (window (window-list target-frame 'no-minibuf))
+               (my/repair-window-after-buffer-kill window target-buffer)))))
+       frame
+       killed-buffer)))
+
   ;; Some kill paths do not go through `server-visit-hook' once a frame is
   ;; already alive, so repair bad fallback buffers after any buffer kill.
-  (add-hook 'kill-buffer-hook #'my/repair-buffer-fallback-after-kill)
+  (add-hook 'kill-buffer-hook
+            (lambda ()
+              (my/repair-buffer-fallback-after-kill (current-buffer))))
   (add-to-list 'default-frame-alist '(internal-border-width . 0)))
 #+end_src
 
@@ -322,9 +377,11 @@ mode associations that Spacemacs does not cover out of the box.
 
 ** Tabs
 
-Keep normal working buffers in a single Centaur Tabs group so switching to
-a terminal does not make the existing tab row appear to vanish.  Internal
-and transient buffers remain hidden to avoid clutter.
+Keep real editing buffers in a single Centaur Tabs group so switching between
+files stays predictable.  Internal, generated, and transient buffers are left
+out of the tab list entirely; terminals are the only visible non-file buffers.
+When the current buffer is internal, keep showing the normal file tab row
+instead of making the header line disappear.
 
 #+begin_src emacs-lisp
   (with-eval-after-load 'centaur-tabs
@@ -332,21 +389,72 @@ and transient buffers remain hidden to avoid clutter.
       "\\`\\*\\(?:terminal\\|ghostel\\|shell\\|eshell\\|vterm\\)"
       "Special buffers that should remain visible in Centaur Tabs.")
 
+    (defun my/centaur-tabs-layout-group-name ()
+      "Return the tab group name for the current Spacemacs layout."
+      (if (and (fboundp 'safe-persp-name) (fboundp 'get-frame-persp))
+          (or (safe-persp-name (get-frame-persp)) "Workspace")
+        "Workspace"))
+
     (defun my/centaur-tabs-buffer-groups ()
-      "Put visible buffers in one shared workspace tab group."
-      '("Workspace"))
+      "Put visible buffers in the active layout's tab group."
+      (list (my/centaur-tabs-layout-group-name)))
+
+    (defun my/centaur-tabs-buffer-name (buffer)
+      "Return BUFFER's name whether BUFFER is a buffer object or a name."
+      (if (bufferp buffer)
+          (or (buffer-name buffer) "")
+        (format "%s" buffer)))
+
+    (defun my/centaur-tabs-file-buffer-p (buffer)
+      "Return non-nil when BUFFER is backed by a visited file."
+      (let ((buf (get-buffer buffer)))
+        (when buf
+          (with-current-buffer buf
+            (or buffer-file-name
+                (and (buffer-base-buffer)
+                     (buffer-file-name (buffer-base-buffer))))))))
+
+    (defun my/centaur-tabs-visible-special-buffer-p (name)
+      "Return non-nil when special buffer NAME should be visible as a tab."
+      (string-match-p my/centaur-tabs-visible-special-buffer-regexp name))
+
+    (defun my/centaur-tabs-visible-buffer-p (buffer)
+      "Return non-nil when BUFFER should be shown as a tab."
+      (let ((name (my/centaur-tabs-buffer-name buffer)))
+        (and (not (string-prefix-p " " name))
+             (or (my/centaur-tabs-file-buffer-p buffer)
+                 (my/centaur-tabs-visible-special-buffer-p name)))))
+
+    (defun my/centaur-tabs-buffer-list ()
+      "Return the buffers Centaur Tabs should present as tabs."
+      (seq-filter #'my/centaur-tabs-visible-buffer-p
+                  (if (and (fboundp 'get-current-persp)
+                           (fboundp 'persp-buffers)
+                           (fboundp 'persp-buffer-in-other-p*))
+                      (let ((persp (get-current-persp)))
+                        (if persp
+                            (cl-copy-list (persp-buffers persp))
+                          (seq-remove #'persp-buffer-in-other-p*
+                                      (buffer-list))))
+                    (buffer-list))))
 
     (defun my/centaur-tabs-hide-tab (buffer)
-      "Hide internal BUFFER tabs while keeping useful terminals visible."
-      (let ((name (format "%s" buffer)))
-        (or (centaur-tabs-hide-tab buffer)
-            (string-prefix-p " " name)
-            (and (string-prefix-p "*" name)
-                 (not (string-match-p
-                       my/centaur-tabs-visible-special-buffer-regexp
-                       name))))))
+      "Hide the tab bar only for buffers where a header line is actively bad."
+      (or (window-dedicated-p (selected-window))
+          (string-prefix-p " " (my/centaur-tabs-buffer-name buffer))))
+
+    (defun my/centaur-tabs-current-tabset ()
+      "Return the active layout tabset even from internal buffers."
+      (centaur-tabs-buffer-update-groups)
+      (let ((tabset (centaur-tabs-get-tabset
+                     (my/centaur-tabs-layout-group-name))))
+        (when (my/centaur-tabs-visible-buffer-p (current-buffer))
+          (centaur-tabs-select-tab-value (current-buffer) tabset))
+        tabset))
 
     (setq centaur-tabs-buffer-groups-function #'my/centaur-tabs-buffer-groups
+          centaur-tabs-buffer-list-function #'my/centaur-tabs-buffer-list
+          centaur-tabs-current-tabset-function #'my/centaur-tabs-current-tabset
           centaur-tabs-hide-tab-function #'my/centaur-tabs-hide-tab)
     (clrhash centaur-tabs-hide-hash)
     (centaur-tabs-headline-match))
@@ -851,9 +959,28 @@ workspace."
 
     (devcontainer-mode 1))
 
+  (defun my/find-devcontainer-file ()
+    "Find a file inside a running container, starting from =/workspaces/=.
+
+Picks the container automatically when only one is running, so language
+servers resolve against the container's toolchain and
+=compile_commands.json= rather than the host's.  The remote user is left
+unset: edit the minibuffer to add =user@= before the container name when
+the image default is not the one you want."
+    (interactive)
+    (require 'tramp-container)
+    (let* ((containers (mapcar #'cadr (tramp-container--completion-function "docker")))
+           (container (cond ((null containers) (user-error "No running containers"))
+                            ((null (cdr containers)) (car containers))
+                            (t (completing-read "Container: " containers nil t)))))
+      (find-file (read-file-name
+                  (format "Find file in %s: " container)
+                  (format "/docker:%s:/workspaces/" container)))))
+
   (spacemacs/set-leader-keys
     "a r d c" #'my/devcontainer-cmake-compile-commands
     "a r d d" #'devcontainer-tramp-dired
+    "a r d f" #'my/find-devcontainer-file
     "a r d e" #'devcontainer-execute-command
     "a r d E" #'devcontainer-execute-command-interactive
     "a r d k" #'devcontainer-kill-container
@@ -1351,7 +1478,7 @@ Markdown, and Dockerfiles.
     (interactive)
     (cond
      ((derived-mode-p 'nix-mode)
-      (my/nix-format-before-save))
+      (my/nix-format-buffer))
      ((fboundp 'lsp-format-buffer)
       (lsp-format-buffer))
      ((fboundp 'eglot-format-buffer)
@@ -1367,6 +1494,24 @@ Markdown, and Dockerfiles.
     ;; Use Company for manual completion in buffers where it is active instead
     ;; of Spacemacs' default dabbrev/hippie expansion on `M-/`.
     (define-key company-mode-map (kbd "C-SPC") #'company-complete))
+
+  (defun my/switch-to-buffer-add-to-layout ()
+    "Switch to a useful buffer and add it to the current layout."
+    (interactive)
+    (let* ((buffers (seq-filter #'my/interactive-buffer-p (buffer-list)))
+           (names (mapcar #'buffer-name buffers))
+           (name (completing-read "Switch to buffer: " names nil t nil
+                                  'buffer-name-history))
+           (buffer (get-buffer name)))
+      (unless buffer
+        (user-error "No buffer named %s" name))
+      (when (and (fboundp 'persp-add-buffer)
+                 (fboundp 'get-current-persp))
+        (persp-add-buffer buffer (get-current-persp) nil nil))
+      (switch-to-buffer buffer)))
+
+  (spacemacs/set-leader-keys
+    "b b" #'my/switch-to-buffer-add-to-layout)
 #+end_src
 
 ** BitBake / Yocto
@@ -1392,7 +1537,8 @@ present in this snapshot, so we handle this manually.
 
 Nix editing uses =eglot= with the =nixd= language server.
 
-Format-on-save is enabled via =nixfmt=.
+Formatting is intentionally manual: =SPC m f= runs =nixfmt= without changing
+buffers during every save.
 
 #+begin_src emacs-lisp
   ;; Nix editing stays on eglot+nixd because it is already lightweight and reliable here.
@@ -1410,10 +1556,10 @@ Format-on-save is enabled via =nixfmt=.
           (format "import <nixpkgs> { system = \"%s\"; }"
                   (my/nixd--nix-system))))
 
-  (defun my/nix-format-before-save ()
+  (defun my/nix-format-buffer ()
     "Format the current Nix buffer locally with nixfmt.
-Avoid routing save through `eglot-format-buffer', since a wedged `nixd'
-request can block `before-save-hook' and make `C-x C-s' feel stuck."
+Avoid routing through `eglot-format-buffer', since a wedged `nixd' request can
+block editing commands."
     (when (fboundp 'nix-format-buffer)
       (nix-format-buffer)))
 
@@ -1435,7 +1581,7 @@ request can block `before-save-hook' and make `C-x C-s' feel stuck."
     (when (boundp 'company-backends)
       (setq-local company-backends '(company-capf)))
     (remove-hook 'before-save-hook #'eglot-format-buffer t)
-    (add-hook 'before-save-hook #'my/nix-format-before-save nil t))
+    (remove-hook 'before-save-hook #'my/nix-format-buffer t))
 
   (use-package nix-mode
     :mode "\\.nix\\'"
@@ -2045,7 +2191,8 @@ always use the live service name.
 ** Tabs (centaur-tabs)
 
 Visual configuration for centaur-tabs using the Gruvbox color palette.
-Global keybindings =C-x t o= / =C-x t O= for cycling tabs forward/backward.
+Global keybindings =C-<next>= / =C-<prior>= cycle tabs like VSCode, with
+=C-x t o= / =C-x t O= kept as mnemonic Emacs-style fallbacks.
 
 #+begin_src emacs-lisp
   (with-eval-after-load 'centaur-tabs
@@ -2078,6 +2225,8 @@ Global keybindings =C-x t o= / =C-x t O= for cycling tabs forward/backward.
                         :box nil)
     (set-face-attribute 'centaur-tabs-active-bar-face nil
                         :background "#d79921")
+    (global-set-key (kbd "C-<next>") #'centaur-tabs-forward)
+    (global-set-key (kbd "C-<prior>") #'centaur-tabs-backward)
     (global-set-key (kbd "C-x t o") #'centaur-tabs-forward)
     (global-set-key (kbd "C-x t O") #'centaur-tabs-backward))
 #+end_src
@@ -2085,6 +2234,7 @@ Global keybindings =C-x t o= / =C-x t O= for cycling tabs forward/backward.
 ** LSP tuning
 
 Performance and feature settings for LSP clients:
+- *formatting*: disabled unless invoked manually
 - *clangd*: background indexing, clang-tidy, detailed completion
 - *pyright*: use =basedpyright-langserver= with basic type checking
 - *YAML*: schema store enabled with GitHub workflow schema mapping
@@ -2094,7 +2244,10 @@ Performance and feature settings for LSP clients:
   (with-eval-after-load 'lsp-mode
     (setq lsp-idle-delay 0.5
           lsp-log-io nil
+          lsp-enable-indentation nil
           lsp-enable-on-type-formatting nil
+          lsp-before-save-edits nil
+          lsp-completion-provider :capf
           lsp-headerline-breadcrumb-enable nil
           lsp-enable-symbol-highlighting t
           lsp-enable-file-watchers nil)

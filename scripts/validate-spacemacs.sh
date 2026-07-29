@@ -74,6 +74,7 @@ run_elisp "(progn
   (dolist (entry '((\"SPC '\" . spacemacs/default-pop-shell)
                    (\"SPC b g\" . ghostel)
                    (\"SPC b G\" . ghostel-project)
+                   (\"SPC b b\" . my/switch-to-buffer-add-to-layout)
                    (\"SPC b t\" . my/ghostel-new)
                    (\"SPC b T\" . ghostel-project)
                    (\"SPC a e m\" . my/mu4e-open-inbox)
@@ -103,10 +104,18 @@ run_elisp "(progn
                  centaur-tabs-buffer-groups-function))
   (princ (format \"centaur-tabs-hide-tab-function => %S\\n\"
                  centaur-tabs-hide-tab-function))
+  (princ (format \"centaur-tabs-buffer-list-function => %S\\n\"
+                 centaur-tabs-buffer-list-function))
+  (princ (format \"centaur-tabs-current-tabset-function => %S\\n\"
+                 centaur-tabs-current-tabset-function))
   (unless (and (eq centaur-tabs-buffer-groups-function
                    (quote my/centaur-tabs-buffer-groups))
                (equal (my/centaur-tabs-buffer-groups)
-                      (quote (\"Workspace\")))
+                      (list (my/centaur-tabs-layout-group-name)))
+               (eq centaur-tabs-buffer-list-function
+                   (quote my/centaur-tabs-buffer-list))
+               (eq centaur-tabs-current-tabset-function
+                   (quote my/centaur-tabs-current-tabset))
                (eq centaur-tabs-hide-tab-function
                    (quote my/centaur-tabs-hide-tab)))
     (kill-emacs 1))
@@ -116,7 +125,11 @@ run_elisp "(progn
             (\"g T\" evil-normal-state-map
              (spacemacs/tabs-backward centaur-tabs-backward tab-previous))))
          (current-tabs
-          '((\"C-x t o\" global-map
+          '((\"C-<next>\" global-map
+             (centaur-tabs-forward spacemacs/tabs-forward tab-next))
+            (\"C-<prior>\" global-map
+             (centaur-tabs-backward spacemacs/tabs-backward tab-previous))
+            (\"C-x t o\" global-map
              (spacemacs/tabs-forward centaur-tabs-forward tab-next))
             (\"C-x t O\" global-map
              (spacemacs/tabs-backward centaur-tabs-backward tab-previous))))

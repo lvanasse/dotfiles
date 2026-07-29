@@ -1,0 +1,649 @@
+#+title: Vanilla Emacs
+#+property: header-args:emacs-lisp :tangle config.el :mkdirp yes
+
+This is the test configuration for the separate vanilla Emacs daemon.
+It intentionally stays smaller than Spacemacs while keeping the parts that make
+daily editing usable: Evil, discoverable keys, modern minibuffer completion,
+manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
+
+* Init
+
+#+begin_src emacs-lisp
+  ;;; config.el --- Vanilla Emacs config -*- lexical-binding: t; -*-
+  ;;; Commentary:
+  ;; Managed by Home Manager from emacs/emacs.org.
+
+  ;;; Code:
+
+  (require 'cl-lib)
+  (require 'project)
+  (require 'recentf)
+  (require 'seq)
+  (require 'subr-x)
+
+  (setq inhibit-startup-screen t
+        inhibit-startup-message t
+        ring-bell-function #'ignore
+        make-backup-files nil
+        auto-save-default nil
+        create-lockfiles nil
+        use-short-answers t
+        confirm-kill-emacs #'y-or-n-p
+        read-process-output-max (* 1024 1024)
+        gc-cons-threshold (* 64 1024 1024))
+
+  (setq user-full-name "Ludovic Vanasse"
+        user-mail-address "mail@ludovicvanasse.com")
+
+  (setq-default indent-tabs-mode nil
+                tab-width 2
+                fill-column 100
+                cursor-type '(bar . 1)
+                line-spacing 0)
+
+  (menu-bar-mode -1)
+  (tool-bar-mode -1)
+  (scroll-bar-mode -1)
+  (blink-cursor-mode 0)
+  (global-display-line-numbers-mode 1)
+  (column-number-mode 1)
+  (save-place-mode 1)
+  (savehist-mode 1)
+  (recentf-mode 1)
+
+  (set-face-attribute 'default nil
+                      :family "JetBrainsMono Nerd Font Mono"
+                      :height 110)
+
+  (setq-default x-underline-at-descent-line t
+                widget-image-enable nil)
+  (setq default-frame-alist
+        (append '((internal-border-width . 18)
+                  (vertical-scroll-bars . nil))
+                default-frame-alist))
+  (set-frame-parameter (selected-frame) 'internal-border-width 18)
+
+  (setq window-divider-default-right-width 2
+        window-divider-default-places 'right-only)
+  (window-divider-mode 1)
+
+  (when (require 'gruvbox-theme nil t)
+    (load-theme 'gruvbox-dark-hard t))
+
+  (set-face-attribute 'mode-line nil :box nil :height 0.95)
+  (set-face-attribute 'mode-line-inactive nil :box nil :height 0.95)
+  (set-face-attribute 'header-line nil :box nil :height 0.95)
+#+end_src
+
+* Home
+
+#+begin_src emacs-lisp
+  (defconst my/home-buffer-name "*home*"
+    "Name of the vanilla Emacs home buffer.")
+
+  (defgroup my/home nil
+    "Vanilla Emacs home buffer."
+    :group 'convenience)
+
+  (defface my/home-title
+    '((t :inherit default :height 1.45 :weight regular))
+    "Face for the home buffer title."
+    :group 'my/home)
+
+  (defface my/home-section
+    '((t :inherit font-lock-keyword-face :height 1.05 :weight regular))
+    "Face for home buffer section headings."
+    :group 'my/home)
+
+  (defface my/home-muted
+    '((t :inherit shadow))
+    "Face for secondary home buffer text."
+    :group 'my/home)
+
+  (defun my/project-root-for-path (path)
+    "Return a project root for PATH, or nil."
+    (when-let* ((directory (cond
+                            ((file-directory-p path) path)
+                            ((file-exists-p path) (file-name-directory path)))))
+      (or (locate-dominating-file directory ".git")
+          (locate-dominating-file directory "flake.nix"))))
+
+  (defun my/recent-project-roots (&optional limit)
+    "Return recent project roots, preferring recently visited files."
+    (let ((roots nil))
+      (dolist (file recentf-list)
+        (when-let* ((root (my/project-root-for-path file)))
+          (cl-pushnew (directory-file-name root) roots :test #'string=)))
+      (when (fboundp 'project-known-project-roots)
+        (dolist (root (project-known-project-roots))
+          (when (file-directory-p root)
+            (cl-pushnew (directory-file-name root) roots :test #'string=))))
+      (setq roots (nreverse roots))
+      (if limit
+          (seq-take roots (min limit (length roots)))
+        roots)))
+
+  (defun my/home-insert-button (label action &optional help)
+    "Insert LABEL as a home buffer button running ACTION."
+    (insert-text-button
+     label
+     'follow-link t
+     'help-echo help
+     'action (lambda (_button) (funcall action))))
+
+  (defun my/home-open-project (root)
+    "Open ROOT through `project-switch-project'."
+    (let ((default-directory root))
+      (project-switch-project root)))
+
+  (defun my/home-refresh ()
+    "Render the vanilla Emacs home buffer."
+    (let ((inhibit-read-only t))
+      (erase-buffer)
+      (setq-local line-spacing 0.15)
+      (insert "\n")
+      (insert (propertize "Emacs" 'face 'my/home-title) "\n")
+      (insert (propertize "Recent work, common entrypoints, and quiet defaults." 'face 'my/home-muted) "\n\n")
+
+      (insert (propertize "Projects" 'face 'my/home-section) "\n")
+      (let ((projects (my/recent-project-roots 8)))
+        (if projects
+            (dolist (root projects)
+              (let ((label (file-name-nondirectory root)))
+                (insert "  ")
+                (my/home-insert-button
+                 (if (string-empty-p label) root label)
+                 (lambda () (my/home-open-project root))
+                 root)
+                (insert (propertize (format "  %s" root) 'face 'my/home-muted) "\n")))
+          (insert (propertize "  No recent projects yet." 'face 'my/home-muted) "\n")))
+
+      (insert "\n" (propertize "Files" 'face 'my/home-section) "\n")
+      (let ((files (seq-take recentf-list (min 8 (length recentf-list)))))
+        (if files
+            (dolist (file files)
+              (insert "  ")
+              (my/home-insert-button
+               (file-name-nondirectory file)
+               (lambda () (find-file file))
+               file)
+              (insert (propertize (format "  %s" (abbreviate-file-name file)) 'face 'my/home-muted) "\n"))
+          (insert (propertize "  No recent files yet." 'face 'my/home-muted) "\n")))
+
+      (insert "\n" (propertize "Actions" 'face 'my/home-section) "\n")
+      (insert "  ")
+      (my/home-insert-button "Find file" #'find-file)
+      (insert "    ")
+      (my/home-insert-button "Project file" #'project-find-file)
+      (insert "    ")
+      (my/home-insert-button "Search" #'consult-ripgrep)
+      (insert "    ")
+      (my/home-insert-button "Mail" #'my/mu4e-open-inbox)
+      (insert "    ")
+      (my/home-insert-button "Magit" #'magit-status)
+      (insert "\n\n")
+      (goto-char (point-min))))
+
+  (defun my/home ()
+    "Open the vanilla Emacs home buffer."
+    (interactive)
+    (let ((buffer (get-buffer-create my/home-buffer-name)))
+      (with-current-buffer buffer
+        (special-mode)
+        (setq-local display-line-numbers nil
+                    truncate-lines t)
+        (let ((map (make-sparse-keymap)))
+          (set-keymap-parent map special-mode-map)
+          (define-key map (kbd "g") #'my/home-refresh)
+          (define-key map (kbd "f") #'find-file)
+          (define-key map (kbd "p") #'project-switch-project)
+          (define-key map (kbd "s") #'consult-ripgrep)
+          (define-key map (kbd "m") #'my/mu4e-open-inbox)
+          (use-local-map map))
+        (my/home-refresh))
+      (switch-to-buffer buffer)))
+
+  (setq initial-buffer-choice #'my/home)
+#+end_src
+
+* Discoverability And Evil
+
+#+begin_src emacs-lisp
+  (when (require 'which-key nil t)
+    (setq which-key-idle-delay 0.4
+          which-key-sort-order #'which-key-key-order-alpha)
+    (which-key-mode 1))
+
+  (when (require 'evil nil t)
+    (setq evil-want-keybinding nil
+          evil-respect-visual-line-mode t
+          evil-undo-system 'undo-redo)
+    (evil-mode 1))
+
+  (when (require 'general nil t)
+    (general-create-definer my/leader-def
+      :states '(normal visual motion)
+      :keymaps 'override
+      :prefix "SPC"
+      :non-normal-prefix "C-SPC")
+
+    (my/leader-def
+      "SPC" '(execute-extended-command :which-key "M-x")
+
+      "f" '(:ignore t :which-key "files")
+      "f f" '(find-file :which-key "find file")
+      "f h" '(my/home :which-key "home")
+      "f r" '(consult-recent-file :which-key "recent file")
+      "f s" '(save-buffer :which-key "save")
+
+      "b" '(:ignore t :which-key "buffers")
+      "b b" '(consult-buffer :which-key "switch buffer")
+      "b d" '(kill-current-buffer :which-key "kill buffer")
+      "b g" '(ghostel :which-key "ghostel")
+      "b G" '(my/ghostel-project :which-key "project ghostel")
+      "b n" '(next-buffer :which-key "next buffer")
+      "b p" '(previous-buffer :which-key "previous buffer")
+      "b t" '(my/ghostel-new :which-key "terminal")
+      "b T" '(my/ghostel-project :which-key "project terminal")
+
+      "/" '(consult-ripgrep :which-key "search project")
+
+      "g" '(:ignore t :which-key "git")
+      "g b" '(magit-branch-checkout :which-key "checkout")
+      "g c" '(magit-clone :which-key "clone")
+      "g C" '(magit-commit-create :which-key "commit")
+      "g f" '(magit-fetch :which-key "fetch")
+      "g p" '(magit-pull :which-key "pull")
+      "g P" '(magit-push :which-key "push")
+      "g s" '(magit-status :which-key "status")
+
+      "a" '(:ignore t :which-key "apps")
+      "a e" '(:ignore t :which-key "email")
+      "a e c" '(my/mu4e-compose-new :which-key "compose")
+      "a e m" '(my/mu4e-open-inbox :which-key "mail")
+      "a e u" '(mu4e-update-index :which-key "update")
+      "a r" '(:ignore t :which-key "remote")
+      "a r d" '(:ignore t :which-key "docker")
+      "a r d c" '(docker-containers :which-key "containers")
+      "a r d d" '(my/docker-dired :which-key "container dired")
+      "a r d f" '(my/docker-find-file :which-key "container file")
+      "a r d i" '(docker-images :which-key "images")
+      "a r d v" '(docker-volumes :which-key "volumes")
+
+      "l" '(:ignore t :which-key "layouts")
+      "l l" '(tab-bar-switch-to-tab :which-key "switch")
+      "l t" '(tab-new :which-key "new")
+      "l d" '(tab-close :which-key "close")
+      "l r" '(tab-rename :which-key "rename")
+      "l p" '(tab-previous :which-key "previous")
+      "l n" '(tab-next :which-key "next")
+
+      "m" '(:ignore t :which-key "mode")
+      "m f" '(my/format-buffer :which-key "format")
+
+      "p" '(:ignore t :which-key "project")
+      "p p" '(project-switch-project :which-key "switch")
+      "p f" '(project-find-file :which-key "find file")
+      "p b" '(project-switch-to-buffer :which-key "buffer")
+      "p t" '(treemacs-projectile :which-key "treemacs")
+
+      "t" '(:ignore t :which-key "toggles")
+      "t t" '(treemacs :which-key "treemacs")
+
+      "w" '(:ignore t :which-key "windows")
+      "w d" '(delete-window :which-key "delete")
+      "w /" '(split-window-right :which-key "split right")
+      "w -" '(split-window-below :which-key "split below")
+      "w s" '(split-window-below :which-key "split below")
+      "w v" '(split-window-right :which-key "split right")
+      "w h" '(windmove-left :which-key "left")
+      "w j" '(windmove-down :which-key "down")
+      "w k" '(windmove-up :which-key "up")
+      "w l" '(windmove-right :which-key "right")
+      "w <left>" '(windmove-left :which-key "left")
+      "w <down>" '(windmove-down :which-key "down")
+      "w <up>" '(windmove-up :which-key "up")
+      "w <right>" '(windmove-right :which-key "right")))
+#+end_src
+
+* Completion
+
+#+begin_src emacs-lisp
+  (when (require 'vertico nil t)
+    (vertico-mode 1))
+
+  (when (require 'marginalia nil t)
+    (marginalia-mode 1))
+
+  (when (require 'orderless nil t)
+    (setq completion-styles '(orderless basic)
+          completion-category-defaults nil
+          completion-category-overrides '((file (styles basic partial-completion)))))
+
+  (when (require 'consult nil t)
+    (global-set-key (kbd "C-x b") #'consult-buffer)
+    (global-set-key (kbd "M-y") #'consult-yank-pop))
+
+  (when (require 'embark nil t)
+    (global-set-key (kbd "C-.") #'embark-act)
+    (global-set-key (kbd "C-;") #'embark-dwim))
+
+  (when (require 'embark-consult nil t)
+    (add-hook 'embark-collect-mode-hook #'consult-preview-at-point-mode))
+
+  (when (require 'corfu nil t)
+    (setq corfu-auto t
+          corfu-cycle t
+          corfu-preview-current nil)
+    (global-corfu-mode 1))
+#+end_src
+
+* Buffers And Layouts
+
+#+begin_src emacs-lisp
+  (tab-bar-mode 1)
+  (setq tab-bar-show 1
+        tab-bar-new-tab-choice "*scratch*"
+        tab-bar-close-button-show nil)
+
+  (defun my/buffer-right ()
+    "Move right through the buffer list."
+    (interactive)
+    (next-buffer))
+
+  (defun my/buffer-left ()
+    "Move left through the buffer list."
+    (interactive)
+    (previous-buffer))
+
+  (global-set-key (kbd "C-<next>") #'my/buffer-right)
+  (global-set-key (kbd "C-<prior>") #'my/buffer-left)
+  (global-set-key (kbd "C-S-<next>") #'tab-next)
+  (global-set-key (kbd "C-S-<prior>") #'tab-previous)
+
+  (put 'dired-find-alternate-file 'disabled nil)
+  (with-eval-after-load 'dired
+    (define-key dired-mode-map (kbd "a") #'dired-find-alternate-file))
+
+  (when (require 'nerd-icons-dired nil t)
+    (add-hook 'dired-mode-hook #'nerd-icons-dired-mode))
+#+end_src
+
+* Shell And Docker
+
+#+begin_src emacs-lisp
+  (defun my/find-fish-shell ()
+    "Return the preferred Fish executable."
+    (seq-find #'file-executable-p
+              (list "/etc/profiles/per-user/ludovic/bin/fish"
+                    "/run/current-system/sw/bin/fish"
+                    (executable-find "fish")
+                    (expand-file-name "~/.nix-profile/bin/fish")
+                    (expand-file-name "~/.local/state/nix/profile/bin/fish"))))
+
+  (defvar explicit-shell-file-name)
+  (defvar ghostel-buffer-name)
+  (defvar ghostel-max-scrollback)
+  (defvar ghostel-module-auto-install)
+  (defvar ghostel-shell)
+  (defvar ghostel-shell-integration)
+
+  (when-let* ((fish (my/find-fish-shell)))
+    (setq shell-file-name fish
+          explicit-shell-file-name fish
+          ghostel-shell fish)
+    (setenv "SHELL" fish))
+
+  (with-eval-after-load 'ghostel
+    (setq ghostel-shell-integration t
+          ghostel-buffer-name "*terminal*"
+          ghostel-max-scrollback (* 16 1024 1024)
+          ghostel-module-auto-install 'ask))
+
+  (defun my/ghostel-new ()
+    "Create a new Ghostel terminal buffer using Fish."
+    (interactive)
+    (unless (require 'ghostel nil t)
+      (user-error "Ghostel is not available; run Home Manager switch and restart Emacs"))
+    (let ((ghostel-buffer-name (generate-new-buffer-name "*terminal*")))
+      (ghostel)))
+
+  (defun my/ghostel-project ()
+    "Open a Ghostel terminal from the current project root."
+    (interactive)
+    (let ((default-directory (or (when-let* ((project (project-current nil)))
+                                   (project-root project))
+                                 default-directory)))
+      (if (fboundp 'ghostel-project)
+          (ghostel-project)
+        (my/ghostel-new))))
+
+  (defun my/docker-container-names ()
+    "Return running Docker container names known to TRAMP."
+    (require 'tramp-container)
+    (mapcar #'cadr (tramp-container--completion-function "docker")))
+
+  (defun my/read-docker-container ()
+    "Read a running Docker container name."
+    (let ((containers (my/docker-container-names)))
+      (cond
+       ((null containers) (user-error "No running Docker containers"))
+       ((null (cdr containers)) (car containers))
+       (t (completing-read "Container: " containers nil t)))))
+
+  (defun my/docker-dired ()
+    "Open Dired at the root of a running Docker container."
+    (interactive)
+    (dired (format "/docker:%s:/" (my/read-docker-container))))
+
+  (defun my/docker-find-file ()
+    "Find a file inside a running Docker container."
+    (interactive)
+    (let ((container (my/read-docker-container)))
+      (find-file (read-file-name
+                  (format "Find file in %s: " container)
+                  (format "/docker:%s:/" container)))))
+
+  (when (require 'docker nil t)
+    (setq docker-command "docker"))
+#+end_src
+
+* Mail
+
+#+begin_src emacs-lisp
+  (add-to-list 'load-path "__MU_SITE_LISP__")
+  (add-to-list 'load-path "__MU_SITE_LISP_MU__")
+  (add-to-list 'load-path "__MU_SITE_LISP_MU4E__")
+
+  (defconst my/mu4e-alert-query
+    "flag:unread AND NOT flag:trashed AND (maildir:/ludovic/Index OR maildir:/ludovic/Promotions OR maildir:/ludovic/SocialNetworks)"
+    "Unread mail query limited to folders shown in the desktop mail indicator.")
+
+  (defconst my/mu-binary "__MU_BIN__"
+    "Path to the mu binary rendered by Home Manager.")
+
+  (defconst my/msmtp-binary "__MSMTP_BIN__"
+    "Path to the msmtp binary rendered by Home Manager.")
+
+  (defconst my/mu4e-inbox-query "maildir:/ludovic/Index"
+    "Query used for the direct Inbox mail entrypoint.")
+
+  (defvar my/mail-unread-count 0
+    "Cached unread mail count for the mode-line.")
+
+  (defvar my/mail-unread-count-timer nil
+    "Timer used to refresh `my/mail-unread-count'.")
+
+  (defvar mu4e-alert-mode-line nil
+    "Mode-line string consumed by mu4e-alert.")
+
+  (defun my/mu4e-compose-new ()
+    "Compose a new message, with a clear error when mu4e is unavailable."
+    (interactive)
+    (unless (require 'mu4e nil t)
+      (user-error "mu4e is not available; run Home Manager switch and restart Emacs"))
+    (call-interactively #'mu4e-compose-new))
+
+  (defun my/mu4e-focus-inbox ()
+    "Switch the current mu4e view to Inbox."
+    (cond
+     ((fboundp 'mu4e-search)
+      (mu4e-search my/mu4e-inbox-query))
+     ((fboundp 'mu4e-headers-search)
+      (mu4e-headers-search my/mu4e-inbox-query))
+     (t
+      (message "mu4e inbox helper unavailable; staying on the default view"))))
+
+  (defun my/mu4e-open-inbox ()
+    "Open mu4e directly in Inbox."
+    (interactive)
+    (unless (require 'mu4e nil t)
+      (user-error "mu4e is not available; run Home Manager switch and restart Emacs"))
+    (mu4e)
+    (run-at-time 0 nil #'my/mu4e-focus-inbox))
+
+  (defun my/mail-unread-count-from-mu ()
+    "Return unread mail count using the same mu query as Waybar."
+    (when (and (file-executable-p my/mu-binary)
+               (file-directory-p (expand-file-name "~/.cache/mu")))
+      (with-temp-buffer
+        (let ((status (call-process my/mu-binary nil t nil
+                                    "find" "--nocolor" "--format=plain"
+                                    my/mu4e-alert-query)))
+          (when (eq status 0)
+            (let ((count 0))
+              (goto-char (point-min))
+              (while (not (eobp))
+                (unless (looking-at-p "^[[:space:]]*$")
+                  (setq count (1+ count)))
+                (forward-line 1))
+              count))))))
+
+  (defun my/mu4e-alert-mode-line-formatter (mail-count)
+    "Return a compact unread MAIL-COUNT indicator."
+    (if (and (integerp mail-count) (> mail-count 0))
+        (format "  mail:%s" mail-count)
+      ""))
+
+  (defun my/refresh-mail-unread-count (&rest _)
+    "Refresh the cached unread mail count and repaint mode-lines."
+    (let ((count (my/mail-unread-count-from-mu)))
+      (when (integerp count)
+        (setq my/mail-unread-count count
+              mu4e-alert-mode-line
+              (my/mu4e-alert-mode-line-formatter count))
+        (force-mode-line-update t))))
+
+  (defun my/start-mail-unread-count-refresh ()
+    "Start the unread mail refresh timer."
+    (my/refresh-mail-unread-count)
+    (unless (timerp my/mail-unread-count-timer)
+      (setq my/mail-unread-count-timer
+            (run-with-timer 30 30 #'my/refresh-mail-unread-count))))
+
+  (with-eval-after-load 'mu4e
+    (setq mu4e-mu-binary my/mu-binary
+          mu4e-maildir (expand-file-name "~/mail")
+          mu4e-get-mail-command "mbsync -a"
+          mu4e-update-interval 300
+          mu4e-change-filenames-when-moving t
+          mu4e-view-show-images t
+          mu4e-view-show-addresses t
+          mu4e-compose-signature-auto-include t
+          mu4e-sent-folder "/ludovic/Sent"
+          mu4e-drafts-folder "/ludovic/Drafts"
+          mu4e-trash-folder "/ludovic/Trash"
+          mu4e-refile-folder "/ludovic/Archives"
+          message-send-mail-function #'message-send-mail-with-sendmail
+          sendmail-program my/msmtp-binary
+          message-sendmail-extra-arguments '("--read-envelope-from")
+          message-sendmail-f-is-evil t
+          message-kill-buffer-on-exit t)
+    (add-to-list 'mu4e-bookmarks
+                 `(:name "Inbox"
+                   :query ,my/mu4e-inbox-query
+                   :key ?i))
+    (add-to-list 'mu4e-bookmarks
+                 `(:name "Unread monitored"
+                   :query ,my/mu4e-alert-query
+                   :key ?u)))
+
+  (with-eval-after-load 'mu4e-alert
+    (setq mu4e-alert-interesting-mail-query my/mu4e-alert-query
+          mu4e-alert-email-notification-types '(subjects)
+          mu4e-alert-mode-line-formatter #'my/mu4e-alert-mode-line-formatter)
+    (mu4e-alert-set-default-style 'libnotify)
+    (mu4e-alert-enable-notifications)
+    (mu4e-alert-enable-mode-line-display))
+
+  (add-hook 'after-init-hook #'my/start-mail-unread-count-refresh)
+#+end_src
+
+* Programming
+
+#+begin_src emacs-lisp
+  (add-hook 'prog-mode-hook #'display-line-numbers-mode)
+  (add-hook 'prog-mode-hook #'electric-pair-local-mode)
+
+  (defun my/eglot-ensure ()
+    "Start Eglot when the current project has a matching language server."
+    (when (fboundp 'eglot-ensure)
+      (eglot-ensure)))
+
+  (with-eval-after-load 'eglot
+    (add-to-list 'eglot-server-programs
+                 '((python-mode python-ts-mode) . ("basedpyright-langserver" "--stdio")))
+    (add-to-list 'eglot-server-programs
+                 '(nix-mode . ("nixd")))
+    (add-to-list 'eglot-server-programs
+                 '((c-mode c++-mode c-ts-mode c++-ts-mode) . ("clangd"))))
+
+  (dolist (hook '(python-mode-hook
+                  python-ts-mode-hook
+                  nix-mode-hook
+                  c-mode-hook
+                  c++-mode-hook
+                  c-ts-mode-hook
+                  c++-ts-mode-hook
+                  sh-mode-hook))
+    (add-hook hook #'my/eglot-ensure))
+
+  (defun my/format-buffer ()
+    "Format the current buffer on demand."
+    (interactive)
+    (cond
+     ((and (derived-mode-p 'nix-mode)
+           (fboundp 'nix-format-buffer))
+      (nix-format-buffer))
+     ((and (fboundp 'eglot-managed-p)
+           (eglot-managed-p))
+      (eglot-format-buffer))
+     (t
+      (user-error "No formatter is available for this buffer"))))
+
+  (with-eval-after-load 'nix-mode
+    (setq nix-nixfmt-bin "nixfmt"))
+#+end_src
+
+* Tree Sidebar
+
+#+begin_src emacs-lisp
+  (when (require 'treemacs nil t)
+    (setq treemacs-width 34
+          treemacs-follow-after-init t
+          treemacs-is-never-other-window t
+          treemacs-show-hidden-files nil)
+    (treemacs-follow-mode 1))
+#+end_src
+
+* Modes
+
+#+begin_src emacs-lisp
+  (add-to-list 'auto-mode-alist '("\\.md\\'" . markdown-mode))
+  (add-to-list 'auto-mode-alist '("\\.ya?ml\\'" . yaml-mode))
+  (add-to-list 'auto-mode-alist '("\\.toml\\'" . toml-mode))
+  (add-to-list 'auto-mode-alist '("Dockerfile\\'" . dockerfile-mode))
+
+  (provide 'config)
+  ;;; config.el ends here
+#+end_src

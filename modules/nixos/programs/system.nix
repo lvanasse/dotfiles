@@ -139,20 +139,22 @@ in
 
                 # --- Determine steps ---
                 is_remote() { [ -n "''${target_host}" ]; }
-                should_validate_spacemacs() {
+                should_restart_emacs_daemons() {
                   case "''${host}" in pc|laptop|hm-only|work-laptop) return 0 ;; *) return 1 ;; esac
                 }
-                restart_spacemacs_daemon() {
-                  should_validate_spacemacs || return 0
+                restart_emacs_daemons() {
+                  should_restart_emacs_daemons || return 0
 
-                  step "Restart Spacemacs daemon"
-                  cmd "systemctl --user restart spacemacs.service"
-                  if "$systemctl_bin" --user restart spacemacs.service; then
-                    ok "Spacemacs daemon"
-                  else
-                    fail "Spacemacs daemon"
-                    exit 1
-                  fi
+                  step "Restart Emacs daemons"
+                  for service in emacs.service spacemacs.service; do
+                    cmd "systemctl --user restart ''${service}"
+                    if "$systemctl_bin" --user restart "''${service}"; then
+                      ok "''${service}"
+                    else
+                      fail "''${service}"
+                      exit 1
+                    fi
+                  done
                 }
                 verify_remote_target() {
                   [ -n "''${target_host}" ] || return 0
@@ -184,7 +186,7 @@ in
                   if env NIX_CONFIG="''${nix_config}" "$hm_bin" switch \
                     --flake "''${flake_dir}#${username}@''${host}" -b "''${bext}" 2>&1 | filter_noise; then
                     ok "Home Manager"
-                    restart_spacemacs_daemon
+                    restart_emacs_daemons
                   else
                     fail "Home Manager"
                     exit 1

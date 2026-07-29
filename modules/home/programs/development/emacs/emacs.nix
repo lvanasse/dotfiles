@@ -12,6 +12,33 @@
       emacsBin = "${config.programs.emacs.finalPackage}/bin/emacs";
       emacsClientBin = "${config.programs.emacs.finalPackage}/bin/emacsclient";
       systemctlBin = "${pkgs.systemd}/bin/systemctl";
+      vanillaTemplateOrg = ../../../../../emacs/emacs.org;
+      vanillaTemplate = builtins.readFile (
+        pkgs.runCommand "tangle-emacs-vanilla" { nativeBuildInputs = [ pkgs.emacs-nox ]; } ''
+          cp ${vanillaTemplateOrg} config.org
+          emacs --batch \
+            --eval "(require 'org)" \
+            --eval "(org-babel-tangle-file \"config.org\")"
+          cp config.el "$out"
+        ''
+      );
+      vanillaConfig =
+        builtins.replaceStrings
+          [
+            "__MU_SITE_LISP_MU4E__"
+            "__MU_SITE_LISP_MU__"
+            "__MU_SITE_LISP__"
+            "__MU_BIN__"
+            "__MSMTP_BIN__"
+          ]
+          [
+            "${pkgs.mu}/share/emacs/site-lisp/mu4e"
+            "${pkgs.mu}/share/emacs/site-lisp/mu"
+            "${pkgs.mu}/share/emacs/site-lisp"
+            "${pkgs.mu}/bin/mu"
+            "${pkgs.msmtp}/bin/msmtp"
+          ]
+          vanillaTemplate;
       daemonServicePreStart =
         clientCmd:
         pkgs.writeShellScript "emacs-service-pre-start" ''
@@ -87,6 +114,18 @@
           epkgs: with epkgs; [
             gcmh
             gruvbox-theme
+            evil
+            general
+            which-key
+            vertico
+            orderless
+            marginalia
+            consult
+            embark
+            embark-consult
+            corfu
+            magit
+            docker
             ghostel
             vterm
             multi-vterm
@@ -105,10 +144,18 @@
             mcp
             devcontainer
             nerd-icons
+            nerd-icons-dired
             pdf-tools
             slack
             bitbake-ts-mode
             nix-mode
+            markdown-mode
+            yaml-mode
+            toml-mode
+            dockerfile-mode
+            projectile
+            treemacs
+            treemacs-projectile
             org-caldav
           ];
       };
@@ -173,11 +220,7 @@
       home.activation = spacemacs.homeActivations;
 
       xdg.configFile = spacemacs.xdgConfigFiles // {
-        "emacs-vanilla/init.el".text = ''
-          ;; Managed by Home Manager.
-          ;; This file is intentionally minimal so `emacs` starts as close to
-          ;; vanilla as possible while remaining isolated from Spacemacs state.
-        '';
+        "emacs-vanilla/init.el".text = vanillaConfig;
       };
     };
 }

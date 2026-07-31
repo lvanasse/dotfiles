@@ -5,7 +5,9 @@
 }:
 let
   personalPub = "${inputs.secrets}/keys/id_ed25519_personal.pub";
+  workPub = "${inputs.secrets}/keys/id_ed25519_work.pub";
   hasPersonalPub = builtins.pathExists personalPub;
+  hasWorkPub = builtins.pathExists workPub;
 in
 {
   flake.modules.homeManager."programs.ssh" =
@@ -33,6 +35,9 @@ in
       home.file =
         (lib.optionalAttrs hasPersonalPub {
           ".ssh/id_ed25519_personal.pub".source = personalPub;
+        })
+        // (lib.optionalAttrs hasWorkPub {
+          ".ssh/id_ed25519_work.pub".source = workPub;
         })
         // {
           ".local/bin/wake-pc" = {

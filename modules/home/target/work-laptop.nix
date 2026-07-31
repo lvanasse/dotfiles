@@ -10,7 +10,9 @@
     let
       homeDir = config.home.homeDirectory;
       personalKeyAge = "${inputs.secrets}/ssh/id_ed25519_personal.age";
+      workKeyAge = "${inputs.secrets}/ssh/id_ed25519_work.age";
       hasPersonalKeyAge = builtins.pathExists personalKeyAge;
+      hasWorkKeyAge = builtins.pathExists workKeyAge;
     in
     {
       age.identityPaths = lib.mkForce [
@@ -21,13 +23,21 @@
         name = "Ludovic Vanasse";
         email = "ludovic.vanasse@vention.cc";
       };
-      age.secrets = lib.optionalAttrs hasPersonalKeyAge {
-        "ssh-id-ed25519-personal" = {
-          file = personalKeyAge;
-          path = "${homeDir}/.ssh/id_ed25519_personal";
-          mode = "0600";
+      age.secrets =
+        lib.optionalAttrs hasPersonalKeyAge {
+          "ssh-id-ed25519-personal" = {
+            file = personalKeyAge;
+            path = "${homeDir}/.ssh/id_ed25519_personal";
+            mode = "0600";
+          };
+        }
+        // lib.optionalAttrs hasWorkKeyAge {
+          "ssh-id-ed25519-work" = {
+            file = workKeyAge;
+            path = "${homeDir}/.ssh/id_ed25519_work";
+            mode = "0600";
+          };
         };
-      };
 
       # Keep user-level Nix cache settings present on the HM-only work laptop.
       # The host still needs to trust this user before restricted settings apply.

@@ -132,9 +132,8 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
      'action (lambda (_button) (funcall action))))
 
   (defun my/home-open-project (root)
-    "Open ROOT through `project-switch-project'."
-    (let ((default-directory root))
-      (project-switch-project root)))
+    "Open ROOT as a folder tab."
+    (my/open-directory-tab root))
 
   (defun my/home-refresh ()
     "Render the vanilla Emacs home buffer."
@@ -165,14 +164,14 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
               (insert "  ")
               (my/home-insert-button
                (file-name-nondirectory file)
-               (lambda () (find-file file))
+               (lambda () (my/find-file-or-directory file))
                file)
               (insert (propertize (format "  %s" (abbreviate-file-name file)) 'face 'my/home-muted) "\n"))
           (insert (propertize "  No recent files yet." 'face 'my/home-muted) "\n")))
 
       (insert "\n" (propertize "Actions" 'face 'my/home-section) "\n")
       (insert "  ")
-      (my/home-insert-button "Find file" #'find-file)
+      (my/home-insert-button "Find file" #'my/find-file-or-directory)
       (insert "    ")
       (my/home-insert-button "Project file" #'project-find-file)
       (insert "    ")
@@ -195,7 +194,7 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
         (let ((map (make-sparse-keymap)))
           (set-keymap-parent map special-mode-map)
           (define-key map (kbd "g") #'my/home-refresh)
-          (define-key map (kbd "f") #'find-file)
+          (define-key map (kbd "f") #'my/find-file-or-directory)
           (define-key map (kbd "p") #'project-switch-project)
           (define-key map (kbd "s") #'consult-ripgrep)
           (define-key map (kbd "m") #'my/mu4e-open-inbox)
@@ -229,12 +228,14 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
 
     (my/leader-def
       "SPC" '(execute-extended-command :which-key "M-x")
+      "'" '(my/pop-shell :which-key "popup shell")
 
       "f" '(:ignore t :which-key "files")
-      "f f" '(find-file :which-key "find file")
+      "f f" '(my/find-file-or-directory :which-key "find file")
       "f h" '(my/home :which-key "home")
       "f r" '(consult-recent-file :which-key "recent file")
       "f s" '(save-buffer :which-key "save")
+      "f t" '(treemacs :which-key "treemacs")
 
       "b" '(:ignore t :which-key "buffers")
       "b b" '(consult-buffer :which-key "switch buffer")
@@ -336,6 +337,19 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
           corfu-cycle t
           corfu-preview-current nil)
     (global-corfu-mode 1))
+
+  (when (require 'cape nil t)
+    (add-to-list 'completion-at-point-functions #'cape-file)
+    (add-to-list 'completion-at-point-functions #'cape-dabbrev))
+
+  (when (require 'yasnippet nil t)
+    (yas-global-mode 1))
+
+  (when (require 'editorconfig nil t)
+    (editorconfig-mode 1))
+
+  (when (require 'envrc nil t)
+    (envrc-global-mode 1))
 #+end_src
 
 * Buffers And Layouts
@@ -345,6 +359,54 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
   (setq tab-bar-show 1
         tab-bar-new-tab-choice "*scratch*"
         tab-bar-close-button-show nil)
+
+  (defconst my/tab-line-visible-special-buffer-regexp
+    "\\`\\*\\(?:terminal\\|ghostel\\|shell\\|eshell\\|vterm\\)"
+    "Special buffers that should remain visible as file tabs.")
+
+  (defun my/tab-line-buffer-p (buffer)
+    "Return non-nil when BUFFER should be shown in the buffer tab row."
+    (when (buffer-live-p buffer)
+      (with-current-buffer buffer
+        (let ((name (buffer-name buffer)))
+          (and (not (string-prefix-p " " name))
+               (or buffer-file-name
+                   (and (buffer-base-buffer)
+                        (buffer-file-name (buffer-base-buffer)))
+                   (derived-mode-p 'dired-mode)
+                   (string-match-p my/tab-line-visible-special-buffer-regexp name)))))))
+
+  (defun my/tab-line-buffer-list ()
+    "Return persistent VSCode-style buffer tabs."
+    (seq-filter #'my/tab-line-buffer-p (buffer-list)))
+
+  (global-tab-line-mode 1)
+  (setq tab-line-tabs-function #'my/tab-line-buffer-list
+        tab-line-close-tab-function #'kill-buffer
+        tab-line-new-button-show nil
+        tab-line-close-button-show t)
+
+  (defun my/directory-tab-name (directory)
+    "Return a readable tab name for DIRECTORY."
+    (let ((name (file-name-nondirectory (directory-file-name directory))))
+      (if (string-empty-p name)
+          (abbreviate-file-name directory)
+        name)))
+
+  (defun my/open-directory-tab (directory)
+    "Open DIRECTORY in Dired inside a new tab."
+    (interactive "DDirectory: ")
+    (let ((directory (file-name-as-directory (expand-file-name directory))))
+      (tab-new)
+      (tab-rename (my/directory-tab-name directory))
+      (dired directory)))
+
+  (defun my/find-file-or-directory (path)
+    "Open PATH, creating a new tab when PATH is a directory."
+    (interactive (list (read-file-name "Find file: " nil nil nil)))
+    (if (file-directory-p path)
+        (my/open-directory-tab path)
+      (find-file path)))
 
   (defun my/buffer-right ()
     "Move right through the buffer list."
@@ -408,6 +470,28 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
     (let ((ghostel-buffer-name (generate-new-buffer-name "*terminal*")))
       (ghostel)))
 
+  (defun my/pop-shell ()
+    "Toggle a Spacemacs-style popup shell at the bottom of the frame."
+    (interactive)
+    (unless (require 'ghostel nil t)
+      (user-error "Ghostel is not available; run Home Manager switch and restart Emacs"))
+    (let* ((buffer-name "*popup-shell*")
+           (buffer (get-buffer buffer-name))
+           (window (and buffer (get-buffer-window buffer t))))
+      (if (and window (window-live-p window))
+          (delete-window window)
+        (let ((ghostel-buffer-name buffer-name))
+          (unless (buffer-live-p buffer)
+            (ghostel)
+            (setq buffer (current-buffer)))
+          (display-buffer-in-side-window
+           buffer
+           '((side . bottom)
+             (slot . -1)
+             (window-height . 0.32)
+             (window-parameters . ((no-delete-other-windows . t)))))
+          (select-window (get-buffer-window buffer t))))))
+
   (defun my/ghostel-project ()
     "Open a Ghostel terminal from the current project root."
     (interactive)
@@ -446,6 +530,61 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
 
   (when (require 'docker nil t)
     (setq docker-command "docker"))
+#+end_src
+
+* Org
+
+#+begin_src emacs-lisp
+  (setq-default org-use-sub-superscripts '{}
+                org-export-with-sub-superscripts '{}
+                org-pretty-entities-include-sub-superscripts nil)
+
+  (setq org-startup-folded 'show2levels
+        org-startup-indented t
+        org-hide-emphasis-markers t
+        org-pretty-entities nil
+        org-ellipsis " ▾"
+        org-cycle-separator-lines 1)
+
+  (defun my/org-disable-implicit-sub-superscripts ()
+    "Require braces for Org subscript/superscript markup."
+    (setq-local org-use-sub-superscripts '{}
+                org-export-with-sub-superscripts '{}
+                org-pretty-entities-include-sub-superscripts nil))
+
+  (defun my/org-visual-setup ()
+    "Make Org buffers readable and fold-friendly."
+    (my/org-disable-implicit-sub-superscripts)
+    (visual-line-mode 1)
+    (setq-local line-spacing 0.12
+                visual-fill-column-width 100
+                visual-fill-column-center-text t)
+    (when (require 'visual-fill-column nil t)
+      (visual-fill-column-mode 1))
+    (when (require 'org-superstar nil t)
+      (setq-local org-superstar-headline-bullets-list
+                  '(?* ?+ ?-))
+      (org-superstar-mode 1))
+    (when (require 'org-appear nil t)
+      (setq-local org-appear-autoemphasis t
+                  org-appear-autolinks t
+                  org-appear-autosubmarkers t)
+      (org-appear-mode 1)))
+
+  (with-eval-after-load 'org
+    (set-face-attribute 'org-document-title nil :height 1.45 :weight 'regular)
+    (set-face-attribute 'org-level-1 nil :height 1.25 :weight 'regular)
+    (set-face-attribute 'org-level-2 nil :height 1.15 :weight 'regular)
+    (set-face-attribute 'org-level-3 nil :height 1.08 :weight 'regular)
+    (set-face-attribute 'org-level-4 nil :height 1.03 :weight 'regular)
+    (set-face-attribute 'org-block nil :inherit 'fixed-pitch)
+    (set-face-attribute 'org-code nil :inherit 'fixed-pitch)
+    (set-face-attribute 'org-table nil :inherit 'fixed-pitch)
+    (set-face-attribute 'org-verbatim nil :inherit 'fixed-pitch)
+    (define-key org-mode-map (kbd "TAB") #'org-cycle)
+    (define-key org-mode-map (kbd "<backtab>") #'org-shifttab))
+
+  (add-hook 'org-mode-hook #'my/org-visual-setup)
 #+end_src
 
 * Mail
@@ -596,7 +735,9 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
     (add-to-list 'eglot-server-programs
                  '(nix-mode . ("nixd")))
     (add-to-list 'eglot-server-programs
-                 '((c-mode c++-mode c-ts-mode c++-ts-mode) . ("clangd"))))
+                 '((c-mode c++-mode c-ts-mode c++-ts-mode) . ("clangd")))
+    (add-to-list 'eglot-server-programs
+                 '((rust-mode rust-ts-mode) . ("rust-analyzer"))))
 
   (dolist (hook '(python-mode-hook
                   python-ts-mode-hook
@@ -605,8 +746,15 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
                   c++-mode-hook
                   c-ts-mode-hook
                   c++-ts-mode-hook
+                  rust-mode-hook
+                  rust-ts-mode-hook
                   sh-mode-hook))
     (add-hook hook #'my/eglot-ensure))
+
+  (with-eval-after-load 'rust-mode
+    (setq rust-format-on-save nil)
+    (add-hook 'rust-mode-hook #'cargo-minor-mode)
+    (add-hook 'rust-mode-hook #'flymake-clippy-setup-backend))
 
   (defun my/format-buffer ()
     "Format the current buffer on demand."
@@ -629,10 +777,24 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
 
 #+begin_src emacs-lisp
   (when (require 'treemacs nil t)
+    (defun my/treemacs-page-down ()
+      "Move down by one visible page in Treemacs."
+      (interactive)
+      (dotimes (_ (max 1 (1- (window-body-height))))
+        (treemacs-next-line 1)))
+
+    (defun my/treemacs-page-up ()
+      "Move up by one visible page in Treemacs."
+      (interactive)
+      (dotimes (_ (max 1 (1- (window-body-height))))
+        (treemacs-previous-line 1)))
+
     (setq treemacs-width 34
           treemacs-follow-after-init t
           treemacs-is-never-other-window t
           treemacs-show-hidden-files nil)
+    (define-key treemacs-mode-map (kbd "<next>") #'my/treemacs-page-down)
+    (define-key treemacs-mode-map (kbd "<prior>") #'my/treemacs-page-up)
     (treemacs-follow-mode 1))
 #+end_src
 
@@ -643,6 +805,7 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
   (add-to-list 'auto-mode-alist '("\\.ya?ml\\'" . yaml-mode))
   (add-to-list 'auto-mode-alist '("\\.toml\\'" . toml-mode))
   (add-to-list 'auto-mode-alist '("Dockerfile\\'" . dockerfile-mode))
+  (add-to-list 'auto-mode-alist '("\\.rs\\'" . rust-mode))
 
   (provide 'config)
   ;;; config.el ends here

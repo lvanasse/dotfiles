@@ -66,6 +66,7 @@ in
             hostname = "192.168.0.100";
             user = "ludovic";
             identityFile = "~/.ssh/id_ed25519_personal";
+            pubkeyAuthentication = true;
             identitiesOnly = true;
             identityAgent = "none";
           };
@@ -74,6 +75,7 @@ in
             hostname = "192.168.0.50";
             user = "ludovic";
             identityFile = "~/.ssh/id_ed25519_personal";
+            pubkeyAuthentication = true;
             identitiesOnly = true;
             identityAgent = "none";
           };
@@ -82,6 +84,7 @@ in
             hostname = "192.168.0.1";
             user = "ludovic";
             identityFile = "~/.ssh/id_ed25519_personal";
+            pubkeyAuthentication = true;
             identitiesOnly = true;
             identityAgent = "none";
           };
@@ -90,6 +93,7 @@ in
             hostname = "laptop";
             user = "ludovic";
             identityFile = "~/.ssh/id_ed25519_personal";
+            pubkeyAuthentication = true;
             identitiesOnly = true;
             identityAgent = "none";
           };
@@ -99,6 +103,7 @@ in
             hostname = "pc.tail7e8d6c.ts.net";
             user = "ludovic";
             identityFile = "~/.ssh/id_ed25519_personal";
+            pubkeyAuthentication = true;
             identitiesOnly = true;
             identityAgent = "none";
           };
@@ -107,6 +112,7 @@ in
             hostname = "server.tail7e8d6c.ts.net";
             user = "ludovic";
             identityFile = "~/.ssh/id_ed25519_personal";
+            pubkeyAuthentication = true;
             identitiesOnly = true;
             identityAgent = "none";
           };
@@ -115,6 +121,7 @@ in
             hostname = "gateway.tail7e8d6c.ts.net";
             user = "ludovic";
             identityFile = "~/.ssh/id_ed25519_personal";
+            pubkeyAuthentication = true;
             identitiesOnly = true;
             identityAgent = "none";
           };
@@ -123,6 +130,7 @@ in
             hostname = "work-laptop.tail7e8d6c.ts.net";
             user = "ludovic";
             identityFile = "~/.ssh/id_ed25519_personal";
+            pubkeyAuthentication = true;
             identitiesOnly = true;
             identityAgent = "none";
           };
@@ -132,18 +140,7 @@ in
             hostname = "192.168.0.105";
             user = "deck";
             identityFile = "~/.ssh/id_ed25519_personal";
-            identitiesOnly = true;
-            identityAgent = "none";
-          };
-
-          # Vention lab machines normally use password auth. Do not offer the
-          # local agent keys first, or OpenSSH can hit the server's
-          # MaxAuthTries limit before it reaches the password prompt.
-          "192.168.103.*" = {
-            user = "vention";
-            pubkeyAuthentication = false;
-            passwordAuthentication = true;
-            preferredAuthentications = "password,keyboard-interactive";
+            pubkeyAuthentication = true;
             identitiesOnly = true;
             identityAgent = "none";
           };
@@ -153,6 +150,7 @@ in
             hostname = "github.com";
             user = "git";
             identityFile = "~/.ssh/id_ed25519_personal";
+            pubkeyAuthentication = true;
             identitiesOnly = true;
           };
 
@@ -161,6 +159,7 @@ in
             hostname = "bitbucket.org";
             user = "git";
             identityFile = "~/.ssh/id_ed25519_work";
+            pubkeyAuthentication = true;
             identitiesOnly = true;
             controlMaster = "no";
             controlPath = "none";
@@ -171,6 +170,7 @@ in
             hostname = "bitbucket.org";
             user = "git";
             identityFile = "~/.ssh/id_ed25519_work";
+            pubkeyAuthentication = true;
             identitiesOnly = true;
             controlMaster = "no";
             controlPath = "none";
@@ -181,6 +181,7 @@ in
             hostname = "github.com";
             user = "git";
             identityFile = "~/.ssh/id_ed25519_work";
+            pubkeyAuthentication = true;
             identitiesOnly = true;
           };
 
@@ -189,6 +190,7 @@ in
             hostname = "codeberg.org";
             user = "git";
             identityFile = "~/.ssh/id_ed25519_personal";
+            pubkeyAuthentication = true;
             identitiesOnly = true;
           };
 
@@ -196,6 +198,10 @@ in
           "*" = {
             serverAliveInterval = 60;
             serverAliveCountMax = 3;
+            pubkeyAuthentication = false;
+            passwordAuthentication = true;
+            preferredAuthentications = "publickey,password,keyboard-interactive";
+            identityAgent = "none";
             # Common SSH defaults that we want to keep
             compression = true;
             controlMaster = "auto";

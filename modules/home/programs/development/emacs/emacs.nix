@@ -124,6 +124,11 @@
             embark
             embark-consult
             corfu
+            cape
+            yasnippet
+            envrc
+            editorconfig
+            apheleia
             magit
             docker
             ghostel
@@ -153,6 +158,12 @@
             yaml-mode
             toml-mode
             dockerfile-mode
+            rust-mode
+            cargo
+            flymake-clippy
+            visual-fill-column
+            org-appear
+            org-superstar
             projectile
             treemacs
             treemacs-projectile

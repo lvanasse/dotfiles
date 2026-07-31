@@ -7,6 +7,49 @@
       stateRoot = "/var/lib/docker-health";
       apiRoot = "${stateRoot}/api";
       statusPath = "${apiRoot}/status.json";
+      managedContainers = [
+        {
+          name = "mariadb";
+          unit = "docker-mariadb.service";
+        }
+        {
+          name = "nextcloud";
+          unit = "docker-nextcloud.service";
+        }
+        {
+          name = "vaultwarden";
+          unit = "docker-vaultwarden.service";
+        }
+        {
+          name = "radarr";
+          unit = "docker-radarr.service";
+        }
+        {
+          name = "bazarr";
+          unit = "docker-bazarr.service";
+        }
+        {
+          name = "lidarr";
+          unit = "docker-lidarr.service";
+        }
+        {
+          name = "prowlarr";
+          unit = "docker-prowlarr.service";
+        }
+        {
+          name = "jellyfin";
+          unit = "docker-jellyfin.service";
+        }
+        {
+          name = "shelfmark";
+          unit = "docker-shelfmark.service";
+        }
+        {
+          name = "calibre";
+          unit = "docker-calibre.service";
+        }
+      ];
+      managedContainersJson = builtins.toJSON managedContainers;
       writeDefaultStatus = ''
         mkdir -p "${apiRoot}"
         if [ ! -f "${statusPath}" ]; then
@@ -27,6 +70,13 @@
           },
           "failed": {
             "names": "none"
+          },
+          "expected": {
+            "total": 0,
+            "missing": 0,
+            "inactive": 0,
+            "unhealthy": 0,
+            "failed": "none"
           }
         }
         EOF
@@ -50,6 +100,8 @@
         status_path = Path(sys.argv[2])
 
         docker_bin = "${pkgs.docker_29}/bin/docker"
+        systemctl_bin = "${pkgs.systemd}/bin/systemctl"
+        expected = ${managedContainersJson}
 
         ids_proc = subprocess.run(
             [docker_bin, "ps", "-aq", "--no-trunc"],
@@ -72,6 +124,13 @@
                 "failed": 0,
             },
             "failed": {"names": "none"},
+            "expected": {
+                "total": len(expected),
+                "missing": 0,
+                "inactive": 0,
+                "unhealthy": 0,
+                "failed": "none",
+            },
         }
 
         if ids_proc.returncode != 0:
@@ -95,12 +154,17 @@
                 else:
                     containers = json.loads(inspect_proc.stdout)
                     failed_names = []
+                    seen_by_name = {}
 
                     for container in containers:
                         name = container.get("Name", "").lstrip("/") or container.get("Config", {}).get("Hostname", "unknown")
                         state = container.get("State") or {}
                         status = state.get("Status", "unknown")
                         health = (state.get("Health") or {}).get("Status")
+                        seen_by_name[name] = {
+                            "status": status,
+                            "health": health,
+                        }
 
                         payload["summary"]["total"] += 1
 
@@ -121,7 +185,35 @@
                     payload["summary"]["failed"] = len(failed_names)
                     payload["failed"]["names"] = ", ".join(failed_names) if failed_names else "none"
 
-                    if payload["summary"]["failed"] > 0:
+                    expected_failures = []
+                    for item in expected:
+                        name = item["name"]
+                        unit = item["unit"]
+                        unit_active = subprocess.run(
+                            [systemctl_bin, "--quiet", "is-active", unit],
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL,
+                            check=False,
+                        ).returncode == 0
+                        state = seen_by_name.get(name)
+
+                        if state is None:
+                            payload["expected"]["missing"] += 1
+                            expected_failures.append(f"{name}:missing")
+                        elif state["status"] != "running":
+                            payload["expected"]["unhealthy"] += 1
+                            expected_failures.append(f"{name}:{state['status']}")
+                        elif state["health"] == "unhealthy":
+                            payload["expected"]["unhealthy"] += 1
+                            expected_failures.append(f"{name}:unhealthy")
+
+                        if not unit_active:
+                            payload["expected"]["inactive"] += 1
+                            expected_failures.append(f"{name}:unit-inactive")
+
+                    payload["expected"]["failed"] = ", ".join(expected_failures) if expected_failures else "none"
+
+                    if payload["summary"]["failed"] > 0 or expected_failures:
                         payload["overall"]["status"] = "critical"
                     elif payload["summary"]["healthy"] < payload["summary"]["running"]:
                         payload["overall"]["status"] = "warning"

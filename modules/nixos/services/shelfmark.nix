@@ -103,7 +103,6 @@ in
                       'QBITTORRENT_CATEGORY=books' \
                       'QBITTORRENT_CATEGORY_AUDIOBOOK=audiobook' \
                       'QBITTORRENT_DOWNLOAD_DIR=/downloads' \
-                      'PROWLARR_ENABLED=false' \
                       'PROWLARR_TORRENT_CLIENT=qbittorrent' \
                       > "$tmp_env"
 

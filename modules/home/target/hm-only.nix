@@ -437,7 +437,7 @@
                 {
                   criteria = "eDP-1";
                   mode = "1920x1200@60.001Hz";
-                  position = "0,1080";
+                  position = "1920,1080";
                 }
                 {
                   criteria = "DP-1";

@@ -1,5 +1,5 @@
 let
-  flake = builtins.getFlake (toString ./.);
+  flake = builtins.getFlake (toString ./..);
   pkgs = import flake.inputs.nixpkgs {
     system = "x86_64-linux";
     overlays = [ flake.inputs.nix-vscode-extensions.overlays.default ];
@@ -20,6 +20,7 @@ let
     "streetsidesoftware"
     "redhat"
     "foxundermoon"
+    "github"
     "marus25"
     "james-yu"
   ];

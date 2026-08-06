@@ -55,6 +55,9 @@
         profiles.default.userSettings = {
           "git.autofetch" = true;
           "diffEditor.ignoreTrimWhitespace" = false;
+          "dev.containers.defaultExtensions" = [
+            "GitHub.vscode-pull-request-github"
+          ];
           "mcpServers" = { };
           "workbench.iconTheme" = "vscode-icons";
           "workbench.colorTheme" = "Gruvbox Dark Hard";

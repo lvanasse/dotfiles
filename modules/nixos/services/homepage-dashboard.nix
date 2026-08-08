@@ -262,7 +262,7 @@
                   {
                     CWA = {
                       href = "http://${serverTailscaleHost}:8083";
-                      description = "Calibre-Web Automated";
+                      description = "Calibre-Web NextGen";
                       server = "local";
                       container = "calibre-web-automated";
                       showStats = true;

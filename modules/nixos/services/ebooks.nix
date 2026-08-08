@@ -30,9 +30,9 @@
         "Z ${libraryRoot} - 99 100 -"
       ];
 
-      # Calibre-Web Automated as a BookFusion replacement
+      # Calibre-Web NextGen as a BookFusion replacement
       virtualisation.oci-containers.containers.calibre-web-automated = {
-        image = "crocodilestick/calibre-web-automated:latest";
+        image = "ghcr.io/new-usemame/calibre-web-nextgen:v4.1.31";
         environment = {
           PUID = "99";
           PGID = "100";
@@ -48,7 +48,6 @@
           "${cwaInitPatch}:/custom-cont-init.d/10-dotfiles-cwa-patch.sh:ro"
         ];
         ports = [ "8083:8083" ];
-        extraOptions = [ "--label=com.centurylinklabs.watchtower.enable=true" ];
       };
 
       systemd.services.docker-calibre-web-automated = {

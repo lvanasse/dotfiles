@@ -41,21 +41,43 @@
             local wezterm = require 'wezterm'
             local act = wezterm.action
 
+            local function basename(path)
+              if not path or path == "" then
+                return nil
+              end
+              return path:gsub('(.*[/\\])', "")
+            end
+
+            local function paste_direct_from_clipboard(window, pane)
+              local success, stdout = wezterm.run_child_process({
+                '${pkgs.wl-clipboard}/bin/wl-paste',
+                '--no-newline',
+              })
+
+              if success and stdout and stdout ~= "" then
+                pane:send_text(stdout)
+              else
+                window:perform_action(act.PasteFrom("Clipboard"), pane)
+              end
+            end
+
+            local function paste_clipboard(window, pane)
+              local proc = basename(pane.foreground_process_name)
+              if proc == 'codex' or proc == 'ssh' then
+                paste_direct_from_clipboard(window, pane)
+              else
+                window:perform_action(act.PasteFrom("Clipboard"), pane)
+              end
+            end
+
             -- Right-click: copy selection if any, else paste (GNOME Terminal-like UX)
             local function right_click(window, pane)
               local sel = window:get_selection_text_for_pane(pane)
               if sel and sel ~= "" then
                 window:perform_action(act.CopyTo("Clipboard"), pane)
               else
-                window:perform_action(act.PasteFrom("Clipboard"), pane)
+                paste_clipboard(window, pane)
               end
-            end
-
-            local function basename(path)
-              if not path or path == "" then
-                return nil
-              end
-              return path:gsub('(.*[/\\])', "")
             end
 
             local function cwd_from_pane(pane)
@@ -162,10 +184,14 @@
                 },
               },
 
-              -- Keybindings: Ctrl+Shift+C/V for copy/paste
+              -- Cover both shifted-character and explicit-shift key event forms.
               keys = {
+                { key = 'C', mods = 'CTRL', action = act.CopyTo('Clipboard') },
                 { key = 'C', mods = 'CTRL|SHIFT', action = act.CopyTo('Clipboard') },
-                { key = 'V', mods = 'CTRL|SHIFT', action = act.PasteFrom('Clipboard') },
+                { key = 'c', mods = 'CTRL|SHIFT', action = act.CopyTo('Clipboard') },
+                { key = 'V', mods = 'CTRL', action = wezterm.action_callback(paste_clipboard) },
+                { key = 'V', mods = 'CTRL|SHIFT', action = wezterm.action_callback(paste_clipboard) },
+                { key = 'v', mods = 'CTRL|SHIFT', action = wezterm.action_callback(paste_clipboard) },
                 {
                   key = 'Enter',
                   mods = 'SHIFT',

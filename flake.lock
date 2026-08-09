@@ -1000,11 +1000,11 @@
     "secrets": {
       "flake": false,
       "locked": {
-        "lastModified": 1779053468,
-        "narHash": "sha256-TVr/mKK3P/qtbgG4PloH+zwLISAPd6yshYLU723bn5U=",
+        "lastModified": 1786151992,
+        "narHash": "sha256-1LCkSaOlyu2OZXolN1wnvyiq7b9kz7jpyKXPjI/0M7A=",
         "ref": "main",
-        "rev": "7c4302638db8b0a295f2aefeab8b0e9f4890cb2d",
-        "revCount": 38,
+        "rev": "5e8a0a076fd65b100c3dc352e22e8f105bf23d7f",
+        "revCount": 39,
         "type": "git",
         "url": "ssh://git@codeberg.org/lvanasse/secrets.git"
       },

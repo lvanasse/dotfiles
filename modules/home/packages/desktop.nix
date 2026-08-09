@@ -29,6 +29,11 @@
         url = "https://github.com/vicrodh/qbz/releases/download/v${qbzVersion}/QBZ_${qbzVersion}_amd64.AppImage";
         hash = "sha256-Kz3EEbP2tCm4oRXvMYUlnUQn6hjZRG2mQvQzQDhXj9U=";
       };
+      qbzExtracted = pkgs.appimageTools.extractType2 {
+        pname = "qbz";
+        version = qbzVersion;
+        src = qbzAppImage;
+      };
       qbz = pkgs.appimageTools.wrapType2 {
         pname = "qbz";
         version = qbzVersion;
@@ -142,6 +147,21 @@
 
         ]
       );
+
+      home.file.".local/share/applications/qbz.desktop".text = ''
+        [Desktop Entry]
+        Name=QBZ
+        Comment=Native Qobuz client with hi-res audio support
+        Exec=${qbz}/bin/qbz %u
+        Icon=${qbzExtracted}/qbz.png
+        Terminal=false
+        Type=Application
+        Categories=AudioVideo;Audio;Music;Player;
+        Keywords=music;audio;qobuz;hifi;streaming;audiophile;flac;
+        StartupWMClass=com.blitzfc.qbz
+        StartupNotify=true
+        MimeType=x-scheme-handler/qobuzapp;
+      '';
 
       home.activation.koreaderEnglishDictionary = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         dict_dir="${koreaderDictDir}"

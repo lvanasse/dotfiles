@@ -9,6 +9,7 @@
     }:
     let
       homeDir = config.home.homeDirectory;
+      bootstrapIdentity = "${homeDir}/.ssh/id_ed25519_work_laptop_bootstrap";
       personalKeyAge = "${inputs.secrets}/ssh/id_ed25519_personal.age";
       workKeyAge = "${inputs.secrets}/ssh/id_ed25519_work.age";
       hasPersonalKeyAge = builtins.pathExists personalKeyAge;
@@ -16,6 +17,7 @@
     in
     {
       age.identityPaths = lib.mkForce [
+        bootstrapIdentity
         "${homeDir}/.ssh/id_ed25519_personal"
         "${homeDir}/.ssh/id_ed25519_work"
       ];
@@ -23,6 +25,7 @@
         name = "Ludovic Vanasse";
         email = "ludovic.vanasse@vention.cc";
       };
+      programs.ssh.settings."github.com".identityFile = lib.mkForce "~/.ssh/id_ed25519_work";
       age.secrets =
         lib.optionalAttrs hasPersonalKeyAge {
           "ssh-id-ed25519-personal" = {

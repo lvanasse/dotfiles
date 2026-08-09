@@ -154,6 +154,17 @@ in
             identitiesOnly = true;
           };
 
+          # Work GitHub account via alias
+          "github" = {
+            hostname = "github.com";
+            user = "git";
+            identityFile = "~/.ssh/id_ed25519_work";
+            pubkeyAuthentication = true;
+            identitiesOnly = true;
+            controlMaster = "no";
+            controlPath = "none";
+          };
+
           # Work Bitbucket account via alias
           "bitbucket-work" = {
             hostname = "bitbucket.org";
@@ -176,11 +187,11 @@ in
             controlPath = "none";
           };
 
-          # Default GitHub (work)
+          # Default GitHub (personal). Use github for the work identity.
           "github.com" = {
             hostname = "github.com";
             user = "git";
-            identityFile = "~/.ssh/id_ed25519_work";
+            identityFile = "~/.ssh/id_ed25519_personal";
             pubkeyAuthentication = true;
             identitiesOnly = true;
           };

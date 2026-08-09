@@ -48,6 +48,10 @@
               return path:gsub('(.*[/\\])', "")
             end
 
+            local function is_codex_process(proc)
+              return proc == 'codex' or proc == '.codex-wrapped' or proc == 'codex-wrapped'
+            end
+
             local function paste_direct_from_clipboard(window, pane)
               local success, stdout = wezterm.run_child_process({
                 '${pkgs.wl-clipboard}/bin/wl-paste',
@@ -63,7 +67,7 @@
 
             local function paste_clipboard(window, pane)
               local proc = basename(pane.foreground_process_name)
-              if proc == 'codex' or proc == 'ssh' then
+              if is_codex_process(proc) or proc == 'ssh' then
                 paste_direct_from_clipboard(window, pane)
               else
                 window:perform_action(act.PasteFrom("Clipboard"), pane)
@@ -197,7 +201,7 @@
                   mods = 'SHIFT',
                   action = wezterm.action_callback(function(window, pane)
                     local proc = basename(pane.foreground_process_name)
-                    if proc == 'codex' then
+                    if is_codex_process(proc) then
                       -- Codex treats Ctrl+J as "insert newline" instead of submit.
                       window:perform_action(act.SendKey({ key = 'j', mods = 'CTRL' }), pane)
                     else

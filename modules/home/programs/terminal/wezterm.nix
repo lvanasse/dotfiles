@@ -52,6 +52,18 @@
               return proc == 'codex' or proc == '.codex-wrapped' or proc == 'codex-wrapped'
             end
 
+            local function foreground_process_name(pane)
+              if pane.get_foreground_process_name then
+                local ok, proc = pcall(function()
+                  return pane:get_foreground_process_name()
+                end)
+                if ok and proc and proc ~= "" then
+                  return proc
+                end
+              end
+              return pane.foreground_process_name
+            end
+
             local function paste_direct_from_clipboard(window, pane)
               local success, stdout = wezterm.run_child_process({
                 '${pkgs.wl-clipboard}/bin/wl-paste',
@@ -66,12 +78,7 @@
             end
 
             local function paste_clipboard(window, pane)
-              local proc = basename(pane.foreground_process_name)
-              if is_codex_process(proc) or proc == 'ssh' then
-                paste_direct_from_clipboard(window, pane)
-              else
-                window:perform_action(act.PasteFrom("Clipboard"), pane)
-              end
+              paste_direct_from_clipboard(window, pane)
             end
 
             -- Right-click: copy selection if any, else paste (GNOME Terminal-like UX)
@@ -200,7 +207,7 @@
                   key = 'Enter',
                   mods = 'SHIFT',
                   action = wezterm.action_callback(function(window, pane)
-                    local proc = basename(pane.foreground_process_name)
+                    local proc = basename(foreground_process_name(pane))
                     if is_codex_process(proc) then
                       -- Codex treats Ctrl+J as "insert newline" instead of submit.
                       window:perform_action(act.SendKey({ key = 'j', mods = 'CTRL' }), pane)

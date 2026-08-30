@@ -481,9 +481,9 @@ instead of making the header line disappear.
   (setq org-superstar-headline-bullets-list
         '(?◉ ?○ ?◆ ?◇ ?▶ ?▷))
 
-  ;; Center prose in Org buffers on wide monitors
+  ;; Keep Org prose readable without pushing line numbers into the middle.
   (setq visual-fill-column-width 100
-        visual-fill-column-center-text t)
+        visual-fill-column-center-text nil)
   (add-hook 'org-mode-hook #'visual-fill-column-mode)
 #+end_src
 

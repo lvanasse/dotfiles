@@ -58,10 +58,10 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
   (setq-default x-underline-at-descent-line t
                 widget-image-enable nil)
   (setq default-frame-alist
-        (append '((internal-border-width . 18)
+        (append '((internal-border-width . 0)
                   (vertical-scroll-bars . nil))
                 default-frame-alist))
-  (set-frame-parameter (selected-frame) 'internal-border-width 18)
+  (set-frame-parameter (selected-frame) 'internal-border-width 0)
 
   (setq window-divider-default-right-width 2
         window-divider-default-places 'right-only)
@@ -69,6 +69,23 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
 
   (when (require 'gruvbox-theme nil t)
     (load-theme 'gruvbox-dark-hard t))
+
+  (defun my/apply-borderless-frame-faces ()
+    "Blend frame and pane separator faces into the default background."
+    (let ((background (face-background 'default nil t)))
+      (when (or (null background)
+                (string= background "unspecified-bg"))
+        (setq background "#1d2021"))
+      (dolist (face '(internal-border
+                      vertical-border
+                      window-divider
+                      window-divider-first-pixel
+                      window-divider-last-pixel))
+        (when (facep face)
+          (set-face-background face background)
+          (set-face-foreground face background)))))
+
+  (my/apply-borderless-frame-faces)
 
   (set-face-attribute 'mode-line nil :box nil :height 0.95)
   (set-face-attribute 'mode-line-inactive nil :box nil :height 0.95)
@@ -208,6 +225,19 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
 * Discoverability And Evil
 
 #+begin_src emacs-lisp
+  (defun my/show-emacs-messages ()
+    "Show the live Emacs message log at its newest entry."
+    (interactive)
+    (pop-to-buffer (get-buffer-create "*Messages*"))
+    (goto-char (point-max)))
+
+  (defun my/show-emacs-warnings ()
+    "Show Emacs warnings when a warning buffer exists."
+    (interactive)
+    (if-let* ((buffer (get-buffer "*Warnings*")))
+        (pop-to-buffer buffer)
+      (user-error "No Emacs warnings have been recorded")))
+
   (when (require 'which-key nil t)
     (setq which-key-idle-delay 0.4
           which-key-sort-order #'which-key-key-order-alpha)
@@ -229,23 +259,34 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
     (my/leader-def
       "SPC" '(execute-extended-command :which-key "M-x")
       "'" '(my/pop-shell :which-key "popup shell")
+      "<home>" '(my/home :which-key "home")
+      "<prior>" '(tab-previous :which-key "previous tab")
+      "<next>" '(tab-next :which-key "next tab")
 
       "f" '(:ignore t :which-key "files")
       "f f" '(my/find-file-or-directory :which-key "find file")
       "f h" '(my/home :which-key "home")
       "f r" '(consult-recent-file :which-key "recent file")
       "f s" '(save-buffer :which-key "save")
-      "f t" '(treemacs :which-key "treemacs")
+      "f t" '(my/treemacs-project :which-key "treemacs")
 
       "b" '(:ignore t :which-key "buffers")
-      "b b" '(consult-buffer :which-key "switch buffer")
+      "b b" '(my/consult-buffer :which-key "switch buffer")
       "b d" '(kill-current-buffer :which-key "kill buffer")
-      "b g" '(ghostel :which-key "ghostel")
+      "b g" '(my/ghostel-new :which-key "ghostel")
       "b G" '(my/ghostel-project :which-key "project ghostel")
       "b n" '(next-buffer :which-key "next buffer")
       "b p" '(previous-buffer :which-key "previous buffer")
       "b t" '(my/ghostel-new :which-key "terminal")
       "b T" '(my/ghostel-project :which-key "project terminal")
+
+      "e" '(:ignore t :which-key "errors")
+      "e d" '(consult-flymake :which-key "diagnostics")
+      "e D" '(flymake-show-project-diagnostics :which-key "project diagnostics")
+      "e m" '(my/show-emacs-messages :which-key "messages")
+      "e n" '(flymake-goto-next-error :which-key "next diagnostic")
+      "e p" '(flymake-goto-prev-error :which-key "previous diagnostic")
+      "e w" '(my/show-emacs-warnings :which-key "warnings")
 
       "/" '(consult-ripgrep :which-key "search project")
 
@@ -257,6 +298,12 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
       "g p" '(magit-pull :which-key "pull")
       "g P" '(magit-push :which-key "push")
       "g s" '(magit-status :which-key "status")
+      "g h" '(:ignore t :which-key "hunks")
+      "g h d" '(diff-hl-show-hunk :which-key "show")
+      "g h n" '(diff-hl-next-hunk :which-key "next")
+      "g h p" '(diff-hl-previous-hunk :which-key "previous")
+      "g h r" '(diff-hl-revert-hunk :which-key "revert")
+      "g h s" '(diff-hl-stage-current-hunk :which-key "stage")
 
       "a" '(:ignore t :which-key "apps")
       "a e" '(:ignore t :which-key "email")
@@ -286,10 +333,14 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
       "p p" '(project-switch-project :which-key "switch")
       "p f" '(project-find-file :which-key "find file")
       "p b" '(project-switch-to-buffer :which-key "buffer")
-      "p t" '(treemacs-projectile :which-key "treemacs")
+      "p c" '(project-compile :which-key "compile")
+      "p r" '(project-recompile :which-key "recompile")
+      "p s" '(project-shell :which-key "shell")
+      "p d" '(project-dired :which-key "dired")
+      "p t" '(my/treemacs-project :which-key "treemacs")
 
       "t" '(:ignore t :which-key "toggles")
-      "t t" '(treemacs :which-key "treemacs")
+      "t t" '(my/treemacs-project :which-key "treemacs")
 
       "w" '(:ignore t :which-key "windows")
       "w d" '(delete-window :which-key "delete")
@@ -310,6 +361,18 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
 * Completion
 
 #+begin_src emacs-lisp
+  (setq tab-always-indent 'complete
+        completion-auto-help t
+        completion-auto-select nil
+        completion-eager-display t
+        completion-eager-update t
+        completion-show-help nil
+        completion-show-inline-help nil
+        completions-detailed t
+        completions-format 'one-column
+        completions-max-height 12
+        completions-sort 'historical)
+
   (when (require 'vertico nil t)
     (vertico-mode 1))
 
@@ -322,7 +385,7 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
           completion-category-overrides '((file (styles basic partial-completion)))))
 
   (when (require 'consult nil t)
-    (global-set-key (kbd "C-x b") #'consult-buffer)
+    (global-set-key (kbd "C-x b") #'my/consult-buffer)
     (global-set-key (kbd "M-y") #'consult-yank-pop))
 
   (when (require 'embark nil t)
@@ -332,11 +395,25 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
   (when (require 'embark-consult nil t)
     (add-hook 'embark-collect-mode-hook #'consult-preview-at-point-mode))
 
-  (when (require 'corfu nil t)
-    (setq corfu-auto t
-          corfu-cycle t
-          corfu-preview-current nil)
-    (global-corfu-mode 1))
+  (when (require 'completion-preview nil t)
+    (setq completion-preview-exact-match-only nil
+          completion-preview-commands '(self-insert-command
+                                        insert-char
+                                        analyze-text-conversion
+                                        completion-preview-insert-word)
+          completion-preview-minimum-symbol-length 2
+          completion-preview-idle-delay 0.3
+          completion-preview-ignore-case t
+          completion-preview-sort-function #'identity)
+    (define-key completion-preview-active-mode-map
+                (kbd "M-n") #'completion-preview-next-candidate)
+    (define-key completion-preview-active-mode-map
+                (kbd "M-p") #'completion-preview-prev-candidate)
+    (define-key completion-preview-active-mode-map
+                (kbd "M-<return>") #'completion-preview-insert)
+    (define-key completion-preview-active-mode-map
+                (kbd "<tab>") #'completion-preview-complete)
+    (global-completion-preview-mode 1))
 
   (when (require 'cape nil t)
     (add-to-list 'completion-at-point-functions #'cape-file)
@@ -350,6 +427,10 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
 
   (when (require 'envrc nil t)
     (envrc-global-mode 1))
+
+  (when (require 'diff-hl nil t)
+    (global-diff-hl-mode 1)
+    (add-hook 'dired-mode-hook #'diff-hl-dired-mode))
 #+end_src
 
 * Buffers And Layouts
@@ -360,12 +441,25 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
         tab-bar-new-tab-choice "*scratch*"
         tab-bar-close-button-show nil)
 
-  (defconst my/tab-line-visible-special-buffer-regexp
-    "\\`\\*\\(?:terminal\\|ghostel\\|shell\\|eshell\\|vterm\\)"
-    "Special buffers that should remain visible as file tabs.")
+  (global-tab-line-mode -1)
 
-  (defun my/tab-line-buffer-p (buffer)
-    "Return non-nil when BUFFER should be shown in the buffer tab row."
+  (defun my/directory-tab-name (directory)
+    "Return a readable tab name for DIRECTORY."
+    (let ((name (file-name-nondirectory (directory-file-name directory))))
+      (if (string-empty-p name)
+          (abbreviate-file-name directory)
+        name)))
+
+  (defun my/file-tab-name (path)
+    "Return a readable tab name for PATH."
+    (file-name-nondirectory (directory-file-name path)))
+
+  (defconst my/tab-visible-special-buffer-regexp
+    "\\`\\*\\(?:terminal\\|ghostel\\|shell\\|eshell\\|vterm\\)"
+    "Special buffers that should get a top-row tab.")
+
+  (defun my/tab-buffer-p (buffer)
+    "Return non-nil when BUFFER should be represented as a top-row tab."
     (when (buffer-live-p buffer)
       (with-current-buffer buffer
         (let ((name (buffer-name buffer)))
@@ -374,24 +468,54 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
                    (and (buffer-base-buffer)
                         (buffer-file-name (buffer-base-buffer)))
                    (derived-mode-p 'dired-mode)
-                   (string-match-p my/tab-line-visible-special-buffer-regexp name)))))))
+                   (string-match-p my/tab-visible-special-buffer-regexp name)))))))
 
-  (defun my/tab-line-buffer-list ()
-    "Return persistent VSCode-style buffer tabs."
-    (seq-filter #'my/tab-line-buffer-p (buffer-list)))
+  (defun my/tab-name-for-buffer (&optional buffer)
+    "Return a readable top-row tab name for BUFFER."
+    (let ((buffer (or buffer (current-buffer))))
+      (with-current-buffer buffer
+        (cond
+         (buffer-file-name
+          (my/file-tab-name buffer-file-name))
+         ((and (derived-mode-p 'dired-mode) default-directory)
+          (my/directory-tab-name default-directory))
+         (t
+          (string-trim (buffer-name buffer) "[*<[:space:]]+" "[*>[:space:]]+"))))))
 
-  (global-tab-line-mode 1)
-  (setq tab-line-tabs-function #'my/tab-line-buffer-list
-        tab-line-close-tab-function #'kill-buffer
-        tab-line-new-button-show nil
-        tab-line-close-button-show t)
+  (defun my/tab-names ()
+    "Return the names of existing top-row tabs."
+    (mapcar (lambda (tab) (alist-get 'name tab)) (tab-bar-tabs)))
 
-  (defun my/directory-tab-name (directory)
-    "Return a readable tab name for DIRECTORY."
-    (let ((name (file-name-nondirectory (directory-file-name directory))))
-      (if (string-empty-p name)
-          (abbreviate-file-name directory)
-        name)))
+  (defun my/buffer-tab-exists-p (name)
+    "Return non-nil when a top-row tab named NAME already exists."
+    (member name (my/tab-names)))
+
+  (defvar my/show-buffer-in-tab-inhibit nil
+    "Non-nil while creating a top-row tab for a buffer.")
+
+  (defun my/show-buffer-in-tab (&optional buffer)
+    "Show BUFFER in a top-row tab when it is relevant."
+    (unless my/show-buffer-in-tab-inhibit
+      (let* ((buffer (or buffer (current-buffer)))
+             (name (my/tab-name-for-buffer buffer)))
+        (when (and (my/tab-buffer-p buffer)
+                   (not (my/buffer-tab-exists-p name)))
+          (let ((my/show-buffer-in-tab-inhibit t))
+            (tab-new)
+            (switch-to-buffer buffer)
+            (tab-rename name))))))
+
+  (defun my/open-file-tab (path)
+    "Open PATH in a new tab, preserving a visible Treemacs sidebar."
+    (interactive "FFind file: ")
+    (let ((path (expand-file-name path))
+          (treemacs-was-visible
+           (and (fboundp 'treemacs-get-local-window)
+                (treemacs-get-local-window))))
+      (find-file-other-tab path)
+      (tab-rename (my/file-tab-name path))
+      (when treemacs-was-visible
+        (my/treemacs-project))))
 
   (defun my/open-directory-tab (directory)
     "Open DIRECTORY in Dired inside a new tab."
@@ -402,26 +526,28 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
       (dired directory)))
 
   (defun my/find-file-or-directory (path)
-    "Open PATH, creating a new tab when PATH is a directory."
+    "Open PATH in a named tab."
     (interactive (list (read-file-name "Find file: " nil nil nil)))
     (if (file-directory-p path)
         (my/open-directory-tab path)
-      (find-file path)))
+      (my/open-file-tab path)))
 
-  (defun my/buffer-right ()
-    "Move right through the buffer list."
+  (defun my/consult-buffer ()
+    "Switch buffers with Consult, adding relevant buffers to the top tab row."
     (interactive)
-    (next-buffer))
+    (call-interactively #'consult-buffer)
+    (my/show-buffer-in-tab))
 
-  (defun my/buffer-left ()
-    "Move left through the buffer list."
-    (interactive)
-    (previous-buffer))
+  (add-hook 'find-file-hook #'my/show-buffer-in-tab)
+  (add-hook 'dired-mode-hook #'my/show-buffer-in-tab)
+  (advice-add 'switch-to-buffer :after
+              (lambda (&rest _)
+                (my/show-buffer-in-tab)))
 
-  (global-set-key (kbd "C-<next>") #'my/buffer-right)
-  (global-set-key (kbd "C-<prior>") #'my/buffer-left)
-  (global-set-key (kbd "C-S-<next>") #'tab-next)
-  (global-set-key (kbd "C-S-<prior>") #'tab-previous)
+  (global-set-key (kbd "C-x C-f") #'my/find-file-or-directory)
+
+  (global-set-key (kbd "C-<next>") #'tab-next)
+  (global-set-key (kbd "C-<prior>") #'tab-previous)
 
   (put 'dired-find-alternate-file 'disabled nil)
   (with-eval-after-load 'dired
@@ -463,10 +589,12 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
           ghostel-module-auto-install 'ask))
 
   (defun my/ghostel-new ()
-    "Create a new Ghostel terminal buffer using Fish."
+    "Create a new Ghostel terminal tab using Fish."
     (interactive)
     (unless (require 'ghostel nil t)
       (user-error "Ghostel is not available; run Home Manager switch and restart Emacs"))
+    (tab-new)
+    (tab-rename "terminal")
     (let ((ghostel-buffer-name (generate-new-buffer-name "*terminal*")))
       (ghostel)))
 
@@ -493,14 +621,19 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
           (select-window (get-buffer-window buffer t))))))
 
   (defun my/ghostel-project ()
-    "Open a Ghostel terminal from the current project root."
+    "Open a Ghostel terminal tab from the current project root."
     (interactive)
-    (let ((default-directory (or (when-let* ((project (project-current nil)))
-                                   (project-root project))
-                                 default-directory)))
-      (if (fboundp 'ghostel-project)
-          (ghostel-project)
-        (my/ghostel-new))))
+    (unless (require 'ghostel nil t)
+      (user-error "Ghostel is not available; run Home Manager switch and restart Emacs"))
+    (let* ((default-directory (or (when-let* ((project (project-current nil)))
+                                    (project-root project))
+                                  default-directory))
+           (name (my/directory-tab-name default-directory)))
+      (tab-new)
+      (tab-rename (format "term:%s" name))
+      (let ((ghostel-buffer-name
+             (generate-new-buffer-name (format "*terminal:%s*" name))))
+        (ghostel))))
 
   (defun my/docker-container-names ()
     "Return running Docker container names known to TRAMP."
@@ -543,8 +676,10 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
         org-startup-indented t
         org-hide-emphasis-markers t
         org-pretty-entities nil
-        org-ellipsis " ▾"
-        org-cycle-separator-lines 1)
+        org-ellipsis "  ... "
+        org-cycle-separator-lines 1
+        org-return-follows-link t
+        org-use-speed-commands t)
 
   (defun my/org-disable-implicit-sub-superscripts ()
     "Require braces for Org subscript/superscript markup."
@@ -553,18 +688,16 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
                 org-pretty-entities-include-sub-superscripts nil))
 
   (defun my/org-visual-setup ()
-    "Make Org buffers readable and fold-friendly."
+    "Make Org buffers readable, polished, and fold-friendly."
     (my/org-disable-implicit-sub-superscripts)
     (visual-line-mode 1)
-    (setq-local line-spacing 0.12
-                visual-fill-column-width 100
-                visual-fill-column-center-text t)
+    (variable-pitch-mode 1)
+    (face-remap-add-relative 'variable-pitch :family "Inter" :height 1.12)
+    (setq-local line-spacing 0.16
+                visual-fill-column-width 96
+                visual-fill-column-center-text nil)
     (when (require 'visual-fill-column nil t)
       (visual-fill-column-mode 1))
-    (when (require 'org-superstar nil t)
-      (setq-local org-superstar-headline-bullets-list
-                  '(?* ?+ ?-))
-      (org-superstar-mode 1))
     (when (require 'org-appear nil t)
       (setq-local org-appear-autoemphasis t
                   org-appear-autolinks t
@@ -578,11 +711,19 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
     (set-face-attribute 'org-level-3 nil :height 1.08 :weight 'regular)
     (set-face-attribute 'org-level-4 nil :height 1.03 :weight 'regular)
     (set-face-attribute 'org-block nil :inherit 'fixed-pitch)
+    (set-face-attribute 'org-block-begin-line nil :inherit 'fixed-pitch :height 0.9)
+    (set-face-attribute 'org-block-end-line nil :inherit 'fixed-pitch :height 0.9)
     (set-face-attribute 'org-code nil :inherit 'fixed-pitch)
+    (set-face-attribute 'org-date nil :inherit 'fixed-pitch :height 0.95)
+    (set-face-attribute 'org-drawer nil :inherit 'fixed-pitch :height 0.9)
+    (set-face-attribute 'org-meta-line nil :inherit 'fixed-pitch :height 0.9)
+    (set-face-attribute 'org-property-value nil :inherit 'fixed-pitch)
+    (set-face-attribute 'org-special-keyword nil :inherit 'fixed-pitch :height 0.9)
     (set-face-attribute 'org-table nil :inherit 'fixed-pitch)
     (set-face-attribute 'org-verbatim nil :inherit 'fixed-pitch)
     (define-key org-mode-map (kbd "TAB") #'org-cycle)
-    (define-key org-mode-map (kbd "<backtab>") #'org-shifttab))
+    (define-key org-mode-map (kbd "<backtab>") #'org-shifttab)
+    (define-key org-mode-map (kbd "C-c -") #'org-insert-item))
 
   (add-hook 'org-mode-hook #'my/org-visual-setup)
 #+end_src
@@ -777,6 +918,11 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
 
 #+begin_src emacs-lisp
   (when (require 'treemacs nil t)
+    (defun my/treemacs-project ()
+      "Show only the current file's project in Treemacs."
+      (interactive)
+      (treemacs-add-and-display-current-project-exclusively))
+
     (defun my/treemacs-page-down ()
       "Move down by one visible page in Treemacs."
       (interactive)
@@ -795,7 +941,9 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
           treemacs-show-hidden-files nil)
     (define-key treemacs-mode-map (kbd "<next>") #'my/treemacs-page-down)
     (define-key treemacs-mode-map (kbd "<prior>") #'my/treemacs-page-up)
-    (treemacs-follow-mode 1))
+    (treemacs-follow-mode 1)
+    (when (require 'treemacs-project-follow-mode nil t)
+      (treemacs-project-follow-mode 1)))
 #+end_src
 
 * Modes
@@ -806,6 +954,10 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
   (add-to-list 'auto-mode-alist '("\\.toml\\'" . toml-mode))
   (add-to-list 'auto-mode-alist '("Dockerfile\\'" . dockerfile-mode))
   (add-to-list 'auto-mode-alist '("\\.rs\\'" . rust-mode))
+
+  (when (require 'bitbake-ts-mode nil t)
+    (dolist (pattern '("\\.bb\\'" "\\.bbappend\\'" "\\.bbclass\\'"))
+      (add-to-list 'auto-mode-alist `(,pattern . bitbake-ts-mode))))
 
   (provide 'config)
   ;;; config.el ends here

@@ -130,6 +130,7 @@
             editorconfig
             apheleia
             magit
+            diff-hl
             docker
             ghostel
             vterm
@@ -163,7 +164,6 @@
             flymake-clippy
             visual-fill-column
             org-appear
-            org-superstar
             projectile
             treemacs
             treemacs-projectile
@@ -232,6 +232,8 @@
 
       xdg.configFile = spacemacs.xdgConfigFiles // {
         "emacs-vanilla/init.el".text = vanillaConfig;
+        "emacs-vanilla/tree-sitter/libtree-sitter-bitbake.so".source =
+          "${pkgs.tree-sitter-grammars.tree-sitter-bitbake}/parser";
       };
     };
 }

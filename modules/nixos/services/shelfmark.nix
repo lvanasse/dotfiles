@@ -62,6 +62,80 @@ in
               print("[dotfiles] Shelfmark Prowlarr audiobook query patch already applied")
           else:
               raise SystemExit("Shelfmark Prowlarr source patch context not found")
+
+          googlebooks_path = Path("/app/shelfmark/metadata_providers/googlebooks.py")
+          googlebooks_source = googlebooks_path.read_text(encoding="utf-8")
+          googlebooks_replacements = [
+              (
+                  "from contextlib import suppress\n",
+                  "from contextlib import suppress\nimport os\nimport time\n",
+              ),
+              (
+                  "_HTTP_STATUS_NOT_FOUND = HTTPStatus.NOT_FOUND\n",
+                  "_HTTP_STATUS_NOT_FOUND = HTTPStatus.NOT_FOUND\n"
+                  "_HTTP_STATUS_TOO_MANY_REQUESTS = HTTPStatus.TOO_MANY_REQUESTS\n"
+                  "_GOOGLEBOOKS_QUOTA_BACKOFF_UNTIL = 0.0\n",
+              ),
+              (
+                  "        # Build request params\n"
+                  "        params: dict[str, Any] = {\n"
+                  "            \"q\": query,\n"
+                  "            \"maxResults\": min(options.limit, 40),  # Google max is 40\n",
+                  "        with suppress(TypeError, ValueError):\n"
+                  "            max_results_cap = int(os.environ.get(\"GOOGLEBOOKS_MAX_RESULTS\", \"5\"))\n"
+                  "        if \"max_results_cap\" not in locals():\n"
+                  "            max_results_cap = 5\n"
+                  "        max_results_cap = max(1, min(max_results_cap, 40))\n"
+                  "\n"
+                  "        # Build request params\n"
+                  "        params: dict[str, Any] = {\n"
+                  "            \"q\": query,\n"
+                  "            \"maxResults\": min(options.limit, max_results_cap, 40),  # Google max is 40\n",
+              ),
+              (
+                  "        # Add API key to params\n"
+                  "        params[\"key\"] = self.api_key\n",
+                  "        global _GOOGLEBOOKS_QUOTA_BACKOFF_UNTIL\n"
+                  "        if time.time() < _GOOGLEBOOKS_QUOTA_BACKOFF_UNTIL:\n"
+                  "            logger.warning(\"Google Books API quota backoff active; skipping request\")\n"
+                  "            return None\n"
+                  "\n"
+                  "        # Add API key to params\n"
+                  "        params[\"key\"] = self.api_key\n",
+              ),
+              (
+                  "                if e.response.status_code == _HTTP_STATUS_FORBIDDEN:\n"
+                  "                    # Quota exceeded or invalid API key\n"
+                  "                    logger.exception(\n"
+                  "                        \"Google Books API: quota exceeded or invalid API key (HTTP 403)\"\n"
+                  "                    )\n",
+                  "                if e.response.status_code in {_HTTP_STATUS_FORBIDDEN, _HTTP_STATUS_TOO_MANY_REQUESTS}:\n"
+                  "                    with suppress(TypeError, ValueError):\n"
+                  "                        backoff_seconds = int(os.environ.get(\"GOOGLEBOOKS_QUOTA_BACKOFF_SECONDS\", \"21600\"))\n"
+                  "                    if \"backoff_seconds\" not in locals():\n"
+                  "                        backoff_seconds = 21600\n"
+                  "                    backoff_seconds = max(60, backoff_seconds)\n"
+                  "                    _GOOGLEBOOKS_QUOTA_BACKOFF_UNTIL = time.time() + backoff_seconds\n"
+                  "                    logger.warning(\n"
+                  "                        \"Google Books API quota or rate limit hit (HTTP %s); backing off for %s seconds\",\n"
+                  "                        e.response.status_code,\n"
+                  "                        backoff_seconds,\n"
+                  "                    )\n",
+              ),
+          ]
+          googlebooks_patched = googlebooks_source
+          for before, after in googlebooks_replacements:
+              if after in googlebooks_patched:
+                  continue
+              if before not in googlebooks_patched:
+                  raise SystemExit("Shelfmark Google Books patch context not found")
+              googlebooks_patched = googlebooks_patched.replace(before, after, 1)
+
+          if googlebooks_patched != googlebooks_source:
+              googlebooks_path.write_text(googlebooks_patched, encoding="utf-8")
+              print("[dotfiles] Patched Shelfmark Google Books request limits")
+          else:
+              print("[dotfiles] Shelfmark Google Books request patch already applied")
           PY
 
           exec /app/entrypoint.sh "$@"
@@ -155,13 +229,15 @@ in
           PGID = "100";
           TZ = "America/Toronto";
           SEARCH_MODE = "universal";
+          GOOGLEBOOKS_MAX_RESULTS = "5";
+          GOOGLEBOOKS_QUOTA_BACKOFF_SECONDS = "21600";
           AUTH_METHOD = "cwa";
           CWA_DB_PATH = "/auth/app.db";
           CALIBRE_WEB_URL = "http://192.168.0.50:8083";
           INGEST_DIR = "/books";
           DESTINATION_AUDIOBOOK = "/audiobooks";
           FILE_ORGANIZATION = "organize";
-          FILE_ORGANIZATION_AUDIOBOOK = "organize";
+          FILE_ORGANIZATION_AUDIOBOOK = "rename";
           HARDLINK_TORRENTS = "false";
           HARDLINK_TORRENTS_AUDIOBOOK = "false";
         };

@@ -64,7 +64,8 @@
             book = clean_book_name((tags.get("album") or tags.get("title") or "").strip())
             return (author or None), (book or None)
 
-        for path in root.glob("*/*"):
+        scan_paths = sorted([*root.iterdir(), *root.glob("*/*")])
+        for path in scan_paths:
             if not path.is_file():
                 continue
             if path.suffix.casefold() not in supported_exts:
@@ -78,13 +79,17 @@
                 print(f"[audiobookshelf-normalize] skipping {path}: missing author/album metadata", file=sys.stderr)
                 continue
 
-            if canonical(parent_name) != canonical(author):
-                continue
+            if parent == root:
+                target_dir = root / author / book
+            else:
+                if canonical(parent_name) != canonical(author):
+                    continue
 
-            if canonical(parent_name) == canonical(book):
-                continue
+                if canonical(parent_name) == canonical(book):
+                    continue
 
-            target_dir = parent / book
+                target_dir = parent / book
+
             target_file = target_dir / path.name
 
             if path == target_file:

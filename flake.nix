@@ -37,6 +37,7 @@
 
     # Applications
     nix-flatpak.url = "github:gmodena/nix-flatpak/?ref=latest";
+    codex-desktop-linux.url = "github:ilysenko/codex-desktop-linux";
 
     # Theming
     stylix = {

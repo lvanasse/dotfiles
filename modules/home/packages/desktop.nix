@@ -1,4 +1,4 @@
-{ ... }:
+{ inputs, ... }:
 {
   flake.modules.homeManager."packages.desktop" =
     {
@@ -43,6 +43,17 @@
       koreaderDictDir = "${config.home.homeDirectory}/.config/koreader/data/dict";
     in
     {
+      imports = [
+        inputs.codex-desktop-linux.homeManagerModules.default
+      ];
+
+      programs.codexDesktopLinux = {
+        enable = true;
+        linuxFeatures = [ ];
+      };
+
+      home.sessionVariables.CODEX_LINUX_DISABLE_USAGE_REPORTING = "1";
+
       # Desktop applications and utilities
       home.packages = (
         with pkgs;
@@ -161,6 +172,42 @@
         StartupWMClass=com.blitzfc.qbz
         StartupNotify=true
         MimeType=x-scheme-handler/qobuzapp;
+      '';
+
+      home.file.".local/share/applications/org.ksnip.ksnip.desktop".text = ''
+        [Desktop Entry]
+        Type=Application
+        Exec=${pkgs.ksnip}/bin/ksnip %F
+        Icon=ksnip
+        Terminal=false
+        StartupNotify=false
+        Name=ksnip
+        GenericName=ksnip Screenshot Tool
+        Categories=Utility;
+        Actions=Area;LastArea;FullScreen;Window;
+        MimeType=image/bmp;image/gif;image/jpeg;image/jpg;image/png;
+        Comment=Cross-platform screenshot tool that provides annotation features for screenshots.
+        X-KDE-DBUS-Restricted-Interfaces=org.kde.kwin.Screenshot,org.kde.KWin.ScreenShot2
+
+        [Desktop Action Area]
+        Exec=${pkgs.ksnip}/bin/ksnip -r -c
+        Icon=ksnip
+        Name=Capture a rectangular area
+
+        [Desktop Action LastArea]
+        Exec=${pkgs.ksnip}/bin/ksnip -l -c
+        Icon=ksnip
+        Name=Capture last selected rectangular area
+
+        [Desktop Action FullScreen]
+        Exec=${pkgs.ksnip}/bin/ksnip -m -c
+        Icon=ksnip
+        Name=Capture a fullscreen
+
+        [Desktop Action Window]
+        Exec=${pkgs.ksnip}/bin/ksnip -a -c
+        Icon=ksnip
+        Name=Capture the focused window
       '';
 
       home.activation.koreaderEnglishDictionary = lib.hm.dag.entryAfter [ "writeBoundary" ] ''

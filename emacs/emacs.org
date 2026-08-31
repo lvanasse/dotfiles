@@ -83,7 +83,10 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
                       window-divider-last-pixel))
         (when (facep face)
           (set-face-background face background)
-          (set-face-foreground face background)))))
+          (set-face-foreground face background)))
+      (dolist (face '(fringe line-number line-number-current-line))
+        (when (facep face)
+          (set-face-background face background)))))
 
   (my/apply-borderless-frame-faces)
 
@@ -352,7 +355,7 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
       "w j" '(windmove-down :which-key "down")
       "w k" '(windmove-up :which-key "up")
       "w l" '(windmove-right :which-key "right")
-      "w <left>" '(windmove-left :which-key "left")
+      "w <left>" '(my/treemacs-focus :which-key "treemacs")
       "w <down>" '(windmove-down :which-key "down")
       "w <up>" '(windmove-up :which-key "up")
       "w <right>" '(windmove-right :which-key "right")))
@@ -706,21 +709,28 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
 
   (with-eval-after-load 'org
     (set-face-attribute 'org-document-title nil :height 1.45 :weight 'regular)
-    (set-face-attribute 'org-level-1 nil :height 1.25 :weight 'regular)
-    (set-face-attribute 'org-level-2 nil :height 1.15 :weight 'regular)
-    (set-face-attribute 'org-level-3 nil :height 1.08 :weight 'regular)
-    (set-face-attribute 'org-level-4 nil :height 1.03 :weight 'regular)
+    (dolist (face '(org-level-1 org-level-2 org-level-3 org-level-4
+                    org-level-5 org-level-6 org-level-7 org-level-8))
+      (set-face-attribute face nil :height 1.0 :weight 'regular))
     (set-face-attribute 'org-block nil :inherit 'fixed-pitch)
     (set-face-attribute 'org-block-begin-line nil :inherit 'fixed-pitch :height 0.9)
     (set-face-attribute 'org-block-end-line nil :inherit 'fixed-pitch :height 0.9)
-    (set-face-attribute 'org-code nil :inherit 'fixed-pitch)
+    (set-face-attribute 'org-code nil
+                        :inherit 'fixed-pitch
+                        :foreground "#fabd2f"
+                        :background "#3c3836"
+                        :weight 'semi-bold)
     (set-face-attribute 'org-date nil :inherit 'fixed-pitch :height 0.95)
     (set-face-attribute 'org-drawer nil :inherit 'fixed-pitch :height 0.9)
     (set-face-attribute 'org-meta-line nil :inherit 'fixed-pitch :height 0.9)
     (set-face-attribute 'org-property-value nil :inherit 'fixed-pitch)
     (set-face-attribute 'org-special-keyword nil :inherit 'fixed-pitch :height 0.9)
     (set-face-attribute 'org-table nil :inherit 'fixed-pitch)
-    (set-face-attribute 'org-verbatim nil :inherit 'fixed-pitch)
+    (set-face-attribute 'org-verbatim nil
+                        :inherit 'fixed-pitch
+                        :foreground "#fabd2f"
+                        :background "#3c3836"
+                        :weight 'semi-bold)
     (define-key org-mode-map (kbd "TAB") #'org-cycle)
     (define-key org-mode-map (kbd "<backtab>") #'org-shifttab)
     (define-key org-mode-map (kbd "C-c -") #'org-insert-item))
@@ -922,6 +932,14 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
       "Show only the current file's project in Treemacs."
       (interactive)
       (treemacs-add-and-display-current-project-exclusively))
+
+    (defun my/treemacs-focus ()
+      "Focus Treemacs, showing the current file's project when needed."
+      (interactive)
+      (unless (treemacs-get-local-window)
+        (my/treemacs-project))
+      (when-let ((window (treemacs-get-local-window)))
+        (select-window window)))
 
     (defun my/treemacs-page-down ()
       "Move down by one visible page in Treemacs."

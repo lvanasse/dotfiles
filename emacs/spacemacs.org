@@ -452,10 +452,36 @@ instead of making the header line disappear.
           (centaur-tabs-select-tab-value (current-buffer) tabset))
         tabset))
 
+    (defvar my/centaur-tabs-layout-selected-buffers (make-hash-table :test #'eq)
+      "Most recently selected visible buffer for each Spacemacs layout.")
+
+    (defun my/centaur-tabs-save-layout-tab (_name frame)
+      "Remember FRAME's selected visible buffer before changing layouts."
+      (when-let* ((persp (get-frame-persp frame))
+                  (buffer (window-buffer (frame-selected-window frame))))
+        (when (my/centaur-tabs-visible-buffer-p buffer)
+          (puthash persp buffer my/centaur-tabs-layout-selected-buffers))))
+
+    (defun my/centaur-tabs-restore-layout-tab (kind frame persp)
+      "Restore the saved selected tab after perspective-mode activates it."
+      (when (eq kind 'frame)
+        (when-let ((buffer (gethash persp my/centaur-tabs-layout-selected-buffers)))
+          (when (and (buffer-live-p buffer)
+                     (persp-contain-buffer-p buffer persp))
+            (with-selected-frame frame
+              (switch-to-buffer buffer)
+              (centaur-tabs-buffer-update-groups)
+              (centaur-tabs-select-tab-value
+               buffer
+               (centaur-tabs-get-tabset (my/centaur-tabs-layout-group-name)))
+              (force-window-update (selected-window)))))))
+
     (setq centaur-tabs-buffer-groups-function #'my/centaur-tabs-buffer-groups
           centaur-tabs-buffer-list-function #'my/centaur-tabs-buffer-list
           centaur-tabs-current-tabset-function #'my/centaur-tabs-current-tabset
           centaur-tabs-hide-tab-function #'my/centaur-tabs-hide-tab)
+    (add-hook 'persp-before-switch-functions #'my/centaur-tabs-save-layout-tab)
+    (add-hook 'persp-activated-functions #'my/centaur-tabs-restore-layout-tab)
     (clrhash centaur-tabs-hide-hash)
     (centaur-tabs-headline-match))
 #+end_src
@@ -478,6 +504,13 @@ instead of making the header line disappear.
                 org-pretty-entities-include-sub-superscripts nil))
   (add-hook 'org-mode-hook #'my/org-disable-implicit-sub-superscripts)
   (add-hook 'org-mode-hook #'visual-line-mode)
+  (with-eval-after-load 'org
+    (dolist (face '(org-code org-verbatim))
+      (set-face-attribute face nil
+                          :inherit 'fixed-pitch
+                          :foreground "#fabd2f"
+                          :background "#3c3836"
+                          :weight 'semi-bold)))
   (setq org-superstar-headline-bullets-list
         '(?◉ ?○ ?◆ ?◇ ?▶ ?▷))
 
@@ -833,11 +866,31 @@ buffer.
           ghostel-max-scrollback (* 16 1024 1024)
           ghostel-module-auto-install 'ask))
 
+  (defun my/ghostel-in-current-window (command)
+    "Run Ghostel COMMAND without letting it collapse the selected split."
+    (let ((window-state (window-state-get (frame-root-window) t))
+          (window-count (count-windows))
+          (target-window (selected-window))
+          (buffer (funcall command)))
+      (when (< (count-windows) window-count)
+        (window-state-put window-state (frame-root-window) t))
+      (when (buffer-live-p (or buffer (current-buffer)))
+        (with-selected-window
+            (if (window-live-p target-window)
+                target-window
+              (selected-window))
+          (switch-to-buffer (or buffer (current-buffer)))))))
+
+  (defun my/ghostel ()
+    "Open the shared Ghostel terminal in the selected split."
+    (interactive)
+    (my/ghostel-in-current-window #'ghostel))
+
   (defun my/ghostel-new ()
-    "Create a new Ghostel terminal buffer."
+    "Create a new Ghostel terminal in the selected split."
     (interactive)
     (let ((ghostel-buffer-name (generate-new-buffer-name "*terminal*")))
-      (ghostel)))
+      (my/ghostel-in-current-window #'ghostel)))
 
   ;; Keep Spacemacs' own shell entry points unchanged; Ghostel lives under
   ;; explicit leader bindings below.
@@ -845,17 +898,20 @@ buffer.
 
 ** Keybindings — core
 
-Leader-key bindings for Ghostel terminal access.  =SPC '= keeps the standard
-Spacemacs popup shell, =SPC b t= creates a new full terminal buffer, and
-=SPC b g= keeps the stable default buffer.
+Leader-key bindings for Ghostel terminal access and window focus.  =SPC '= keeps
+the standard Spacemacs popup shell, =SPC b t= creates a new terminal in the
+selected split, =SPC b g= reopens the shared terminal in the selected split,
+and =SPC w f= toggles the selected window between its current split and a
+maximized view.
 
 #+begin_src emacs-lisp
   (spacemacs/set-leader-keys
     "'" 'spacemacs/default-pop-shell
-    "bg" 'ghostel
+    "bg" 'my/ghostel
     "bG" 'ghostel-project
     "bt" 'my/ghostel-new
-    "bT" 'ghostel-project)
+    "bT" 'ghostel-project
+    "w f" 'spacemacs/toggle-maximize-buffer)
 
   (spacemacs/declare-prefix "b g" "ghostel")
   (spacemacs/declare-prefix "b t" "terminal")

@@ -16,6 +16,13 @@
         sed -i '/for requested_file in \[item for field in sorted(request.files)/a\            if not requested_file or not requested_file.filename:\n                continue' \
           /app/calibre-web-automated/cps/editbooks.py
         sqlite3 /config/app.db 'UPDATE settings SET mail_size = 1024 * 1024 * 1024;' || true
+        # Keep an already imported title/author pair instead of creating a
+        # second Calibre record for an incoming copy of the same book.
+        sqlite3 /config/cwa.db "
+          UPDATE cwa_settings
+          SET auto_ingest_automerge = 'ignore'
+          WHERE auto_ingest_automerge != 'ignore';
+        " || true
       '';
     in
     {

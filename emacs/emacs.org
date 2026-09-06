@@ -241,16 +241,89 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
         (pop-to-buffer buffer)
       (user-error "No Emacs warnings have been recorded")))
 
+  (defun my/comment-dwim ()
+    "Comment or uncomment the active region, or the current line."
+    (interactive)
+    (comment-dwim nil))
+
+  (defun my/delete-current-file-and-buffer ()
+    "Delete the visited file after confirmation, then kill its buffer."
+    (interactive)
+    (unless buffer-file-name
+      (user-error "Current buffer is not visiting a file"))
+    (when (yes-or-no-p (format "Delete %s? " (abbreviate-file-name buffer-file-name)))
+      (delete-file buffer-file-name)
+      (kill-buffer (current-buffer))))
+
   (when (require 'which-key nil t)
     (setq which-key-idle-delay 0.4
           which-key-sort-order #'which-key-key-order-alpha)
     (which-key-mode 1))
 
+  (defvar my/which-key-popup-shell-window-configuration nil
+    "Layout saved while Which-Key temporarily covers the popup shell.")
+
+  (defun my/which-key-cover-popup-shell (&rest _)
+    "Hide the popup shell before displaying Which-Key over its space."
+    (when (and (null my/which-key-popup-shell-window-configuration)
+               (derived-mode-p 'ghostel-mode)
+               (equal (buffer-name) "*popup-shell*")
+               (not (one-window-p)))
+      (setq my/which-key-popup-shell-window-configuration
+            (current-window-configuration))
+      (delete-window (selected-window))))
+
+  (defun my/which-key-restore-popup-shell (&rest _)
+    "Restore the popup shell after Which-Key finishes reading a prefix."
+    (when (window-configuration-p
+           my/which-key-popup-shell-window-configuration)
+      (set-window-configuration
+       my/which-key-popup-shell-window-configuration)
+      (setq my/which-key-popup-shell-window-configuration nil)))
+
+  (with-eval-after-load 'which-key
+    (advice-add 'which-key--show-buffer-side-window :before
+                #'my/which-key-cover-popup-shell)
+    (advice-add 'which-key--hide-popup :after
+                #'my/which-key-restore-popup-shell))
+
+  (defun my/forward-word-within-line (arg)
+    "Move ARG words forward without crossing the current physical line."
+    (interactive "^p")
+    (dotimes (_ (max 0 arg))
+      (let ((line-end (line-end-position)))
+        (forward-word 1)
+        (when (> (point) line-end)
+          (goto-char line-end)))))
+
+  (defun my/backward-word-within-line (arg)
+    "Move ARG words backward without crossing the current physical line."
+    (interactive "^p")
+    (dotimes (_ (max 0 arg))
+      (let ((line-start (line-beginning-position)))
+        (backward-word 1)
+        (when (< (point) line-start)
+          (goto-char line-start)))))
+
+  ;; These must be set before loading Evil so it adopts the system clipboard.
+  (setq evil-want-keybinding nil
+        evil-want-clipboard t)
+
   (when (require 'evil nil t)
-    (setq evil-want-keybinding nil
-          evil-respect-visual-line-mode t
+    (setq evil-respect-visual-line-mode t
           evil-undo-system 'undo-redo)
-    (evil-mode 1))
+    (evil-mode 1)
+    ;; Some modes intentionally start in Evil's Emacs state.  Keep Escape
+    ;; consistent with ordinary editing by returning to normal state there.
+    (define-key evil-emacs-state-map (kbd "<escape>") #'evil-normal-state)
+    (define-key evil-emacs-state-map (kbd "C-[") #'evil-normal-state)
+    (dolist (map (list evil-emacs-state-map
+                       evil-insert-state-map
+                       evil-motion-state-map
+                       evil-normal-state-map
+                       evil-visual-state-map))
+      (define-key map (kbd "C-<left>") #'my/backward-word-within-line)
+      (define-key map (kbd "C-<right>") #'my/forward-word-within-line)))
 
   (when (require 'general nil t)
     (general-create-definer my/leader-def
@@ -261,17 +334,23 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
 
     (my/leader-def
       "SPC" '(execute-extended-command :which-key "M-x")
+      "C-g" '(keyboard-quit :which-key "cancel")
+      "<escape>" '(keyboard-quit :which-key "cancel")
       "'" '(my/pop-shell :which-key "popup shell")
+      ";" '(my/comment-dwim :which-key "comment")
       "<home>" '(my/home :which-key "home")
       "<prior>" '(tab-previous :which-key "previous tab")
       "<next>" '(tab-next :which-key "next tab")
 
       "f" '(:ignore t :which-key "files")
       "f f" '(my/find-file-or-directory :which-key "find file")
+      "f d" '(my/delete-current-file-and-buffer :which-key "delete current file")
       "f h" '(my/home :which-key "home")
       "f r" '(consult-recent-file :which-key "recent file")
       "f s" '(save-buffer :which-key "save")
       "f t" '(my/treemacs-project :which-key "treemacs")
+      "f C-g" '(keyboard-quit :which-key "cancel")
+      "f <escape>" '(keyboard-quit :which-key "cancel")
 
       "b" '(:ignore t :which-key "buffers")
       "b b" '(my/consult-buffer :which-key "switch buffer")
@@ -279,9 +358,15 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
       "b g" '(my/ghostel-new :which-key "ghostel")
       "b G" '(my/ghostel-project :which-key "project ghostel")
       "b n" '(next-buffer :which-key "next buffer")
+      "b m" '(my/show-emacs-messages :which-key "messages")
       "b p" '(previous-buffer :which-key "previous buffer")
+      "b r" '(revert-buffer :which-key "revert")
+      "b s" '(my/home :which-key "scratch/home")
       "b t" '(my/ghostel-new :which-key "terminal")
       "b T" '(my/ghostel-project :which-key "project terminal")
+      "b w" '(read-only-mode :which-key "read-only")
+      "b C-g" '(keyboard-quit :which-key "cancel")
+      "b <escape>" '(keyboard-quit :which-key "cancel")
 
       "e" '(:ignore t :which-key "errors")
       "e d" '(consult-flymake :which-key "diagnostics")
@@ -290,6 +375,8 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
       "e n" '(flymake-goto-next-error :which-key "next diagnostic")
       "e p" '(flymake-goto-prev-error :which-key "previous diagnostic")
       "e w" '(my/show-emacs-warnings :which-key "warnings")
+      "e C-g" '(keyboard-quit :which-key "cancel")
+      "e <escape>" '(keyboard-quit :which-key "cancel")
 
       "/" '(consult-ripgrep :which-key "search project")
 
@@ -307,6 +394,8 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
       "g h p" '(diff-hl-previous-hunk :which-key "previous")
       "g h r" '(diff-hl-revert-hunk :which-key "revert")
       "g h s" '(diff-hl-stage-current-hunk :which-key "stage")
+      "g C-g" '(keyboard-quit :which-key "cancel")
+      "g <escape>" '(keyboard-quit :which-key "cancel")
 
       "a" '(:ignore t :which-key "apps")
       "a e" '(:ignore t :which-key "email")
@@ -323,11 +412,23 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
 
       "l" '(:ignore t :which-key "layouts")
       "l l" '(tab-bar-switch-to-tab :which-key "switch")
+      "l 1" '((lambda () (interactive) (tab-bar-select-tab 1)) :which-key "layout 1")
+      "l 2" '((lambda () (interactive) (tab-bar-select-tab 2)) :which-key "layout 2")
+      "l 3" '((lambda () (interactive) (tab-bar-select-tab 3)) :which-key "layout 3")
       "l t" '(tab-new :which-key "new")
       "l d" '(tab-close :which-key "close")
       "l r" '(tab-rename :which-key "rename")
       "l p" '(tab-previous :which-key "previous")
       "l n" '(tab-next :which-key "next")
+      "l C-g" '(keyboard-quit :which-key "cancel")
+      "l <escape>" '(keyboard-quit :which-key "cancel")
+
+      "i" '(:ignore t :which-key "insert")
+      "i b" '(insert-buffer :which-key "buffer")
+      "i j" '(evil-open-below :which-key "line below")
+      "i k" '(evil-open-above :which-key "line above")
+      "i C-g" '(keyboard-quit :which-key "cancel")
+      "i <escape>" '(keyboard-quit :which-key "cancel")
 
       "m" '(:ignore t :which-key "mode")
       "m f" '(my/format-buffer :which-key "format")
@@ -341,6 +442,8 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
       "p s" '(project-shell :which-key "shell")
       "p d" '(project-dired :which-key "dired")
       "p t" '(my/treemacs-project :which-key "treemacs")
+      "p C-g" '(keyboard-quit :which-key "cancel")
+      "p <escape>" '(keyboard-quit :which-key "cancel")
 
       "t" '(:ignore t :which-key "toggles")
       "t t" '(my/treemacs-project :which-key "treemacs")
@@ -358,7 +461,10 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
       "w <left>" '(my/treemacs-focus :which-key "treemacs")
       "w <down>" '(windmove-down :which-key "down")
       "w <up>" '(windmove-up :which-key "up")
-      "w <right>" '(windmove-right :which-key "right")))
+      "w <right>" '(windmove-right :which-key "right")
+      "w e" '(balance-windows-area :which-key "balance")
+      "w C-g" '(keyboard-quit :which-key "cancel")
+      "w <escape>" '(keyboard-quit :which-key "cancel")))
 #+end_src
 
 * Completion
@@ -589,7 +695,32 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
     (setq ghostel-shell-integration t
           ghostel-buffer-name "*terminal*"
           ghostel-max-scrollback (* 16 1024 1024)
-          ghostel-module-auto-install 'ask))
+          ghostel-module-auto-install 'ask)
+    ;; A terminal is still an editing surface: use Vim's modal workflow here
+    ;; too.  In normal state, p sends the system/Emacs clipboard as a safe
+    ;; bracketed terminal paste; i enters ordinary terminal input.
+    (evil-set-initial-state 'ghostel-mode 'normal)
+    (evil-define-key 'normal ghostel-mode-map (kbd "p") #'ghostel-paste)
+    ;; Evil's insert-state map otherwise turns C-y into
+    ;; `evil-copy-from-above`, bypassing Ghostel's bracketed terminal paste.
+    (define-key ghostel-mode-map (kbd "C-v") #'ghostel-paste)
+    (define-key ghostel-mode-map (kbd "C-S-v") #'ghostel-paste)
+    (defun my/evil-yank-or-ghostel-paste ()
+      "Paste in Ghostel, otherwise keep Evil's usual C-y behavior."
+      (interactive)
+      (if (derived-mode-p 'ghostel-mode)
+          (ghostel-yank)
+        (call-interactively #'evil-copy-from-above)))
+    (defun my/evil-quoted-insert-or-ghostel-paste ()
+      "Paste in Ghostel, otherwise keep Evil's usual C-v behavior."
+      (interactive)
+      (if (derived-mode-p 'ghostel-mode)
+          (ghostel-paste)
+        (call-interactively #'evil-quoted-insert)))
+    (define-key evil-insert-state-map (kbd "C-y")
+                #'my/evil-yank-or-ghostel-paste)
+    (define-key evil-insert-state-map (kbd "C-v")
+                #'my/evil-quoted-insert-or-ghostel-paste))
 
   (defun my/ghostel-new ()
     "Create a new Ghostel terminal tab using Fish."
@@ -601,6 +732,9 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
     (let ((ghostel-buffer-name (generate-new-buffer-name "*terminal*")))
       (ghostel)))
 
+  (defvar my/popup-shell-previous-window nil
+    "Window selected before opening the popup shell.")
+
   (defun my/pop-shell ()
     "Toggle a Spacemacs-style popup shell at the bottom of the frame."
     (interactive)
@@ -610,18 +744,27 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
            (buffer (get-buffer buffer-name))
            (window (and buffer (get-buffer-window buffer t))))
       (if (and window (window-live-p window))
-          (delete-window window)
+          (progn
+            (delete-window window)
+            (when (window-live-p my/popup-shell-previous-window)
+              (select-window my/popup-shell-previous-window))
+            (setq my/popup-shell-previous-window nil))
         (let ((ghostel-buffer-name buffer-name))
           (unless (buffer-live-p buffer)
-            (ghostel)
-            (setq buffer (current-buffer)))
-          (display-buffer-in-side-window
-           buffer
-           '((side . bottom)
-             (slot . -1)
-             (window-height . 0.32)
-             (window-parameters . ((no-delete-other-windows . t)))))
-          (select-window (get-buffer-window buffer t))))))
+            ;; Ghostel normally displays its new buffer in the selected window.
+            ;; Restore that file window before placing the shell in its popup.
+            (save-window-excursion
+              (ghostel)
+              (setq buffer (current-buffer))))
+          (setq my/popup-shell-previous-window (selected-window))
+          (let ((popup-window
+                 (display-buffer-in-side-window
+                  buffer
+                  '((side . bottom)
+                    (slot . -1)
+                    (window-height . 0.32)
+                    (window-parameters . ((no-delete-other-windows . t)))))))
+            (select-window popup-window))))))
 
   (defun my/ghostel-project ()
     "Open a Ghostel terminal tab from the current project root."
@@ -920,8 +1063,21 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
      (t
       (user-error "No formatter is available for this buffer"))))
 
+  (defun my/indent-line-or-region ()
+    "Indent the current line, or the active region when one is selected."
+    (interactive)
+    (if (use-region-p)
+        (indent-region (region-beginning) (region-end))
+      (indent-for-tab-command)))
+
   (with-eval-after-load 'nix-mode
-    (setq nix-nixfmt-bin "nixfmt"))
+    (setq nix-nixfmt-bin "nixfmt")
+    ;; GUI Tab is <tab>, while terminals usually send TAB/C-i.  Bind both so
+    ;; Nix indentation works identically in every Evil editing state.
+    (dolist (key (list (kbd "TAB") (kbd "<tab>")))
+      (define-key nix-mode-map key #'my/indent-line-or-region)
+      (evil-define-key '(normal insert visual)
+        nix-mode-map key #'my/indent-line-or-region)))
 #+end_src
 
 * Tree Sidebar

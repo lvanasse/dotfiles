@@ -1,7 +1,7 @@
 { ... }:
 {
   flake.modules.nixos."target.config.pc.hardware" =
-    { pkgs, ... }:
+    { config, pkgs, ... }:
     {
       # Boot configuration
       boot = {
@@ -23,10 +23,19 @@
           "coretemp"
           "nct6775"
         ];
-        initrd.kernelModules = [ "amdgpu" ];
       };
 
       # Graphics
+      services.xserver.videoDrivers = [ "nvidia" ];
+      programs.sway.extraOptions = [ "--unsupported-gpu" ];
+
+      hardware.nvidia = {
+        modesetting.enable = true;
+        open = true;
+        nvidiaSettings = true;
+        package = config.boot.kernelPackages.nvidiaPackages.stable;
+      };
+
       hardware.graphics = {
         enable = true;
         enable32Bit = true;

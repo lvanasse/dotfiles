@@ -23,21 +23,58 @@
     {
       xdg.configFile."spotifyd/spotifyd.conf".source = spotifydConfig;
 
-      # RX 580 exposes VA-API decode for H.264/HEVC but not VP9/AV1.
+      # The GTX 1660 Ti can decode VP9 in hardware, but not AV1.
       # Prefer codecs that can actually use hardware decode on this host.
       programs.firefox.profiles.default.settings = {
         "media.av1.enabled" = false;
-        "media.mediasource.vp9.enabled" = false;
       };
 
       # PC-specific Sway output layout (host-only)
+      wayland.windowManager.sway.extraOptions = [ "--unsupported-gpu" ];
       wayland.windowManager.sway.extraConfig = lib.mkAfter ''
-        # Displays/workspaces (from nwg-displays)
-        include ${config.home.homeDirectory}/.config/sway/outputs
-        include ${config.home.homeDirectory}/.config/sway/workspaces
+        # Displays (captured from nwg-displays)
+        output "DP-3" {
+          mode 1920x1080@60.0Hz
+          pos 2060 1080
+          transform normal
+          scale 1.0
+          scale_filter nearest
+          adaptive_sync off
+          dpms on
+        }
+        output "HDMI-A-1" {
+          mode 1920x1080@60.0Hz
+          pos 980 1080
+          transform 90
+          scale 1.0
+          scale_filter nearest
+          adaptive_sync off
+          dpms on
+        }
+        output "DP-2" {
+          mode 1920x1080@60.0Hz
+          pos 3980 1080
+          transform normal
+          scale 1.0
+          scale_filter nearest
+          adaptive_sync off
+          dpms on
+        }
+        output "DP-1" {
+          mode 2560x1080@74.991Hz
+          pos 1756 0
+          transform normal
+          scale 1.0
+          scale_filter nearest
+          adaptive_sync off
+          dpms on
+        }
 
-        # Ultrawide starts on workspace 4
-        workspace 4 output DP-2
+        # Keep one initial workspace on each display, with DP-3 as the primary.
+        workspace 1 output DP-3
+        workspace 2 output DP-2
+        workspace 3 output HDMI-A-1
+        workspace 4 output DP-1
       '';
 
       # Ensure Yeti microphone input level is set around 70% on login

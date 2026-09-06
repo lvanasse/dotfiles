@@ -45,6 +45,14 @@
           unit = "docker-shelfmark.service";
         }
         {
+          name = "standardnotes-server";
+          unit = "docker-standardnotes-server.service";
+        }
+        {
+          name = "standardnotes-web";
+          unit = "docker-standardnotes-web.service";
+        }
+        {
           name = "calibre";
           unit = "docker-calibre.service";
         }

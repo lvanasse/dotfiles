@@ -25,6 +25,7 @@
     flakeModules.nixos."services.annotationsync-status"
     flakeModules.nixos."services.shelfmark"
     flakeModules.nixos."services.actual"
+    flakeModules.nixos."services.standardnotes"
     flakeModules.nixos."services.dockhand"
     flakeModules.nixos."services.container-updates"
     flakeModules.nixos."services.docker-health"

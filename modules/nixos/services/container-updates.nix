@@ -78,6 +78,14 @@
           kind = "http";
           url = "http://127.0.0.1:5010/state";
         };
+        standardnotes-server = {
+          kind = "http";
+          url = "http://127.0.0.1:3030/";
+        };
+        standardnotes-web = {
+          kind = "http";
+          url = "http://127.0.0.1:3031/";
+        };
         nextcloud = {
           kind = "http";
           url = "https://127.0.0.1:444/";

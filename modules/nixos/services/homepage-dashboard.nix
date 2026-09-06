@@ -352,6 +352,15 @@
                     };
                   }
                   {
+                    "Standard Notes" = {
+                      href = "https://notes.ludovicvanasse.com";
+                      description = "Private encrypted notes";
+                      server = "local";
+                      container = "standardnotes-web";
+                      showStats = true;
+                    };
+                  }
+                  {
                     Linkwarden = {
                       href = "http://${serverTailscaleHost}:3000";
                       description = "Bookmarks";

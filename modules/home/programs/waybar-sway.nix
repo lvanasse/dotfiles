@@ -72,12 +72,12 @@
         ];
         "modules-center" = [ ];
         "modules-right" = [
-          "custom/power"
           "custom/mail"
           "battery"
           "custom/weather"
           "custom/datetime"
           "tray"
+          "custom/power"
         ];
 
         "sway/workspaces" = {
@@ -173,6 +173,7 @@
         #workspaces button.active, #workspaces button.focused { color: ${config.theme.waybar.workspaceActiveFg}; background: ${config.theme.palette.dark1}; box-shadow: inset 0 -2px ${config.theme.palette.bright_orange}; font-weight: 600; }
         #battery, #tray, #custom-weather, #custom-datetime, #custom-power, #custom-mode, #custom-mail { padding: 0 10px; }
         #custom-mode { background: ${config.theme.palette.dark1}; color: ${config.theme.palette.bright_orange}; font-weight: 600; }
+        #custom-datetime { font-feature-settings: "tnum"; }
         #custom-mail.attention { color: ${config.theme.palette.bright_orange}; font-weight: 700; }
         #custom-mail.error { color: ${config.theme.palette.bright_red}; font-weight: 700; }
         /* Add spacing between individual tray icons */

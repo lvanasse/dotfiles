@@ -23,6 +23,8 @@
     {
       xdg.configFile."spotifyd/spotifyd.conf".source = spotifydConfig;
 
+      programs.swayTools.autostartSlack = false;
+
       # The GTX 1660 Ti can decode VP9 in hardware, but not AV1.
       # Prefer codecs that can actually use hardware decode on this host.
       programs.firefox.profiles.default.settings = {

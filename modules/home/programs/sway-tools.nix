@@ -1,10 +1,21 @@
 { ... }:
 {
   flake.modules.homeManager."programs.sway-tools" =
-    { pkgs, config, ... }:
     {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
+    {
+      options.programs.swayTools.autostartSlack = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Whether to start Slack automatically with the Sway session";
+      };
+
       # Helper scripts for Wayland sessions (Sway) and Rofi wrappers
-      home.packages = [
+      config.home.packages = [
         (pkgs.writeShellScriptBin "rofi-combi" ''
           #!/usr/bin/env bash
           set -euo pipefail
@@ -299,7 +310,7 @@
           }
 
           # Prefer Vesktop over Discord if both installed
-          launch_if_missing slack
+          ${lib.optionalString config.programs.swayTools.autostartSlack "launch_if_missing slack"}
           if app="$(resolve_app vesktop)"; then
             # Start minimized so Vesktop reliably registers its tray item.
             if ! "$PGREP" -x vesktop >/dev/null 2>&1; then

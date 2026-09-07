@@ -4,6 +4,21 @@
     { lib, ... }:
     {
       services = {
+        # Proxy DHCP and TFTP service for Raspberry Pi network booting.
+        dnsmasq = {
+          enable = true;
+          settings = {
+            port = 0;
+            interface = [ "enp5s0" ];
+            "bind-interfaces" = true;
+            "dhcp-range" = "192.168.0.255,proxy";
+            "log-dhcp" = true;
+            "enable-tftp" = true;
+            "tftp-root" = "/srv/rpi4/tftp";
+            "pxe-service" = ''0,"Raspberry Pi Boot"'';
+          };
+        };
+
         # Keep the PC awake while idle; Sway handles display power-off separately.
         logind.settings.Login = {
           IdleAction = lib.mkForce "ignore";
@@ -62,7 +77,15 @@
 
       networking.firewall = {
         allowedTCPPorts = [ 57621 ];
-        allowedUDPPorts = [ 5353 ];
+        allowedUDPPorts = [
+          67
+          69
+          5353
+        ];
       };
+
+      systemd.tmpfiles.rules = [
+        "d /srv/rpi4/tftp 0755 root root -"
+      ];
     };
 }

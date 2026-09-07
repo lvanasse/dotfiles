@@ -11,6 +11,7 @@
         heroic
         gamescope
         gamemode
+        umu-launcher
         mpfr
         isl
         xivlauncher

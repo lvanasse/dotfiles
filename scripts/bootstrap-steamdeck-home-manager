@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+# Bootstrap Nix and this repository's Home Manager target on a Steam Deck.
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: bootstrap-steamdeck-home-manager [--repo-url URL] [--repo-dir PATH] [--dry-run]
+
+Run this from the PC. It connects interactively to the configured `steamdeck`
+SSH alias, installs Nix only when absent, clones the dotfiles repository when
+needed, and applies the deck@steamdeck Home Manager configuration.
+EOF
+}
+
+repo_url="https://codeberg.org/lvanasse/dotfiles.git"
+repo_dir="/home/deck/Code/personal/dotfiles"
+dry_run=false
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --repo-url) repo_url=${2:?missing value for --repo-url}; shift 2 ;;
+    --repo-dir) repo_dir=${2:?missing value for --repo-dir}; shift 2 ;;
+    --dry-run) dry_run=true; shift ;;
+    -h|--help) usage; exit 0 ;;
+    *) printf 'Unknown argument: %s\n' "$1" >&2; usage >&2; exit 2 ;;
+  esac
+done
+
+if "$dry_run"; then
+  cat <<EOF
+Would open an interactive SSH session to: steamdeck
+Would install Determinate Nix only if nix is absent.
+Would clone repository if absent: $repo_url -> $repo_dir
+Would apply: nix run github:nix-community/home-manager/release-26.05 -- switch --flake .#deck@steamdeck
+EOF
+  exit 0
+fi
+
+ssh -t steamdeck bash -s -- "$repo_url" "$repo_dir" <<'REMOTE'
+set -euo pipefail
+repo_url=$1
+repo_dir=$2
+
+if ! command -v nix >/dev/null; then
+  printf '%s\n' 'Installing Determinate Nix (this may request administrator authentication).'
+  curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
+fi
+
+if [[ -r /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]]; then
+  # shellcheck disable=SC1091
+  . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+fi
+
+if [[ ! -d $repo_dir/.git ]]; then
+  mkdir -p "${repo_dir%/*}"
+  git clone "$repo_url" "$repo_dir"
+fi
+
+cd "$repo_dir"
+nix run github:nix-community/home-manager/release-26.05 -- switch --flake '.#deck@steamdeck'
+REMOTE

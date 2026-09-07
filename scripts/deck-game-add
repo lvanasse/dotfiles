@@ -1,0 +1,135 @@
+#!/usr/bin/env bash
+# Transfer a legitimate installed Windows game to the Steam Deck and create a UMU launcher.
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: deck-game-add --slug ID --name TITLE --source DIR --exe-rel PATH [options]
+
+Transfer an already-installed Windows game to the Steam Deck, create a stable
+UMU prefix and launcher, then optionally register that Linux launcher in Steam.
+
+Options:
+  --proton VALUE    Proton path or UMU selector (default: GE-Proton)
+  --store VALUE     UMU store identifier (default: none)
+  --game-id VALUE   UMU game identifier (default: umu-default)
+  --no-register     Do not edit Steam shortcuts.vdf
+  --dry-run         Print actions without changing the Deck
+  -h, --help        Show this help
+EOF
+}
+
+slug=""
+name=""
+source_dir=""
+exe_rel=""
+proton="GE-Proton"
+store="none"
+game_id="umu-default"
+register=true
+dry_run=false
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --slug) slug=${2:?missing value for --slug}; shift 2 ;;
+    --name) name=${2:?missing value for --name}; shift 2 ;;
+    --source) source_dir=${2:?missing value for --source}; shift 2 ;;
+    --exe-rel) exe_rel=${2:?missing value for --exe-rel}; shift 2 ;;
+    --proton) proton=${2:?missing value for --proton}; shift 2 ;;
+    --store) store=${2:?missing value for --store}; shift 2 ;;
+    --game-id) game_id=${2:?missing value for --game-id}; shift 2 ;;
+    --no-register) register=false; shift ;;
+    --dry-run) dry_run=true; shift ;;
+    -h|--help) usage; exit 0 ;;
+    *) printf 'Unknown argument: %s\n' "$1" >&2; usage >&2; exit 2 ;;
+  esac
+done
+
+[[ $slug =~ ^[a-z0-9][a-z0-9-]*$ ]] || {
+  printf '%s\n' '--slug must use lowercase letters, digits, and hyphens.' >&2
+  exit 2
+}
+[[ -n $name && -n $source_dir && -n $exe_rel ]] || { usage >&2; exit 2; }
+[[ $exe_rel != /* && $exe_rel != *'..'* ]] || {
+  printf '%s\n' '--exe-rel must stay inside --source.' >&2
+  exit 2
+}
+[[ $proton != *$'\n'* && $proton != *'"'* && $store != *$'\n'* && $store != *'"'* && $game_id != *$'\n'* && $game_id != *'"'* ]] || {
+  printf '%s\n' 'UMU values cannot contain quotes or newlines.' >&2
+  exit 2
+}
+
+source_dir=$(realpath -e "$source_dir")
+[[ -d $source_dir && -f $source_dir/$exe_rel ]] || {
+  printf 'Game executable not found: %s/%s\n' "$source_dir" "$exe_rel" >&2
+  exit 2
+}
+
+deck_game_dir="/home/deck/Games/library/$slug"
+deck_launcher="/home/deck/Games/bin/$slug"
+deck_config="/home/deck/Games/config/$slug.toml"
+
+printf 'Game: %s\nSource: %s\nDeck game directory: %s\nDeck prefix: /home/deck/Games/prefixes/%s\n' \
+  "$name" "$source_dir" "$deck_game_dir" "$slug"
+
+if "$dry_run"; then
+  printf 'Would verify: ssh steamdeck umu-run and steamtinkerlaunch\n'
+  printf 'Would transfer: rsync -aH --partial --info=progress2 %q/ steamdeck:%q/\n' "$source_dir" "$deck_game_dir"
+  printf 'Would create: %s and %s\n' "$deck_config" "$deck_launcher"
+  if "$register"; then
+    printf 'Would refuse registration if Steam is running, otherwise add a non-Steam shortcut.\n'
+  fi
+  exit 0
+fi
+
+ssh steamdeck bash -s -- "$slug" <<'REMOTE'
+set -euo pipefail
+command -v umu-run >/dev/null
+command -v steamtinkerlaunch >/dev/null
+mkdir -p "/home/deck/Games/library/$1"
+REMOTE
+rsync -aH --partial --info=progress2 "$source_dir/" "steamdeck:$deck_game_dir/"
+
+ssh steamdeck bash -s -- "$slug" "$exe_rel" "$proton" "$store" "$game_id" <<'REMOTE'
+set -euo pipefail
+slug=$1
+exe_rel=$2
+proton=$3
+store=$4
+game_id=$5
+game_dir="/home/deck/Games/library/$slug"
+prefix="/home/deck/Games/prefixes/$slug"
+config="/home/deck/Games/config/$slug.toml"
+launcher="/home/deck/Games/bin/$slug"
+
+test -f "$game_dir/$exe_rel"
+mkdir -p "$prefix" "${config%/*}" "${launcher%/*}"
+cat > "$config" <<EOF
+[umu]
+prefix = "$prefix"
+exe = "$game_dir/$exe_rel"
+proton = "$proton"
+game_id = "$game_id"
+store = "$store"
+EOF
+cat > "$launcher" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+exec umu-run --config "$config" "\$@"
+EOF
+chmod 0755 "$launcher"
+REMOTE
+
+if "$register"; then
+  if ssh steamdeck 'pgrep -x steam >/dev/null'; then
+    printf '%s\n' 'Steam is running on the Deck. Close it, then rerun this command to register the shortcut.' >&2
+    exit 3
+  fi
+  ssh steamdeck steamtinkerlaunch ansg \
+    --appname="$name" \
+    --exepath="$deck_launcher" \
+    --startdir="$deck_game_dir"
+  printf '%s\n' 'Shortcut registered. Restart Steam on the Deck to make it appear.'
+else
+  printf '%s\n' 'Deck launcher created; Steam shortcut registration was skipped.'
+fi

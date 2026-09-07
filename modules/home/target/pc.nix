@@ -21,6 +21,21 @@
       };
     in
     {
+      home.file = {
+        ".local/bin/deck-game-install" = {
+          source = ../../../scripts/deck-game-install;
+          executable = true;
+        };
+        ".local/bin/deck-game-add" = {
+          source = ../../../scripts/deck-game-add;
+          executable = true;
+        };
+        ".local/bin/bootstrap-steamdeck-home-manager" = {
+          source = ../../../scripts/bootstrap-steamdeck-home-manager;
+          executable = true;
+        };
+      };
+
       xdg.configFile."spotifyd/spotifyd.conf".source = spotifydConfig;
 
       programs.swayTools.autostartSlack = false;

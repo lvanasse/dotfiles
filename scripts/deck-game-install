@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+# Install an official DRM-free Windows game into a PC-local directory with UMU.
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: deck-game-install --slug ID --name TITLE --installer SETUP.EXE --install-dir DIR [options]
+
+Run a legitimate Windows installer with an isolated PC prefix. Select DIR in
+the installer. The installer prefix is intentionally not copied to the Deck.
+
+Options:
+  --proton VALUE    Proton path or UMU selector (default: GE-Proton)
+  --store VALUE     UMU store identifier (default: none)
+  --game-id VALUE   UMU game identifier (default: umu-default)
+  --dry-run         Print the resolved launch without creating directories
+  -h, --help        Show this help
+EOF
+}
+
+slug=""
+name=""
+installer=""
+install_dir=""
+proton="GE-Proton"
+store="none"
+game_id="umu-default"
+dry_run=false
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --slug) slug=${2:?missing value for --slug}; shift 2 ;;
+    --name) name=${2:?missing value for --name}; shift 2 ;;
+    --installer) installer=${2:?missing value for --installer}; shift 2 ;;
+    --install-dir) install_dir=${2:?missing value for --install-dir}; shift 2 ;;
+    --proton) proton=${2:?missing value for --proton}; shift 2 ;;
+    --store) store=${2:?missing value for --store}; shift 2 ;;
+    --game-id) game_id=${2:?missing value for --game-id}; shift 2 ;;
+    --dry-run) dry_run=true; shift ;;
+    -h|--help) usage; exit 0 ;;
+    *) printf 'Unknown argument: %s\n' "$1" >&2; usage >&2; exit 2 ;;
+  esac
+done
+
+[[ $slug =~ ^[a-z0-9][a-z0-9-]*$ ]] || {
+  printf '%s\n' '--slug must use lowercase letters, digits, and hyphens.' >&2
+  exit 2
+}
+[[ -n $name && -n $installer && -n $install_dir ]] || { usage >&2; exit 2; }
+[[ -f $installer ]] || { printf 'Installer not found: %s\n' "$installer" >&2; exit 2; }
+
+installer=$(realpath -e "$installer")
+install_dir=$(realpath -m "$install_dir")
+prefix="$HOME/Games/prefixes/$slug-installer"
+
+printf 'Game: %s\nInstaller: %s\nInstall directory: %s\nPC prefix: %s\n' \
+  "$name" "$installer" "$install_dir" "$prefix"
+
+if "$dry_run"; then
+  printf 'Would run: WINEPREFIX=%q GAMEID=%q STORE=%q PROTONPATH=%q umu-run %q\n' \
+    "$prefix" "$game_id" "$store" "$proton" "$installer"
+  exit 0
+fi
+
+command -v umu-run >/dev/null || { printf '%s\n' 'umu-run is not installed.' >&2; exit 127; }
+mkdir -p "$prefix" "$install_dir"
+printf '%s\n' 'When prompted, install into the directory shown above.'
+exec env \
+  WINEPREFIX="$prefix" \
+  GAMEID="$game_id" \
+  STORE="$store" \
+  PROTONPATH="$proton" \
+  umu-run "$installer"

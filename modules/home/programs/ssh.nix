@@ -137,7 +137,7 @@ in
 
           # Steam Deck (SteamOS)
           "steamdeck" = {
-            hostname = "192.168.0.105";
+            hostname = "192.168.0.175";
             user = "deck";
             identityFile = "~/.ssh/id_ed25519_personal";
             pubkeyAuthentication = true;

@@ -16,6 +16,8 @@ Options:
   --proton VALUE    Proton path or UMU selector (default: GE-Proton)
   --store VALUE     UMU store identifier (default: none)
   --game-id VALUE   UMU game identifier (default: umu-default)
+  --sgdb-id ID      SteamGridDB game ID for canonical name and artwork
+  --no-artwork      Skip SteamGridDB matching and artwork
   --no-register     Do not edit Steam shortcuts.vdf
   --dry-run         Print actions without changing the Deck
   -h, --help        Show this help
@@ -29,7 +31,9 @@ exe_rel=""
 proton="GE-Proton"
 store="none"
 game_id="umu-default"
+sgdb_id=""
 register=true
+artwork=true
 dry_run=false
 interactive=false
 
@@ -45,6 +49,8 @@ while [[ $# -gt 0 ]]; do
     --proton) proton=${2:?missing value for --proton}; shift 2 ;;
     --store) store=${2:?missing value for --store}; shift 2 ;;
     --game-id) game_id=${2:?missing value for --game-id}; shift 2 ;;
+    --sgdb-id) sgdb_id=${2:?missing value for --sgdb-id}; shift 2 ;;
+    --no-artwork) artwork=false; shift ;;
     --no-register) register=false; shift ;;
     --dry-run) dry_run=true; shift ;;
     -h|--help) usage; exit 0 ;;
@@ -99,8 +105,45 @@ if "$interactive"; then
   done
   source_dir=$(realpath -e "$source_dir")
 
-  name=$(prompt_value 'Steam display name' "${name:-$(basename "$source_dir")}")
-  slug=$(prompt_value 'Machine-safe slug' "${slug:-$(make_slug "$name")}")
+  suggested_name=${name:-$(basename "$source_dir")}
+  api_key_file="${XDG_CONFIG_HOME:-$HOME/.config}/deck-game/steamgriddb-api-key"
+  if "$artwork" && [[ -s $api_key_file ]]; then
+    search_name=$(prompt_value 'SteamGridDB search' "$suggested_name")
+    search_uri=$(printf '%s' "$search_name" | jq -sRr @uri)
+    sgdb_response=$(curl -fsS \
+      -H "Authorization: Bearer $(<"$api_key_file")" \
+      "https://www.steamgriddb.com/api/v2/search/autocomplete/$search_uri") || {
+      printf '%s\n' 'SteamGridDB search failed; continuing with the folder name.' >&2
+      sgdb_response='{"data":[]}'
+    }
+    mapfile -t sgdb_ids < <(jq -r '.data[:10][].id' <<<"$sgdb_response")
+    mapfile -t sgdb_names < <(jq -r '.data[:10][].name' <<<"$sgdb_response")
+    if [[ ${#sgdb_ids[@]} -gt 0 ]]; then
+      printf '%s\n' 'Choose the matching SteamGridDB game:'
+      for i in "${!sgdb_ids[@]}"; do
+        printf '  %d) %s [SteamGridDB %s]\n' \
+          "$((i + 1))" "${sgdb_names[$i]}" "${sgdb_ids[$i]}"
+      done
+      printf '%s\n' '  0) Keep the folder-derived name and skip artwork'
+      while :; do
+        read -er -p 'Game match [1]: ' sgdb_choice
+        sgdb_choice=${sgdb_choice:-1}
+        if [[ $sgdb_choice == 0 ]]; then
+          artwork=false
+          break
+        elif [[ $sgdb_choice =~ ^[0-9]+$ ]] \
+          && ((sgdb_choice >= 1 && sgdb_choice <= ${#sgdb_ids[@]})); then
+          sgdb_id=${sgdb_ids[sgdb_choice - 1]}
+          suggested_name=${sgdb_names[sgdb_choice - 1]}
+          break
+        fi
+        printf '%s\n' 'That SteamGridDB selection is not valid.' >&2
+      done
+    fi
+  fi
+
+  name=$(prompt_value 'Steam display name' "$suggested_name")
+  slug=$(prompt_value 'Machine-safe slug' "${slug:-$(make_slug "$(basename "$source_dir")")}")
 
   if [[ -z $exe_rel ]]; then
     mapfile -d '' exe_candidates < <(
@@ -135,6 +178,10 @@ fi
 
 [[ $slug =~ ^[a-z0-9][a-z0-9-]*$ ]] || {
   printf '%s\n' '--slug must use lowercase letters, digits, and hyphens.' >&2
+  exit 2
+}
+[[ -z $sgdb_id || $sgdb_id =~ ^[0-9]+$ ]] || {
+  printf '%s\n' '--sgdb-id must contain only digits.' >&2
   exit 2
 }
 [[ -n $name && -n $source_dir && -n $exe_rel ]] || { usage >&2; exit 2; }
@@ -177,6 +224,7 @@ deck_config="/home/deck/Games/config/$slug.toml"
 printf 'Game: %s\nSource: %s\nDeck game directory: %s\nDeck prefix: /home/deck/Games/prefixes/%s\n' \
   "$name" "$source_dir" "$deck_game_dir" "$slug"
 printf 'Executable: %s\n' "$exe_rel"
+[[ -n $sgdb_id ]] && printf 'SteamGridDB game: %s\n' "$sgdb_id"
 
 if "$dry_run"; then
   printf 'Would verify: ssh steamdeck umu-run and steamtinkerlaunch\n'
@@ -230,9 +278,32 @@ launcher="/home/deck/Games/bin/$slug"
 
 test -f "$game_dir/$exe_rel"
 mkdir -p "$prefix" "${config%/*}" "${launcher%/*}"
+printf '%s\n' 'Preparing the Deck Proton build and UMU prefix.'
+env \
+  WINEPREFIX="$prefix" \
+  GAMEID="$game_id" \
+  STORE="$store" \
+  PROTONPATH="$proton" \
+  umu-run ""
+
+if [[ -d $proton ]]; then
+  resolved_proton=$(realpath -e "$proton")
+else
+  mapfile -t proton_candidates < <(
+    find "$HOME/.local/share/Steam/compatibilitytools.d" \
+      -mindepth 1 -maxdepth 1 -type d -name "$proton*" -printf '%p\n' 2>/dev/null \
+      | sort -V
+  )
+  [[ ${#proton_candidates[@]} -gt 0 ]] || {
+    printf 'UMU did not install a Proton build matching: %s\n' "$proton" >&2
+    exit 6
+  }
+  resolved_proton=${proton_candidates[-1]}
+fi
+
 prefix_toml=$(toml_escape "$prefix")
 exe_toml=$(toml_escape "$game_dir/$exe_rel")
-proton_toml=$(toml_escape "$proton")
+proton_toml=$(toml_escape "$resolved_proton")
 game_id_toml=$(toml_escape "$game_id")
 store_toml=$(toml_escape "$store")
 cat > "$config" <<EOF
@@ -248,7 +319,11 @@ cat > "$launcher" <<EOF
 set -euo pipefail
 unset LD_PRELOAD LD_LIBRARY_PATH
 export PATH="\$HOME/.nix-profile/bin:/nix/var/nix/profiles/default/bin:\$PATH"
-exec "\$HOME/.nix-profile/bin/umu-run" --config "$config" "\$@"
+export WINEPREFIX=$(printf '%q' "$prefix")
+export GAMEID=$(printf '%q' "$game_id")
+export STORE=$(printf '%q' "$store")
+export PROTONPATH=$(printf '%q' "$proton")
+exec "\$HOME/.nix-profile/bin/umu-run" $(printf '%q' "$game_dir/$exe_rel") "\$@"
 EOF
 chmod 0755 "$launcher"
 REMOTE
@@ -294,10 +369,9 @@ if "$register"; then
   }
 
   shortcut_is_registered() {
-    ssh steamdeck bash -s -- "$name_encoded" "$slug" <<'REMOTE'
+    ssh steamdeck bash -s -- "$slug" <<'REMOTE'
 set -euo pipefail
-name=$(printf '%s' "$1" | base64 --decode)
-slug=$2
+slug=$1
 steam_userdata="$HOME/.local/share/Steam/userdata"
 mapfile -t steam_user_ids < <(
   find "$steam_userdata" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' 2>/dev/null \
@@ -307,14 +381,16 @@ mapfile -t steam_user_ids < <(
 [[ ${#steam_user_ids[@]} -eq 1 ]]
 shortcut_file="$steam_userdata/${steam_user_ids[0]}/config/shortcuts.vdf"
 [[ -s $shortcut_file ]]
-strings "$shortcut_file" | grep -Fqx -- "$name"
+# The stable launcher path is the game identity. Display names are metadata and
+# may be refined later without creating a duplicate Steam shortcut.
 strings "$shortcut_file" | grep -Fqx -- "\"/home/deck/Games/bin/$slug\""
 REMOTE
   }
 
+  shortcut_already_registered=false
   if shortcut_is_registered; then
     printf '%s\n' 'Steam shortcut is already registered and verified.'
-    exit 0
+    shortcut_already_registered=true
   fi
 
   initial_mode=$(deck_mode)
@@ -358,7 +434,8 @@ REMOTE
     wait_for_steam_state closed
   fi
 
-  ssh steamdeck bash -s -- "$name_encoded" "$slug" <<'REMOTE'
+  if ! "$shortcut_already_registered"; then
+    ssh steamdeck bash -s -- "$name_encoded" "$slug" <<'REMOTE'
 set -euo pipefail
 export PATH="$HOME/.nix-profile/bin:/nix/var/nix/profiles/default/bin:$PATH"
 name=$(printf '%s' "$1" | base64 --decode)
@@ -402,6 +479,92 @@ if [[ ! -s $shortcut_file ]] || ! strings "$shortcut_file" | grep -Fqx -- "$name
   exit 5
 fi
 REMOTE
+  fi
+
+  shortcut_app_id=$(ssh steamdeck python3 - "$slug" <<'PY'
+import pathlib
+import struct
+import sys
+
+slug = sys.argv[1]
+launcher = f'/home/deck/Games/bin/{slug}'.encode()
+userdata = pathlib.Path.home() / ".local/share/Steam/userdata"
+users = sorted(path for path in userdata.iterdir() if path.is_dir() and path.name.isdigit())
+if len(users) != 1:
+    raise SystemExit(f"expected one Steam userdata directory, found {len(users)}")
+data = (users[0] / "config/shortcuts.vdf").read_bytes()
+identity_marker = b'\x01Exe\x00"' + launcher + b'"\x00'
+identity_offset = data.find(identity_marker)
+if identity_offset < 0:
+    raise SystemExit("shortcut launcher not found")
+appid_marker = b"\x02appid\x00"
+appid_offset = data.rfind(appid_marker, 0, identity_offset)
+if appid_offset < 0:
+    raise SystemExit("shortcut AppID not found")
+print(struct.unpack_from("<I", data, appid_offset + len(appid_marker))[0])
+PY
+  )
+
+  ssh steamdeck python3 - "$shortcut_app_id" <<'PY'
+import pathlib
+import shutil
+import sys
+import time
+
+appid = sys.argv[1]
+config = pathlib.Path.home() / ".local/share/Steam/config/config.vdf"
+lines = config.read_text().splitlines(keepends=True)
+target = f'"{appid}"'
+section = next((i for i, line in enumerate(lines) if line.strip() == '"CompatToolMapping"'), None)
+if section is None:
+    raise SystemExit(0)
+
+start = None
+for i in range(section + 1, len(lines)):
+    if lines[i].strip() == target:
+        start = i
+        break
+    if lines[i].strip() == '"Tools"':
+        break
+if start is None:
+    raise SystemExit(0)
+
+brace = start + 1
+while brace < len(lines) and lines[brace].strip() != "{":
+    brace += 1
+if brace == len(lines):
+    raise SystemExit("invalid compatibility mapping")
+depth = 0
+end = None
+for i in range(brace, len(lines)):
+    depth += lines[i].count("{")
+    depth -= lines[i].count("}")
+    if depth == 0:
+        end = i + 1
+        break
+if end is None:
+    raise SystemExit("unterminated compatibility mapping")
+
+backup = config.with_name(f"config.vdf.deck-game-backup-{int(time.time())}")
+shutil.copy2(config, backup)
+temp = config.with_suffix(".vdf.deck-game-tmp")
+temp.write_text("".join(lines[:start] + lines[end:]))
+temp.replace(config)
+print(f"Removed Steam compatibility mapping for {appid}; backup: {backup}")
+PY
+
+  if "$artwork" && [[ -n $sgdb_id ]]; then
+    artwork_helper=$(command -v deck-game-artwork || true)
+    [[ -n $artwork_helper ]] || artwork_helper="$(dirname "$0")/deck-game-artwork"
+    [[ -x $artwork_helper ]] || {
+      printf 'Artwork helper is not installed: %s\n' "$artwork_helper" >&2
+      exit 7
+    }
+    "$artwork_helper" \
+      --name "$name" \
+      --sgdb-id "$sgdb_id" \
+      --shortcut-id "$shortcut_app_id"
+  fi
 
   if [[ $initial_mode == gaming ]]; then
     printf '%s\n' 'Restoring Gaming Mode.'
@@ -414,7 +577,7 @@ REMOTE
   fi
   restore_required=false
   trap - EXIT
-  printf '%s\n' 'Shortcut registered and the original Deck session was restored.'
+  printf '%s\n' 'Game shortcut and artwork are ready; the original Deck session was restored.'
 else
   printf '%s\n' 'Deck launcher created; Steam shortcut registration was skipped.'
 fi

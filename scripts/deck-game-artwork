@@ -1,0 +1,172 @@
+#!/usr/bin/env bash
+# Apply SteamGridDB artwork to an existing Steam Deck non-Steam shortcut.
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: deck-game-artwork --name TITLE --sgdb-id ID [options]
+
+Options:
+  --shortcut-id ID  Non-Steam shortcut AppID (discovered by name by default)
+  --launcher PATH   Discover the shortcut AppID from its stable launcher path
+  --replace         Replace existing artwork instead of preserving it
+  --dry-run         Resolve IDs and print actions without downloading
+  -h, --help        Show this help
+EOF
+}
+
+name=""
+sgdb_id=""
+shortcut_id=""
+launcher=""
+replace=false
+dry_run=false
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --name) name=${2:?missing value for --name}; shift 2 ;;
+    --sgdb-id) sgdb_id=${2:?missing value for --sgdb-id}; shift 2 ;;
+    --shortcut-id) shortcut_id=${2:?missing value for --shortcut-id}; shift 2 ;;
+    --launcher) launcher=${2:?missing value for --launcher}; shift 2 ;;
+    --replace) replace=true; shift ;;
+    --dry-run) dry_run=true; shift ;;
+    -h|--help) usage; exit 0 ;;
+    *) printf 'Unknown argument: %s\n' "$1" >&2; usage >&2; exit 2 ;;
+  esac
+done
+
+[[ -n $name && $sgdb_id =~ ^[0-9]+$ ]] || { usage >&2; exit 2; }
+[[ -z $shortcut_id || $shortcut_id =~ ^[0-9]+$ ]] || {
+  printf '%s\n' '--shortcut-id must contain only digits.' >&2
+  exit 2
+}
+
+for command_name in curl jq scp ssh file base64; do
+  command -v "$command_name" >/dev/null || {
+    printf 'Required command is missing: %s\n' "$command_name" >&2
+    exit 127
+  }
+done
+
+config_home=${XDG_CONFIG_HOME:-$HOME/.config}
+api_key_file="$config_home/deck-game/steamgriddb-api-key"
+[[ -s $api_key_file ]] || {
+  printf 'SteamGridDB API key not found: %s\n' "$api_key_file" >&2
+  exit 2
+}
+api_key=$(<"$api_key_file")
+
+name_encoded=$(printf '%s' "$name" | base64 --wrap=0)
+launcher_encoded=$(printf '%s' "$launcher" | base64 --wrap=0)
+if [[ -z $shortcut_id ]]; then
+  shortcut_id=$(ssh steamdeck python3 - "$name_encoded" "$launcher_encoded" <<'PY'
+import base64
+import pathlib
+import struct
+import sys
+
+name = base64.b64decode(sys.argv[1]).decode("utf-8").encode("utf-8")
+launcher = base64.b64decode(sys.argv[2]).decode("utf-8").encode("utf-8")
+userdata = pathlib.Path.home() / ".local/share/Steam/userdata"
+users = sorted(path for path in userdata.iterdir() if path.is_dir() and path.name.isdigit())
+if len(users) != 1:
+    raise SystemExit(f"expected one Steam userdata directory, found {len(users)}")
+shortcut_file = users[0] / "config/shortcuts.vdf"
+data = shortcut_file.read_bytes()
+if launcher:
+    identity_marker = b'\x01Exe\x00"' + launcher + b'"\x00'
+    name_offset = data.find(identity_marker)
+    missing_message = "shortcut launcher not found"
+else:
+    identity_marker = b"\x01AppName\x00" + name + b"\x00"
+    name_offset = data.find(identity_marker)
+    missing_message = "shortcut name not found"
+if name_offset < 0:
+    raise SystemExit(missing_message)
+appid_marker = b"\x02appid\x00"
+appid_offset = data.rfind(appid_marker, 0, name_offset)
+if appid_offset < 0:
+    raise SystemExit("shortcut AppID not found")
+print(struct.unpack_from("<I", data, appid_offset + len(appid_marker))[0])
+PY
+  )
+fi
+
+remote_grid_dir=$(ssh steamdeck '
+  set -e
+  userdata="$HOME/.local/share/Steam/userdata"
+  set -- "$userdata"/[0-9]*
+  test "$#" -eq 1
+  test -d "$1/config"
+  printf "%s/config/grid" "$1"
+')
+
+printf 'SteamGridDB game: %s\nShortcut AppID: %s\nArtwork directory: %s\n' \
+  "$sgdb_id" "$shortcut_id" "$remote_grid_dir"
+
+if "$dry_run"; then
+  printf '%s\n' 'Would download missing portrait, horizontal grid, hero, logo, and icon artwork.'
+  exit 0
+fi
+
+temp_dir=$(mktemp -d /tmp/deck-game-artwork.XXXXXX)
+cleanup() {
+  rm -rf -- "$temp_dir"
+}
+trap cleanup EXIT
+
+api_get() {
+  curl -fsS \
+    -H "Authorization: Bearer $api_key" \
+    "https://www.steamgriddb.com/api/v2/$1"
+}
+
+install_asset() {
+  local label=$1 endpoint=$2 selector=$3 suffix=$4
+  local response asset url extension local_file remote_file
+
+  if ! "$replace" && ssh steamdeck bash -s -- "$remote_grid_dir" "$shortcut_id$suffix" <<'REMOTE'
+compgen -G "$1/$2.*" >/dev/null
+REMOTE
+  then
+    printf 'Keeping existing %s artwork.\n' "$label"
+    return 0
+  fi
+
+  response=$(api_get "$endpoint")
+  asset=$(jq -r \
+    "$selector | sort_by(.score // 0) | reverse | .[0] | [.url, (.url | split(\"?\")[0] | split(\".\")[-1] | ascii_downcase)] | @tsv" \
+    <<<"$response")
+  [[ -n $asset && $asset != null$'\t'null ]] || {
+    printf 'No %s artwork was available.\n' "$label"
+    return 0
+  }
+  IFS=$'\t' read -r url extension <<<"$asset"
+  case "$extension" in
+    jpeg) extension=jpg ;;
+    jpg|png) ;;
+    *) printf 'Skipping unsupported %s format: %s\n' "$label" "$extension"; return 0 ;;
+  esac
+
+  local_file="$temp_dir/$shortcut_id$suffix.$extension"
+  remote_file="$remote_grid_dir/$shortcut_id$suffix.$extension"
+  curl -fsSL "$url" -o "$local_file"
+  file --brief --mime-type "$local_file" | grep -Eq '^image/(jpeg|png)$' || {
+    printf 'Downloaded %s is not a supported image.\n' "$label" >&2
+    return 1
+  }
+  ssh steamdeck mkdir -p "$remote_grid_dir"
+  scp -q "$local_file" "steamdeck:$remote_file"
+  printf 'Installed %s artwork.\n' "$label"
+}
+
+static_images='[.data[] | select(.url | test("\\.(png|jpe?g)(\\?|$)"; "i"))]'
+install_asset portrait "grids/game/$sgdb_id" \
+  "$static_images | map(select(.height > .width))" p
+install_asset horizontal-grid "grids/game/$sgdb_id" \
+  "$static_images | map(select(.width > .height))" ""
+install_asset hero "heroes/game/$sgdb_id" "$static_images" _hero
+install_asset logo "logos/game/$sgdb_id" "$static_images" _logo
+install_asset icon "icons/game/$sgdb_id" "$static_images" _icon
+
+printf '%s\n' 'SteamGridDB artwork installed and verified.'

@@ -30,6 +30,10 @@
           source = ../../../scripts/deck-game-add;
           executable = true;
         };
+        ".local/bin/deck-game-artwork" = {
+          source = ../../../scripts/deck-game-artwork;
+          executable = true;
+        };
         ".local/bin/bootstrap-steamdeck-home-manager" = {
           source = ../../../scripts/bootstrap-steamdeck-home-manager;
           executable = true;

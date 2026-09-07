@@ -36,7 +36,21 @@ EOF
   exit 0
 fi
 
-ssh -tt steamdeck bash -s -- "$repo_url" "$repo_dir" <<'REMOTE'
+[[ $repo_url != *[[:space:]]* && $repo_dir != *[[:space:]]* ]] || {
+  printf '%s\n' 'Repository URL and directory cannot contain whitespace.' >&2
+  exit 2
+}
+
+local_helper=$(mktemp)
+remote_helper="/tmp/bootstrap-steamdeck-home-manager-${RANDOM}${RANDOM}.sh"
+cleanup() {
+  rm -f "$local_helper"
+  ssh -o BatchMode=yes steamdeck rm -f -- "$remote_helper" >/dev/null 2>&1 || true
+}
+trap cleanup EXIT
+
+cat > "$local_helper" <<'REMOTE'
+#!/usr/bin/env bash
 set -euo pipefail
 repo_url=$1
 repo_dir=$2
@@ -59,3 +73,7 @@ fi
 cd "$repo_dir"
 nix run github:nix-community/home-manager/release-26.05 -- switch --flake '.#deck@steamdeck'
 REMOTE
+
+chmod 0700 "$local_helper"
+scp "$local_helper" "steamdeck:$remote_helper"
+ssh -tt steamdeck bash "$remote_helper" "$repo_url" "$repo_dir"

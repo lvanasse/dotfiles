@@ -8,6 +8,8 @@ Usage: deck-game-add --slug ID --name TITLE --source DIR --exe-rel PATH [options
 
 Transfer an already-installed Windows game to the Steam Deck, create a stable
 UMU prefix and launcher, then optionally register that Linux launcher in Steam.
+Quote values containing spaces or shell punctuation. Only --slug is restricted
+to a machine-safe identifier; names and paths may contain normal punctuation.
 
 Options:
   --proton VALUE    Proton path or UMU selector (default: GE-Proton)
@@ -50,20 +52,37 @@ done
   exit 2
 }
 [[ -n $name && -n $source_dir && -n $exe_rel ]] || { usage >&2; exit 2; }
-[[ $exe_rel != /* && $exe_rel != *'..'* ]] || {
+[[ $exe_rel != /* ]] || {
   printf '%s\n' '--exe-rel must stay inside --source.' >&2
   exit 2
 }
-[[ $proton != *$'\n'* && $proton != *'"'* && $store != *$'\n'* && $store != *'"'* && $game_id != *$'\n'* && $game_id != *'"'* ]] || {
-  printf '%s\n' 'UMU values cannot contain quotes or newlines.' >&2
+[[ ! $name =~ [[:cntrl:]] && ! $exe_rel =~ [[:cntrl:]] \
+  && ! $proton =~ [[:cntrl:]] && ! $store =~ [[:cntrl:]] \
+  && ! $game_id =~ [[:cntrl:]] ]] || {
+  printf '%s\n' 'Names, paths, and UMU values cannot contain control characters.' >&2
   exit 2
 }
 
 source_dir=$(realpath -e "$source_dir")
-[[ -d $source_dir && -f $source_dir/$exe_rel ]] || {
+source_exe=$(realpath -e "$source_dir/$exe_rel" 2>/dev/null) || {
   printf 'Game executable not found: %s/%s\n' "$source_dir" "$exe_rel" >&2
   exit 2
 }
+[[ -d $source_dir && -f $source_exe && $source_exe == "$source_dir/"* ]] || {
+  printf '%s\n' '--exe-rel must resolve to a file inside --source.' >&2
+  exit 2
+}
+exe_rel=${source_exe#"$source_dir/"}
+
+encode_value() {
+  printf '%s' "$1" | base64 --wrap=0
+}
+
+exe_rel_encoded=$(encode_value "$exe_rel")
+proton_encoded=$(encode_value "$proton")
+store_encoded=$(encode_value "$store")
+game_id_encoded=$(encode_value "$game_id")
+name_encoded=$(encode_value "$name")
 
 deck_game_dir="/home/deck/Games/library/$slug"
 deck_launcher="/home/deck/Games/bin/$slug"
@@ -71,6 +90,7 @@ deck_config="/home/deck/Games/config/$slug.toml"
 
 printf 'Game: %s\nSource: %s\nDeck game directory: %s\nDeck prefix: /home/deck/Games/prefixes/%s\n' \
   "$name" "$source_dir" "$deck_game_dir" "$slug"
+printf 'Executable: %s\n' "$exe_rel"
 
 if "$dry_run"; then
   printf 'Would verify: ssh steamdeck umu-run and steamtinkerlaunch\n'
@@ -84,19 +104,31 @@ fi
 
 ssh steamdeck bash -s -- "$slug" <<'REMOTE'
 set -euo pipefail
+export PATH="$HOME/.nix-profile/bin:/nix/var/nix/profiles/default/bin:$PATH"
 command -v umu-run >/dev/null
 command -v steamtinkerlaunch >/dev/null
 mkdir -p "/home/deck/Games/library/$1"
 REMOTE
 rsync -aH --partial --info=progress2 "$source_dir/" "steamdeck:$deck_game_dir/"
 
-ssh steamdeck bash -s -- "$slug" "$exe_rel" "$proton" "$store" "$game_id" <<'REMOTE'
+ssh steamdeck bash -s -- \
+  "$slug" "$exe_rel_encoded" "$proton_encoded" "$store_encoded" "$game_id_encoded" <<'REMOTE'
 set -euo pipefail
+export PATH="$HOME/.nix-profile/bin:/nix/var/nix/profiles/default/bin:$PATH"
 slug=$1
-exe_rel=$2
-proton=$3
-store=$4
-game_id=$5
+decode_value() {
+  printf '%s' "$1" | base64 --decode
+}
+toml_escape() {
+  local value=$1
+  value=${value//\\/\\\\}
+  value=${value//\"/\\\"}
+  printf '%s' "$value"
+}
+exe_rel=$(decode_value "$2")
+proton=$(decode_value "$3")
+store=$(decode_value "$4")
+game_id=$(decode_value "$5")
 game_dir="/home/deck/Games/library/$slug"
 prefix="/home/deck/Games/prefixes/$slug"
 config="/home/deck/Games/config/$slug.toml"
@@ -104,17 +136,23 @@ launcher="/home/deck/Games/bin/$slug"
 
 test -f "$game_dir/$exe_rel"
 mkdir -p "$prefix" "${config%/*}" "${launcher%/*}"
+prefix_toml=$(toml_escape "$prefix")
+exe_toml=$(toml_escape "$game_dir/$exe_rel")
+proton_toml=$(toml_escape "$proton")
+game_id_toml=$(toml_escape "$game_id")
+store_toml=$(toml_escape "$store")
 cat > "$config" <<EOF
 [umu]
-prefix = "$prefix"
-exe = "$game_dir/$exe_rel"
-proton = "$proton"
-game_id = "$game_id"
-store = "$store"
+prefix = "$prefix_toml"
+exe = "$exe_toml"
+proton = "$proton_toml"
+game_id = "$game_id_toml"
+store = "$store_toml"
 EOF
 cat > "$launcher" <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
+export PATH="\$HOME/.nix-profile/bin:/nix/var/nix/profiles/default/bin:\$PATH"
 exec umu-run --config "$config" "\$@"
 EOF
 chmod 0755 "$launcher"
@@ -125,10 +163,16 @@ if "$register"; then
     printf '%s\n' 'Steam is running on the Deck. Close it, then rerun this command to register the shortcut.' >&2
     exit 3
   fi
-  ssh steamdeck steamtinkerlaunch ansg \
-    --appname="$name" \
-    --exepath="$deck_launcher" \
-    --startdir="$deck_game_dir"
+  ssh steamdeck bash -s -- "$name_encoded" "$slug" <<'REMOTE'
+set -euo pipefail
+export PATH="$HOME/.nix-profile/bin:/nix/var/nix/profiles/default/bin:$PATH"
+name=$(printf '%s' "$1" | base64 --decode)
+slug=$2
+steamtinkerlaunch ansg \
+  --appname="$name" \
+  --exepath="/home/deck/Games/bin/$slug" \
+  --startdir="/home/deck/Games/library/$slug"
+REMOTE
   printf '%s\n' 'Shortcut registered. Restart Steam on the Deck to make it appear.'
 else
   printf '%s\n' 'Deck launcher created; Steam shortcut registration was skipped.'

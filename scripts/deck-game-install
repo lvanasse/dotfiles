@@ -8,6 +8,8 @@ Usage: deck-game-install --slug ID --name TITLE --installer SETUP.EXE --install-
 
 Run a legitimate Windows installer with an isolated PC prefix. Select DIR in
 the installer. The installer prefix is intentionally not copied to the Deck.
+Quote values containing spaces or shell punctuation. Only --slug is restricted
+to a machine-safe identifier; names and paths may contain normal punctuation.
 
 Options:
   --proton VALUE    Proton path or UMU selector (default: GE-Proton)

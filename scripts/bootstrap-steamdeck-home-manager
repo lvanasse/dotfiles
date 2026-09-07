@@ -29,21 +29,21 @@ done
 if "$dry_run"; then
   cat <<EOF
 Would open an interactive SSH session to: steamdeck
-Would install Determinate Nix only if nix is absent.
+Would install Determinate Nix with its documented --no-confirm flag only if nix is absent.
 Would clone repository if absent: $repo_url -> $repo_dir
 Would apply: nix run github:nix-community/home-manager/release-26.05 -- switch --flake .#deck@steamdeck
 EOF
   exit 0
 fi
 
-ssh -t steamdeck bash -s -- "$repo_url" "$repo_dir" <<'REMOTE'
+ssh -tt steamdeck bash -s -- "$repo_url" "$repo_dir" <<'REMOTE'
 set -euo pipefail
 repo_url=$1
 repo_dir=$2
 
 if ! command -v nix >/dev/null; then
   printf '%s\n' 'Installing Determinate Nix (this may request administrator authentication).'
-  curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
+  curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install --no-confirm
 fi
 
 if [[ -r /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]]; then

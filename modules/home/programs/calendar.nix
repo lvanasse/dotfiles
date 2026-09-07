@@ -26,7 +26,11 @@
         <2026-05-31 Sun 16:00-17:00 +1m>
       '';
 
-      xdg.configFile."calendar/README".text = ''
+      # Kept out of .config/calendar itself: agenix creates that directory as
+      # root:root when it deploys the caldav password secret there, which
+      # blocks home-manager (running as the user) from symlinking anything
+      # else into it.
+      xdg.configFile."calendar-notes/README".text = ''
         Infomaniak CalDAV for Spacemacs/org-caldav
 
         Secret file expected by the config:

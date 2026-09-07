@@ -121,7 +121,7 @@ in
           modifier = "Mod4";
           terminal = "wezterm";
 
-          # Start background, tray, and Waybar
+          # Start background and tray helpers. Waybar is managed by systemd.
           startup = [
             {
               command = "${pkgs.bash}/bin/bash -lc '${pkgs.systemd}/bin/systemctl --user unset-environment DISPLAY DESKTOP_SESSION KDE_FULL_SESSION KDE_SESSION_VERSION; export GDK_BACKEND=wayland; ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd PATH XDG_DATA_DIRS XDG_CONFIG_DIRS WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE GDK_BACKEND; ${pkgs.systemd}/bin/systemctl --user restart xdg-desktop-portal.service'";
@@ -137,10 +137,6 @@ in
             }
             {
               command = "nm-applet --indicator";
-              always = true;
-            }
-            {
-              command = "${pkgs.bash}/bin/bash -lc 'if ${pkgs.procps}/bin/pgrep -x waybar >/dev/null 2>&1; then ${pkgs.procps}/bin/pkill -USR2 -x waybar; else exec ${pkgs.waybar}/bin/waybar -c ${config.home.homeDirectory}/.config/waybar/config-sway.jsonc -s ${config.home.homeDirectory}/.config/waybar/style-sway.css; fi'";
               always = true;
             }
             {
@@ -205,7 +201,7 @@ in
               "${mod}+Shift+d" = "exec rofi-run-only";
               "${mod}+Shift+q" = "kill";
               "${mod}+Shift+c" = "reload";
-              # Reload Sway config (Waybar restarts via exec_always)
+              # Reload Sway configuration
               "${mod}+Shift+r" = "exec swaymsg reload";
               "Ctrl+${mod}+r" = "restart";
               "${mod}+Shift+e" = "exec swaynag -t warning -m 'Exit Sway?' -b 'Yes, exit' 'swaymsg exit'";

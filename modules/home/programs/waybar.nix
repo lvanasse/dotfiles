@@ -1,15 +1,37 @@
 { ... }:
 {
   flake.modules.homeManager."programs.waybar" =
-    { ... }:
     {
-      # Waybar package (Sway will start it)
-      # Keep Waybar installed but do not manage a systemd unit here.
-      # Sway will launch Waybar in its own startup config so it never
-      # appears under KDE/Plasma sessions.
+      config,
+      pkgs,
+      ...
+    }:
+    let
+      swayTarget = "sway-session.target";
+    in
+    {
+      # Bind Waybar to the Sway session so it is stopped before switching to
+      # KDE and automatically restarted if startup races with session services.
       programs.waybar = {
         enable = true;
         systemd.enable = false;
+      };
+
+      systemd.user.services.waybar = {
+        Unit = {
+          Description = "Waybar for Sway";
+          PartOf = [ swayTarget ];
+          After = [ swayTarget ];
+        };
+        Service = {
+          ExecStart = "${pkgs.waybar}/bin/waybar -c ${config.home.homeDirectory}/.config/waybar/config-sway.jsonc -s ${config.home.homeDirectory}/.config/waybar/style-sway.css";
+          ExecReload = "${pkgs.coreutils}/bin/kill -SIGUSR2 $MAINPID";
+          Restart = "on-failure";
+          RestartSec = 1;
+        };
+        Install = {
+          WantedBy = [ swayTarget ];
+        };
       };
     };
 }

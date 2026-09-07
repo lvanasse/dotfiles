@@ -12,6 +12,7 @@ Quote values containing spaces or shell punctuation. Only --slug is restricted
 to a machine-safe identifier; names and paths may contain normal punctuation.
 
 Options:
+  --interactive     Prompt for missing values and choose the executable
   --proton VALUE    Proton path or UMU selector (default: GE-Proton)
   --store VALUE     UMU store identifier (default: none)
   --game-id VALUE   UMU game identifier (default: umu-default)
@@ -30,6 +31,9 @@ store="none"
 game_id="umu-default"
 register=true
 dry_run=false
+interactive=false
+
+[[ $# -eq 0 ]] && interactive=true
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -37,6 +41,7 @@ while [[ $# -gt 0 ]]; do
     --name) name=${2:?missing value for --name}; shift 2 ;;
     --source) source_dir=${2:?missing value for --source}; shift 2 ;;
     --exe-rel) exe_rel=${2:?missing value for --exe-rel}; shift 2 ;;
+    --interactive) interactive=true; shift ;;
     --proton) proton=${2:?missing value for --proton}; shift 2 ;;
     --store) store=${2:?missing value for --store}; shift 2 ;;
     --game-id) game_id=${2:?missing value for --game-id}; shift 2 ;;
@@ -46,6 +51,87 @@ while [[ $# -gt 0 ]]; do
     *) printf 'Unknown argument: %s\n' "$1" >&2; usage >&2; exit 2 ;;
   esac
 done
+
+prompt_value() {
+  local prompt=$1 default=${2-} value
+  if [[ -n $default ]]; then
+    read -er -p "$prompt [$default]: " value
+    printf '%s' "${value:-$default}"
+  else
+    while [[ -z ${value-} ]]; do
+      read -er -p "$prompt: " value
+    done
+    printf '%s' "$value"
+  fi
+}
+
+expand_home_path() {
+  local value=$1
+  if [[ $value == '~' ]]; then
+    value=$HOME
+  elif [[ ${value:0:2} == $'\x7e/' ]]; then
+    value="$HOME/${value#\~/}"
+  fi
+  printf '%s' "$value"
+}
+
+make_slug() {
+  local value=$1
+  if command -v iconv >/dev/null; then
+    value=$(printf '%s' "$value" | iconv -c -t ASCII//TRANSLIT)
+  fi
+  value=$(printf '%s' "$value" \
+    | tr '[:upper:]' '[:lower:]' \
+    | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//')
+  printf '%s' "${value:-game}"
+}
+
+if "$interactive"; then
+  [[ -t 0 ]] || {
+    printf '%s\n' 'Interactive mode requires a terminal.' >&2
+    exit 2
+  }
+
+  while [[ -z $source_dir || ! -d $source_dir ]]; do
+    source_dir=$(prompt_value 'Installed game directory' "$source_dir")
+    source_dir=$(expand_home_path "$source_dir")
+    [[ -d $source_dir ]] || printf 'Directory not found: %s\n' "$source_dir" >&2
+  done
+  source_dir=$(realpath -e "$source_dir")
+
+  name=$(prompt_value 'Steam display name' "${name:-$(basename "$source_dir")}")
+  slug=$(prompt_value 'Machine-safe slug' "${slug:-$(make_slug "$name")}")
+
+  if [[ -z $exe_rel ]]; then
+    mapfile -d '' exe_candidates < <(
+      find "$source_dir" -type f -iname '*.exe' -printf '%P\0' | sort -z
+    )
+    if [[ ${#exe_candidates[@]} -eq 0 ]]; then
+      printf 'No Windows executables were found under: %s\n' "$source_dir" >&2
+      exit 2
+    elif [[ ${#exe_candidates[@]} -eq 1 ]]; then
+      exe_rel=${exe_candidates[0]}
+      printf 'Using the only executable found: %s\n' "$exe_rel"
+    else
+      printf '%s\n' 'Choose the game executable:'
+      for i in "${!exe_candidates[@]}"; do
+        printf '  %d) %s\n' "$((i + 1))" "${exe_candidates[$i]}"
+      done
+      while :; do
+        read -er -p 'Executable number or relative path: ' exe_choice
+        if [[ $exe_choice =~ ^[0-9]+$ ]] \
+          && ((exe_choice >= 1 && exe_choice <= ${#exe_candidates[@]})); then
+          exe_rel=${exe_candidates[exe_choice - 1]}
+          break
+        elif [[ -f $source_dir/$exe_choice ]]; then
+          exe_rel=$exe_choice
+          break
+        fi
+        printf '%s\n' 'That executable selection is not valid.' >&2
+      done
+    fi
+  fi
+fi
 
 [[ $slug =~ ^[a-z0-9][a-z0-9-]*$ ]] || {
   printf '%s\n' '--slug must use lowercase letters, digits, and hyphens.' >&2
@@ -102,6 +188,14 @@ if "$dry_run"; then
   exit 0
 fi
 
+if "$interactive"; then
+  read -er -p 'Transfer and register this game now? [y/N]: ' confirmation
+  [[ $confirmation =~ ^[Yy]$ ]] || {
+    printf '%s\n' 'Cancelled; no Deck changes were made.'
+    exit 0
+  }
+fi
+
 ssh steamdeck bash -s -- "$slug" <<'REMOTE'
 set -euo pipefail
 export PATH="$HOME/.nix-profile/bin:/nix/var/nix/profiles/default/bin:$PATH"
@@ -150,10 +244,11 @@ game_id = "$game_id_toml"
 store = "$store_toml"
 EOF
 cat > "$launcher" <<EOF
-#!/usr/bin/env bash
+#!/bin/bash
 set -euo pipefail
+unset LD_PRELOAD LD_LIBRARY_PATH
 export PATH="\$HOME/.nix-profile/bin:/nix/var/nix/profiles/default/bin:\$PATH"
-exec umu-run --config "$config" "\$@"
+exec "\$HOME/.nix-profile/bin/umu-run" --config "$config" "\$@"
 EOF
 chmod 0755 "$launcher"
 REMOTE

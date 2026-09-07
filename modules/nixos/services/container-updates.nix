@@ -13,7 +13,6 @@
       excludedContainers = [ "dockhand" ];
       preferredOrder = [
         "linkwarden-postgres"
-        "vikunja-postgres"
         "mariadb"
         "qbittorrent"
         "prowlarr"
@@ -113,10 +112,6 @@
         vaultwarden = {
           kind = "http";
           url = "http://127.0.0.1:4743/";
-        };
-        vikunja = {
-          kind = "http";
-          url = "http://127.0.0.1:3456/";
         };
       };
       containerNames = builtins.filter (name: !(builtins.elem name excludedContainers)) (

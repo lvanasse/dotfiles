@@ -28,7 +28,6 @@
         "d /mnt/ssd/appdata/docker/mariadb 0775 99 100 -"
         "d /mnt/ssd/appdata/docker/nextcloud 0775 99 100 -"
         "d /mnt/ssd/appdata/docker/cloudflared 0755 root root -"
-        "d /mnt/ssd/appdata/docker/vikunja 0755 root root -"
         "d /mnt/ssd/appdata/docker/headplane 0755 root root -"
         "d /mnt/ssd/appdata/docker/mousehole 0755 root root -"
         "d /mnt/ssd/appdata/docker/shelfmark 0775 99 100 -"

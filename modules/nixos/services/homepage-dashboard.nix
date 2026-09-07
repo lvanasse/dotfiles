@@ -334,11 +334,11 @@
                     };
                   }
                   {
-                    Vikunja = {
-                      href = "http://${serverTailscaleHost}:3456";
-                      description = "Tasks";
+                    Plane = {
+                      href = "https://plane.ludovicvanasse.com";
+                      description = "Projects and tasks";
                       server = "local";
-                      container = "vikunja";
+                      container = "plane-proxy-1";
                       showStats = true;
                     };
                   }

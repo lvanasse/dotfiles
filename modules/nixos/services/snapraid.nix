@@ -30,14 +30,13 @@
         "docker-standardnotes-cache.service"
         "docker-mousehole.service"
         "docker-nextcloud.service"
+        "plane.service"
         "docker-prowlarr.service"
         "docker-qbittorrent.service"
         "docker-radarr.service"
         "docker-shelfmark.service"
         "docker-sonarr.service"
         "docker-vaultwarden.service"
-        "docker-vikunja.service"
-        "docker-vikunja-postgres.service"
       ];
       writeDefaultStatus = ''
                 mkdir -p "${apiRoot}"

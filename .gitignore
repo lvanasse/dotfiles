@@ -9,3 +9,6 @@ overrides/vaultwarden-kdrive-backup.env
 overrides/headplane.yaml
 overrides/vikunja.env
 .aider*
+__pycache__/
+# Local migration reports can contain source identifiers and target mappings.
+migration-artifacts/

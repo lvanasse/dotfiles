@@ -53,6 +53,10 @@
           unit = "docker-standardnotes-web.service";
         }
         {
+          name = "plane-proxy-1";
+          unit = "plane.service";
+        }
+        {
           name = "calibre";
           unit = "docker-calibre.service";
         }

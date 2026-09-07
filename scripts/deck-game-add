@@ -168,10 +168,44 @@ set -euo pipefail
 export PATH="$HOME/.nix-profile/bin:/nix/var/nix/profiles/default/bin:$PATH"
 name=$(printf '%s' "$1" | base64 --decode)
 slug=$2
+
+steam_userdata="$HOME/.local/share/Steam/userdata"
+mapfile -t steam_user_ids < <(
+  find "$steam_userdata" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' 2>/dev/null \
+    | grep -E '^[0-9]+$' \
+    | sort -n
+)
+if [[ ${#steam_user_ids[@]} -ne 1 ]]; then
+  printf 'Expected exactly one Steam userdata directory in %s; found %d.\n' \
+    "$steam_userdata" "${#steam_user_ids[@]}" >&2
+  exit 4
+fi
+steam_user_id=${steam_user_ids[0]}
+
+# SteamTinkerLaunch releases that predate the current loginusers.vdf format can
+# fail to identify the active account when Steam is closed. Its global config
+# supports an explicit short Steam user ID, so keep that value deterministic.
+stl_config="$HOME/.config/steamtinkerlaunch/global.conf"
+mkdir -p "${stl_config%/*}"
+if [[ -f $stl_config ]] && grep -q '^STEAMUSERID=' "$stl_config"; then
+  sed -i -E "s/^STEAMUSERID=.*/STEAMUSERID=\"$steam_user_id\"/" "$stl_config"
+else
+  printf 'STEAMUSERID="%s"\n' "$steam_user_id" >> "$stl_config"
+fi
+rm -f \
+  /dev/shm/steamtinkerlaunch/steampaths.txt \
+  /dev/shm/steamtinkerlaunch/LoginUsersCSV.txt
+
 steamtinkerlaunch ansg \
   --appname="$name" \
   --exepath="/home/deck/Games/bin/$slug" \
   --startdir="/home/deck/Games/library/$slug"
+
+shortcut_file="$steam_userdata/$steam_user_id/config/shortcuts.vdf"
+if [[ ! -s $shortcut_file ]] || ! strings "$shortcut_file" | grep -Fqx -- "$name"; then
+  printf 'SteamTinkerLaunch did not write %s to %s.\n' "$name" "$shortcut_file" >&2
+  exit 5
+fi
 REMOTE
   printf '%s\n' 'Shortcut registered. Restart Steam on the Deck to make it appear.'
 else

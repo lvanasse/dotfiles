@@ -30,6 +30,7 @@ if "$dry_run"; then
   cat <<EOF
 Would open an interactive SSH session to: steamdeck
 Would clean an incomplete nix-installer receipt if Nix is unavailable.
+Would stop a stale /nix bind mount if its SteamOS backing directory was deleted.
 Would install upstream Nix with the Steam Deck planner only if nix is absent.
 Would clone repository if absent: $repo_url -> $repo_dir
 Would apply: nix run github:nix-community/home-manager/release-26.05 -- switch --flake .#deck@steamdeck
@@ -64,6 +65,12 @@ fi
 if ! command -v nix >/dev/null && [[ -x /nix/nix-installer && -e /nix/receipt.json ]]; then
   printf '%s\n' 'Removing the incomplete Nix installation from the previous failed attempt.'
   /nix/nix-installer uninstall --no-confirm
+fi
+
+if ! command -v nix >/dev/null \
+  && findmnt -n -o SOURCE /nix 2>/dev/null | grep -q '/deleted'; then
+  printf '%s\n' 'Stopping the stale /nix mount left by the failed installer cleanup.'
+  sudo systemctl stop nix.mount
 fi
 
 if ! command -v nix >/dev/null; then

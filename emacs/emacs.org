@@ -257,35 +257,10 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
 
   (when (require 'which-key nil t)
     (setq which-key-idle-delay 0.4
-          which-key-sort-order #'which-key-key-order-alpha)
+          which-key-sort-order #'which-key-key-order-alpha
+          which-key-side-window-location 'bottom
+          which-key-side-window-slot -1)
     (which-key-mode 1))
-
-  (defvar my/which-key-popup-shell-window-configuration nil
-    "Layout saved while Which-Key temporarily covers the popup shell.")
-
-  (defun my/which-key-cover-popup-shell (&rest _)
-    "Hide the popup shell before displaying Which-Key over its space."
-    (when (and (null my/which-key-popup-shell-window-configuration)
-               (derived-mode-p 'ghostel-mode)
-               (equal (buffer-name) "*popup-shell*")
-               (not (one-window-p)))
-      (setq my/which-key-popup-shell-window-configuration
-            (current-window-configuration))
-      (delete-window (selected-window))))
-
-  (defun my/which-key-restore-popup-shell (&rest _)
-    "Restore the popup shell after Which-Key finishes reading a prefix."
-    (when (window-configuration-p
-           my/which-key-popup-shell-window-configuration)
-      (set-window-configuration
-       my/which-key-popup-shell-window-configuration)
-      (setq my/which-key-popup-shell-window-configuration nil)))
-
-  (with-eval-after-load 'which-key
-    (advice-add 'which-key--show-buffer-side-window :before
-                #'my/which-key-cover-popup-shell)
-    (advice-add 'which-key--hide-popup :after
-                #'my/which-key-restore-popup-shell))
 
   (defun my/forward-word-within-line (arg)
     "Move ARG words forward without crossing the current physical line."
@@ -412,9 +387,15 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
 
       "l" '(:ignore t :which-key "layouts")
       "l l" '(tab-bar-switch-to-tab :which-key "switch")
-      "l 1" '((lambda () (interactive) (tab-bar-select-tab 1)) :which-key "layout 1")
-      "l 2" '((lambda () (interactive) (tab-bar-select-tab 2)) :which-key "layout 2")
-      "l 3" '((lambda () (interactive) (tab-bar-select-tab 3)) :which-key "layout 3")
+      "l 1" '((lambda () (interactive) (my/select-workspace 1)) :which-key "workspace 1")
+      "l 2" '((lambda () (interactive) (my/select-workspace 2)) :which-key "workspace 2")
+      "l 3" '((lambda () (interactive) (my/select-workspace 3)) :which-key "workspace 3")
+      "l 4" '((lambda () (interactive) (my/select-workspace 4)) :which-key "workspace 4")
+      "l 5" '((lambda () (interactive) (my/select-workspace 5)) :which-key "workspace 5")
+      "l 6" '((lambda () (interactive) (my/select-workspace 6)) :which-key "workspace 6")
+      "l 7" '((lambda () (interactive) (my/select-workspace 7)) :which-key "workspace 7")
+      "l 8" '((lambda () (interactive) (my/select-workspace 8)) :which-key "workspace 8")
+      "l 9" '((lambda () (interactive) (my/select-workspace 9)) :which-key "workspace 9")
       "l t" '(tab-new :which-key "new")
       "l d" '(tab-close :which-key "close")
       "l r" '(tab-rename :which-key "rename")
@@ -552,6 +533,65 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
 
   (global-tab-line-mode -1)
 
+  (defun my/current-workspace-tab ()
+    "Return the current tab-bar workspace record."
+    (tab-bar--current-tab-find))
+
+  (defun my/workspace-number (tab)
+    "Return TAB's persistent workspace number, if assigned."
+    (alist-get 'my/workspace-number tab))
+
+  (defun my/workspace-tab-for-number (number)
+    "Return the tab assigned to workspace NUMBER."
+    (seq-find (lambda (tab)
+                (= (or (my/workspace-number tab) 0) number))
+              (tab-bar-tabs)))
+
+  (defun my/workspace-context-name ()
+    "Return a concise context name for the current workspace."
+    (cond
+     ((and (derived-mode-p 'dired-mode) default-directory)
+      (my/directory-tab-name default-directory))
+     (buffer-file-name
+      (my/directory-tab-name (file-name-directory buffer-file-name)))
+     (t nil)))
+
+  (defun my/refresh-workspace-label ()
+    "Show the workspace number and current file or directory context."
+    (let* ((tab (my/current-workspace-tab))
+           (number (my/workspace-number tab))
+           (context (my/workspace-context-name)))
+      (when number
+        (tab-rename (if context
+                        (format "%d: %s" number context)
+                      (number-to-string number))))))
+
+  (defun my/assign-workspace-number (number)
+    "Assign NUMBER to the current workspace and refresh its label."
+    (let* ((tab (my/current-workspace-tab))
+           (entry (assq 'my/workspace-number tab)))
+      (if entry
+          (setcdr entry number)
+        (setcdr tab (cons (cons 'my/workspace-number number) (cdr tab)))))
+    (my/refresh-workspace-label))
+
+  (defun my/select-workspace (number)
+    "Select workspace NUMBER by identity, creating it only when needed."
+    (interactive "nWorkspace number: ")
+    (when (or (< number 1) (> number 9))
+      (user-error "Workspace numbers must be between 1 and 9"))
+    (let ((target (my/workspace-tab-for-number number))
+          (current (my/current-workspace-tab)))
+      (cond
+       (target
+        (tab-bar-switch-to-tab (alist-get 'name target)))
+       ((null (my/workspace-number current))
+        (my/assign-workspace-number number))
+       (t
+        (tab-new)
+        (my/assign-workspace-number number)))
+      (my/refresh-workspace-label)))
+
   (defun my/directory-tab-name (directory)
     "Return a readable tab name for DIRECTORY."
     (let ((name (file-name-nondirectory (directory-file-name directory))))
@@ -562,22 +602,6 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
   (defun my/file-tab-name (path)
     "Return a readable tab name for PATH."
     (file-name-nondirectory (directory-file-name path)))
-
-  (defconst my/tab-visible-special-buffer-regexp
-    "\\`\\*\\(?:terminal\\|ghostel\\|shell\\|eshell\\|vterm\\)"
-    "Special buffers that should get a top-row tab.")
-
-  (defun my/tab-buffer-p (buffer)
-    "Return non-nil when BUFFER should be represented as a top-row tab."
-    (when (buffer-live-p buffer)
-      (with-current-buffer buffer
-        (let ((name (buffer-name buffer)))
-          (and (not (string-prefix-p " " name))
-               (or buffer-file-name
-                   (and (buffer-base-buffer)
-                        (buffer-file-name (buffer-base-buffer)))
-                   (derived-mode-p 'dired-mode)
-                   (string-match-p my/tab-visible-special-buffer-regexp name)))))))
 
   (defun my/tab-name-for-buffer (&optional buffer)
     "Return a readable top-row tab name for BUFFER."
@@ -591,67 +615,32 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
          (t
           (string-trim (buffer-name buffer) "[*<[:space:]]+" "[*>[:space:]]+"))))))
 
-  (defun my/tab-names ()
-    "Return the names of existing top-row tabs."
-    (mapcar (lambda (tab) (alist-get 'name tab)) (tab-bar-tabs)))
-
-  (defun my/buffer-tab-exists-p (name)
-    "Return non-nil when a top-row tab named NAME already exists."
-    (member name (my/tab-names)))
-
-  (defvar my/show-buffer-in-tab-inhibit nil
-    "Non-nil while creating a top-row tab for a buffer.")
-
-  (defun my/show-buffer-in-tab (&optional buffer)
-    "Show BUFFER in a top-row tab when it is relevant."
-    (unless my/show-buffer-in-tab-inhibit
-      (let* ((buffer (or buffer (current-buffer)))
-             (name (my/tab-name-for-buffer buffer)))
-        (when (and (my/tab-buffer-p buffer)
-                   (not (my/buffer-tab-exists-p name)))
-          (let ((my/show-buffer-in-tab-inhibit t))
-            (tab-new)
-            (switch-to-buffer buffer)
-            (tab-rename name))))))
-
   (defun my/open-file-tab (path)
-    "Open PATH in a new tab, preserving a visible Treemacs sidebar."
+    "Open PATH in the current workspace, preserving Treemacs."
     (interactive "FFind file: ")
-    (let ((path (expand-file-name path))
-          (treemacs-was-visible
-           (and (fboundp 'treemacs-get-local-window)
-                (treemacs-get-local-window))))
-      (find-file-other-tab path)
-      (tab-rename (my/file-tab-name path))
-      (when treemacs-was-visible
-        (my/treemacs-project))))
+    (find-file (expand-file-name path)))
 
   (defun my/open-directory-tab (directory)
-    "Open DIRECTORY in Dired inside a new tab."
+    "Open DIRECTORY in Dired inside the current workspace."
     (interactive "DDirectory: ")
     (let ((directory (file-name-as-directory (expand-file-name directory))))
-      (tab-new)
-      (tab-rename (my/directory-tab-name directory))
-      (dired directory)))
+      (dired directory)
+      (my/refresh-workspace-label)))
 
   (defun my/find-file-or-directory (path)
-    "Open PATH in a named tab."
+    "Open PATH in the current workspace."
     (interactive (list (read-file-name "Find file: " nil nil nil)))
     (if (file-directory-p path)
         (my/open-directory-tab path)
       (my/open-file-tab path)))
 
   (defun my/consult-buffer ()
-    "Switch buffers with Consult, adding relevant buffers to the top tab row."
+    "Switch buffers with Consult without creating a workspace."
     (interactive)
     (call-interactively #'consult-buffer)
-    (my/show-buffer-in-tab))
+    (my/refresh-workspace-label))
 
-  (add-hook 'find-file-hook #'my/show-buffer-in-tab)
-  (add-hook 'dired-mode-hook #'my/show-buffer-in-tab)
-  (advice-add 'switch-to-buffer :after
-              (lambda (&rest _)
-                (my/show-buffer-in-tab)))
+  (add-hook 'find-file-hook #'my/refresh-workspace-label)
 
   (global-set-key (kbd "C-x C-f") #'my/find-file-or-directory)
 
@@ -660,7 +649,21 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
 
   (put 'dired-find-alternate-file 'disabled nil)
   (with-eval-after-load 'dired
-    (define-key dired-mode-map (kbd "a") #'dired-find-alternate-file))
+    (defun my/dired-open ()
+      "Open the Dired entry at point in the current workspace."
+      (interactive)
+      (let ((path (dired-get-file-for-visit)))
+        (if (file-directory-p path)
+            (progn
+              (dired-find-alternate-file)
+              (my/refresh-workspace-label))
+          (find-file path))))
+
+    (define-key dired-mode-map (kbd "a") #'dired-find-alternate-file)
+    (evil-set-initial-state 'dired-mode 'normal)
+    (evil-define-key 'normal dired-mode-map (kbd "RET") #'my/dired-open)
+    (evil-define-key 'normal dired-mode-map (kbd "<return>") #'my/dired-open)
+    (add-hook 'dired-mode-hook #'my/refresh-workspace-label))
 
   (when (require 'nerd-icons-dired nil t)
     (add-hook 'dired-mode-hook #'nerd-icons-dired-mode))
@@ -761,7 +764,7 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
                  (display-buffer-in-side-window
                   buffer
                   '((side . bottom)
-                    (slot . -1)
+                    (slot . 0)
                     (window-height . 0.32)
                     (window-parameters . ((no-delete-other-windows . t)))))))
             (select-window popup-window))))))
@@ -1097,6 +1100,17 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
       (when-let ((window (treemacs-get-local-window)))
         (select-window window)))
 
+    (defun my/treemacs-ensure-visible-for-file ()
+      "Keep Treemacs visible and following the current file."
+      (when buffer-file-name
+        (let ((origin (selected-window)))
+          (unless (treemacs-get-local-window)
+            (if (project-current nil)
+                (my/treemacs-project)
+              (treemacs)))
+          (when (window-live-p origin)
+            (select-window origin)))))
+
     (defun my/treemacs-page-down ()
       "Move down by one visible page in Treemacs."
       (interactive)
@@ -1117,7 +1131,8 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
     (define-key treemacs-mode-map (kbd "<prior>") #'my/treemacs-page-up)
     (treemacs-follow-mode 1)
     (when (require 'treemacs-project-follow-mode nil t)
-      (treemacs-project-follow-mode 1)))
+      (treemacs-project-follow-mode 1))
+    (add-hook 'find-file-hook #'my/treemacs-ensure-visible-for-file))
 #+end_src
 
 * Modes

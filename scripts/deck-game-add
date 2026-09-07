@@ -97,7 +97,7 @@ if "$dry_run"; then
   printf 'Would transfer: rsync -aH --partial --info=progress2 %q/ steamdeck:%q/\n' "$source_dir" "$deck_game_dir"
   printf 'Would create: %s and %s\n' "$deck_config" "$deck_launcher"
   if "$register"; then
-    printf 'Would refuse registration if Steam is running, otherwise add a non-Steam shortcut.\n'
+    printf 'Would manage the Deck Steam session, register and verify the shortcut, then restore the original session.\n'
   fi
   exit 0
 fi
@@ -159,10 +159,110 @@ chmod 0755 "$launcher"
 REMOTE
 
 if "$register"; then
-  if ssh steamdeck 'pgrep -x steam >/dev/null'; then
-    printf '%s\n' 'Steam is running on the Deck. Close it, then rerun this command to register the shortcut.' >&2
+  deck_mode() {
+    ssh steamdeck '
+      if pgrep -x plasmashell >/dev/null; then
+        printf "%s\n" desktop
+      elif ps -C steam -o args= 2>/dev/null | grep -q -- "-gamepadui"; then
+        printf "%s\n" gaming
+      else
+        printf "%s\n" unknown
+      fi
+    '
+  }
+
+  wait_for_deck_mode() {
+    local wanted=$1 current attempt
+    for ((attempt = 1; attempt <= 45; attempt++)); do
+      if current=$(deck_mode 2>/dev/null) && [[ $current == "$wanted" ]]; then
+        return 0
+      fi
+      sleep 2
+    done
+    printf 'Timed out waiting for Deck mode: %s\n' "$wanted" >&2
+    return 1
+  }
+
+  wait_for_steam_state() {
+    local wanted=$1 current attempt
+    for ((attempt = 1; attempt <= 30; attempt++)); do
+      if ssh steamdeck 'pgrep -x steam >/dev/null' 2>/dev/null; then
+        current=running
+      else
+        current=closed
+      fi
+      [[ $current == "$wanted" ]] && return 0
+      sleep 2
+    done
+    printf 'Timed out waiting for Steam to be %s.\n' "$wanted" >&2
+    return 1
+  }
+
+  shortcut_is_registered() {
+    ssh steamdeck bash -s -- "$name_encoded" "$slug" <<'REMOTE'
+set -euo pipefail
+name=$(printf '%s' "$1" | base64 --decode)
+slug=$2
+steam_userdata="$HOME/.local/share/Steam/userdata"
+mapfile -t steam_user_ids < <(
+  find "$steam_userdata" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' 2>/dev/null \
+    | grep -E '^[0-9]+$' \
+    | sort -n
+)
+[[ ${#steam_user_ids[@]} -eq 1 ]]
+shortcut_file="$steam_userdata/${steam_user_ids[0]}/config/shortcuts.vdf"
+[[ -s $shortcut_file ]]
+strings "$shortcut_file" | grep -Fqx -- "$name"
+strings "$shortcut_file" | grep -Fqx -- "\"/home/deck/Games/bin/$slug\""
+REMOTE
+  }
+
+  if shortcut_is_registered; then
+    printf '%s\n' 'Steam shortcut is already registered and verified.'
+    exit 0
+  fi
+
+  initial_mode=$(deck_mode)
+  if [[ $initial_mode == unknown ]]; then
+    printf '%s\n' 'Could not identify the Deck graphical session.' >&2
     exit 3
   fi
+  if ssh steamdeck 'pgrep -x steam >/dev/null'; then
+    steam_was_running=true
+  else
+    steam_was_running=false
+  fi
+  restore_required=false
+
+  restore_deck_session() {
+    local status=$?
+    if "$restore_required"; then
+      printf '%s\n' 'Restoring the original Deck session after an error.' >&2
+      if [[ $initial_mode == gaming ]]; then
+        ssh steamdeck 'steamosctl switch-to-game-mode' >/dev/null 2>&1 || true
+      elif "$steam_was_running"; then
+        ssh steamdeck 'systemctl --user start app-steam@autostart.service' >/dev/null 2>&1 || true
+      fi
+    fi
+    return "$status"
+  }
+  trap restore_deck_session EXIT
+
+  if [[ $initial_mode == gaming ]]; then
+    restore_required=true
+    printf '%s\n' 'Switching the Deck to Desktop Mode for safe shortcut registration.'
+    ssh steamdeck 'steamosctl switch-to-desktop-mode plasma.desktop'
+    wait_for_deck_mode desktop
+  elif "$steam_was_running"; then
+    restore_required=true
+  fi
+
+  if ssh steamdeck 'pgrep -x steam >/dev/null'; then
+    printf '%s\n' 'Closing Steam on the Deck.'
+    ssh steamdeck '/usr/bin/steam -shutdown'
+    wait_for_steam_state closed
+  fi
+
   ssh steamdeck bash -s -- "$name_encoded" "$slug" <<'REMOTE'
 set -euo pipefail
 export PATH="$HOME/.nix-profile/bin:/nix/var/nix/profiles/default/bin:$PATH"
@@ -207,7 +307,19 @@ if [[ ! -s $shortcut_file ]] || ! strings "$shortcut_file" | grep -Fqx -- "$name
   exit 5
 fi
 REMOTE
-  printf '%s\n' 'Shortcut registered. Restart Steam on the Deck to make it appear.'
+
+  if [[ $initial_mode == gaming ]]; then
+    printf '%s\n' 'Restoring Gaming Mode.'
+    ssh steamdeck 'steamosctl switch-to-game-mode'
+    wait_for_deck_mode gaming
+  elif "$steam_was_running"; then
+    printf '%s\n' 'Restarting the Steam desktop client.'
+    ssh steamdeck 'systemctl --user start app-steam@autostart.service'
+    wait_for_steam_state running
+  fi
+  restore_required=false
+  trap - EXIT
+  printf '%s\n' 'Shortcut registered and the original Deck session was restored.'
 else
   printf '%s\n' 'Deck launcher created; Steam shortcut registration was skipped.'
 fi

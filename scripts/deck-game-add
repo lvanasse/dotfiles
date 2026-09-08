@@ -313,13 +313,7 @@ launcher="/home/deck/Games/bin/$slug"
 
 test -f "$game_dir/$exe_rel"
 mkdir -p "$prefix" "${config%/*}" "${launcher%/*}"
-printf '%s\n' 'Preparing the Deck Proton build and UMU prefix.'
-env \
-  WINEPREFIX="$prefix" \
-  GAMEID="$game_id" \
-  STORE="$store" \
-  PROTONPATH="$proton" \
-  umu-run ""
+printf '%s\n' 'Verifying the Deck Proton build.'
 
 if [[ -d $proton ]]; then
   resolved_proton=$(realpath -e "$proton")

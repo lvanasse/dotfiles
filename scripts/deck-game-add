@@ -212,7 +212,6 @@ encode_value() {
 }
 
 exe_rel_encoded=$(encode_value "$exe_rel")
-proton_encoded=$(encode_value "$proton")
 store_encoded=$(encode_value "$store")
 game_id_encoded=$(encode_value "$game_id")
 name_encoded=$(encode_value "$name")
@@ -220,15 +219,45 @@ name_encoded=$(encode_value "$name")
 deck_game_dir="/home/deck/Games/library/$slug"
 deck_launcher="/home/deck/Games/bin/$slug"
 deck_config="/home/deck/Games/config/$slug.toml"
+local_proton_dir=""
+deck_proton="$proton"
+
+# Prefer the PC's existing Proton build over another GitHub download on the
+# Deck. This also makes the selected Proton version deterministic on both
+# machines and leaves UMU's selector-based download as a fallback.
+if [[ -d $proton ]]; then
+  local_proton_dir=$(realpath -e "$proton")
+elif [[ $proton != */* ]]; then
+  mapfile -t local_proton_candidates < <(
+    find "$HOME/.local/share/Steam/compatibilitytools.d" \
+      -mindepth 1 -maxdepth 1 -type d -name "$proton*" -printf '%p\n' 2>/dev/null \
+      | sort -V
+  )
+  if [[ ${#local_proton_candidates[@]} -gt 0 ]]; then
+    local_proton_dir=${local_proton_candidates[-1]}
+  fi
+fi
+
+if [[ -n $local_proton_dir ]]; then
+  deck_proton="/home/deck/.local/share/Steam/compatibilitytools.d/$(basename "$local_proton_dir")"
+fi
+deck_proton_encoded=$(encode_value "$deck_proton")
 
 printf 'Game: %s\nSource: %s\nDeck game directory: %s\nDeck prefix: /home/deck/Games/prefixes/%s\n' \
   "$name" "$source_dir" "$deck_game_dir" "$slug"
 printf 'Executable: %s\n' "$exe_rel"
 [[ -n $sgdb_id ]] && printf 'SteamGridDB game: %s\n' "$sgdb_id"
+if [[ -n $local_proton_dir ]]; then
+  printf 'Proton synchronization: %s -> %s\n' "$local_proton_dir" "$deck_proton"
+fi
 
 if "$dry_run"; then
   printf 'Would verify: ssh steamdeck umu-run and steamtinkerlaunch\n'
   printf 'Would transfer: rsync -aH --partial --info=progress2 %q/ steamdeck:%q/\n' "$source_dir" "$deck_game_dir"
+  if [[ -n $local_proton_dir ]]; then
+    printf 'Would synchronize Proton: rsync -aH --partial --info=progress2 %q/ steamdeck:%q/\n' \
+      "$local_proton_dir" "$deck_proton"
+  fi
   printf 'Would create: %s and %s\n' "$deck_config" "$deck_launcher"
   if "$register"; then
     printf 'Would manage the Deck Steam session, register and verify the shortcut, then restore the original session.\n'
@@ -250,11 +279,17 @@ export PATH="$HOME/.nix-profile/bin:/nix/var/nix/profiles/default/bin:$PATH"
 command -v umu-run >/dev/null
 command -v steamtinkerlaunch >/dev/null
 mkdir -p "/home/deck/Games/library/$1"
+mkdir -p "$HOME/.local/share/Steam/compatibilitytools.d"
 REMOTE
 rsync -aH --partial --info=progress2 "$source_dir/" "steamdeck:$deck_game_dir/"
+if [[ -n $local_proton_dir ]]; then
+  printf '%s\n' 'Synchronizing the PC Proton build to the Deck.'
+  rsync -aH --partial --info=progress2 \
+    "$local_proton_dir/" "steamdeck:$deck_proton/"
+fi
 
 ssh steamdeck bash -s -- \
-  "$slug" "$exe_rel_encoded" "$proton_encoded" "$store_encoded" "$game_id_encoded" <<'REMOTE'
+  "$slug" "$exe_rel_encoded" "$deck_proton_encoded" "$store_encoded" "$game_id_encoded" <<'REMOTE'
 set -euo pipefail
 export PATH="$HOME/.nix-profile/bin:/nix/var/nix/profiles/default/bin:$PATH"
 slug=$1

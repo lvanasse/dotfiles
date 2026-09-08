@@ -33,6 +33,7 @@ Would clean an incomplete nix-installer receipt if Nix is unavailable.
 Would stop a stale /nix bind mount if its SteamOS backing directory was deleted.
 Would install upstream Nix with the Steam Deck planner only if nix is absent.
 Would clone repository if absent: $repo_url -> $repo_dir
+Would fast-forward the existing repository from its configured upstream.
 Would apply: nix run github:nix-community/home-manager/release-26.05 -- switch --flake .#deck@steamdeck
 EOF
   exit 0
@@ -87,6 +88,8 @@ fi
 if [[ ! -d $repo_dir/.git ]]; then
   mkdir -p "${repo_dir%/*}"
   git clone "$repo_url" "$repo_dir"
+else
+  git -C "$repo_dir" pull --ff-only
 fi
 
 cd "$repo_dir"

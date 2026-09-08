@@ -127,8 +127,12 @@
 
                 if is_home_manager_only_target; then
                   if [ -n "''${target_host}" ]; then
-                    echo "nohm: --target-host is not supported for Home Manager-only targets; run nohm on that machine." >&2
-                    exit 1
+                    if [ "''${host}" != "steamdeck" ]; then
+                      echo "nohm: remote Home Manager activation is currently configured only for steamdeck." >&2
+                      exit 1
+                    fi
+                    exec bash "''${flake_dir}/scripts/bootstrap-steamdeck-home-manager" \
+                      --target-host "''${target_host}"
                   fi
                   exec bash "''${nix_switch_script}" "''${host}"
                 fi

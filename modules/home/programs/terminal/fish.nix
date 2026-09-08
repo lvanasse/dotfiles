@@ -212,8 +212,8 @@
 
               if __nohm_is_home_manager_only_target "$host"
                 if contains -- --target-host $argv
-                  echo "nohm: --target-host is not supported for Home Manager-only targets; run nohm on that machine." >&2
-                  return 1
+                  command nohm $argv
+                  return $status
                 end
                 bash "$flake_dir/scripts/nix-switch.sh" $argv
                 return $status

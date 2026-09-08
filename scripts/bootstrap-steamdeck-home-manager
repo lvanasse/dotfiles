@@ -4,7 +4,7 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: bootstrap-steamdeck-home-manager [--repo-url URL] [--repo-dir PATH] [--dry-run]
+Usage: bootstrap-steamdeck-home-manager [--target-host HOST] [--repo-url URL] [--repo-dir PATH] [--dry-run]
 
 Run this from the PC. It connects interactively to the configured `steamdeck`
 SSH alias, installs Nix only when absent, clones the dotfiles repository when
@@ -12,12 +12,14 @@ needed, and applies the deck@steamdeck Home Manager configuration.
 EOF
 }
 
+target_host="steamdeck"
 repo_url="https://codeberg.org/lvanasse/dotfiles.git"
 repo_dir="/home/deck/Code/personal/dotfiles"
 dry_run=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --target-host) target_host=${2:?missing value for --target-host}; shift 2 ;;
     --repo-url) repo_url=${2:?missing value for --repo-url}; shift 2 ;;
     --repo-dir) repo_dir=${2:?missing value for --repo-dir}; shift 2 ;;
     --dry-run) dry_run=true; shift ;;
@@ -27,8 +29,10 @@ while [[ $# -gt 0 ]]; do
 done
 
 if "$dry_run"; then
+  ssh_target=$target_host
+  [[ $ssh_target == *@* || $ssh_target == steamdeck ]] || ssh_target="deck@$ssh_target"
   cat <<EOF
-Would open an interactive SSH session to: steamdeck
+Would open an interactive SSH session to: $ssh_target
 Would clean an incomplete nix-installer receipt if Nix is unavailable.
 Would stop a stale /nix bind mount if its SteamOS backing directory was deleted.
 Would install upstream Nix with the Steam Deck planner only if nix is absent.
@@ -43,12 +47,19 @@ fi
   printf '%s\n' 'Repository URL and directory cannot contain whitespace.' >&2
   exit 2
 }
+[[ $target_host != *[[:space:]]* ]] || {
+  printf '%s\n' 'Target host cannot contain whitespace.' >&2
+  exit 2
+}
+
+ssh_target=$target_host
+[[ $ssh_target == *@* || $ssh_target == steamdeck ]] || ssh_target="deck@$ssh_target"
 
 local_helper=$(mktemp)
 remote_helper="/tmp/bootstrap-steamdeck-home-manager-${RANDOM}${RANDOM}.sh"
 cleanup() {
   rm -f "$local_helper"
-  ssh -o BatchMode=yes steamdeck rm -f -- "$remote_helper" >/dev/null 2>&1 || true
+  ssh -o BatchMode=yes "$ssh_target" rm -f -- "$remote_helper" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 
@@ -97,5 +108,5 @@ nix run github:nix-community/home-manager/release-26.05 -- switch --flake '.#dec
 REMOTE
 
 chmod 0700 "$local_helper"
-scp "$local_helper" "steamdeck:$remote_helper"
-ssh -tt steamdeck bash "$remote_helper" "$repo_url" "$repo_dir"
+scp "$local_helper" "$ssh_target:$remote_helper"
+ssh -tt "$ssh_target" bash "$remote_helper" "$repo_url" "$repo_dir"

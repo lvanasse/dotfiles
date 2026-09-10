@@ -17,6 +17,8 @@
     flakeModules.nixos."services.vaultwarden"
     flakeModules.nixos."services.vaultwarden-backup"
     flakeModules.nixos."services.cloudflared"
+    flakeModules.nixos."services.ntfy"
+    flakeModules.nixos."services.beszel"
     flakeModules.nixos."services.fail2ban"
     flakeModules.nixos."services.linkwarden"
     flakeModules.nixos."services.ebooks"
@@ -24,6 +26,7 @@
     flakeModules.nixos."services.annotationsync-status"
     flakeModules.nixos."services.shelfmark"
     flakeModules.nixos."services.actual"
+    flakeModules.nixos."services.wealthsimple-actual-sync"
     flakeModules.nixos."services.standardnotes"
     flakeModules.nixos."services.plane"
     flakeModules.nixos."services.dockhand"
@@ -34,4 +37,9 @@
     flakeModules.nixos."services.homepage-dashboard"
     flakeModules.nixos."target.config.server"
   ];
+
+  services.wealthsimpleActualSync = {
+    enable = true;
+    timer.enable = true;
+  };
 }

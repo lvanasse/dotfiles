@@ -16,6 +16,11 @@
       hasWorkKeyAge = builtins.pathExists workKeyAge;
     in
     {
+      services.ntfySubscriber = {
+        enable = true;
+        device = "work-laptop";
+      };
+
       age.identityPaths = lib.mkForce [
         bootstrapIdentity
         "${homeDir}/.ssh/id_ed25519_personal"

@@ -83,7 +83,7 @@ let
                   config = nixpkgsConfig;
                 };
               };
-              sharedModules = sharedHomeModules;
+              sharedModules = [ inputs.agenix.homeManagerModules.default ] ++ sharedHomeModules;
             };
           }
         )

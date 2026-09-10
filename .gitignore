@@ -12,3 +12,4 @@ overrides/vikunja.env
 __pycache__/
 # Local migration reports can contain source identifiers and target mappings.
 migration-artifacts/
+/tools/wealthsimple-actual-sync/target/

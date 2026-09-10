@@ -392,6 +392,18 @@
               {
                 Infra = [
                   {
+                    Beszel = {
+                      href = "http://${serverTailscaleHost}:8090";
+                      description = "Host, Docker, and resource monitoring";
+                    };
+                  }
+                  {
+                    Ntfy = {
+                      href = "https://ntfy.ludovicvanasse.com";
+                      description = "Homelab notification service";
+                    };
+                  }
+                  {
                     DockerHealth = {
                       href = "http://${serverTailscaleHost}:3001";
                       description = "Dynamic container health";

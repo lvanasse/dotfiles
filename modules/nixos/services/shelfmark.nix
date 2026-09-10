@@ -54,12 +54,22 @@ in
               f"{indent})",
               f"{indent}indexer_query = enriched_query if use_enriched_query else query",
           ])
+          upstream_title_only = all(
+              marker in source
+              for marker in (
+                  "Every indexer gets the same title-only query.",
+                  "query = variant.title",
+                  "query=query,",
+              )
+          )
 
           if original in source:
               source_path.write_text(source.replace(original, patched, 1), encoding="utf-8")
               print("[dotfiles] Patched Shelfmark Prowlarr audiobook queries")
           elif patched in source:
               print("[dotfiles] Shelfmark Prowlarr audiobook query patch already applied")
+          elif upstream_title_only:
+              print("[dotfiles] Shelfmark includes upstream title-only Prowlarr queries")
           else:
               raise SystemExit("Shelfmark Prowlarr source patch context not found")
 

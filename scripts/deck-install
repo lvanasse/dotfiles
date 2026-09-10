@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+# Transfer a DRM-free game's complete installer folder to the Steam Deck.
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: deck-install INSTALLER_FOLDER
+
+Copy INSTALLER_FOLDER to /home/deck/Downloads/ on the Steam Deck with rsync,
+then switch the Deck to Desktop Mode for manual installation through Heroic.
+Re-run the same command after an interruption to resume the transfer.
+EOF
+}
+
+if [[ $# -eq 1 && $1 == --help ]]; then
+  usage
+  exit 0
+fi
+
+if [[ $# -ne 1 ]]; then
+  usage >&2
+  exit 2
+fi
+
+for command_name in realpath rsync ssh; do
+  command -v "$command_name" >/dev/null || {
+    printf 'Required command is missing: %s\n' "$command_name" >&2
+    exit 127
+  }
+done
+
+installer_dir=$(realpath -e -- "$1" 2>/dev/null) || {
+  printf 'Installer folder not found: %s\n' "$1" >&2
+  exit 2
+}
+[[ -d $installer_dir ]] || {
+  printf 'Installer folder not found: %s\n' "$1" >&2
+  exit 2
+}
+
+folder_name=$(basename -- "$installer_dir")
+[[ $folder_name != . && $folder_name != / ]] || {
+  printf 'Could not determine the installer folder name: %s\n' "$installer_dir" >&2
+  exit 2
+}
+
+deck_host=steamdeck
+deck_downloads=/home/deck/Downloads
+deck_installer_dir="$deck_downloads/$folder_name"
+
+printf 'Checking Steam Deck SSH access...\n'
+ssh -o ConnectTimeout=10 "$deck_host" true
+
+printf 'Preparing %s on the Steam Deck...\n' "$deck_downloads"
+ssh "$deck_host" bash -s -- "$deck_downloads" <<'REMOTE'
+set -euo pipefail
+mkdir -p -- "$1"
+REMOTE
+
+printf 'Transferring %s to %s...\n' "$installer_dir" "$deck_installer_dir"
+rsync -ahP -- "$installer_dir" "$deck_host:$deck_downloads/"
+
+if ssh "$deck_host" 'pgrep -x plasmashell >/dev/null'; then
+  printf '%s\n' 'Steam Deck is already in Desktop Mode.'
+else
+  printf '%s\n' 'Switching Steam Deck to Desktop Mode...'
+  ssh "$deck_host" 'steamosctl switch-to-desktop-mode'
+fi
+
+printf '%s' 'Waiting for the Steam Deck desktop session'
+for _ in {1..30}; do
+  if ssh "$deck_host" 'pgrep -x plasmashell >/dev/null'; then
+    printf '\n%s\n' 'Steam Deck Desktop Mode is ready.'
+    cat <<EOF
+
+Installer folder: $deck_installer_dir
+
+Open Steam Link or Steam Remote Play on the PC, connect to the Steam Deck,
+then use Heroic manually from the Deck desktop.
+EOF
+    exit 0
+  fi
+  printf '.'
+  sleep 2
+done
+
+printf '\n%s\n' 'The transfer completed, but Desktop Mode did not become ready within 60 seconds.' >&2
+printf 'Connect to the Deck directly and check Desktop Mode; the installer folder is: %s\n' \
+  "$deck_installer_dir" >&2
+exit 1

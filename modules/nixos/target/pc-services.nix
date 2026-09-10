@@ -58,11 +58,23 @@
             ];
             packages = [
               {
+                appId = "com.valvesoftware.SteamLink";
+                origin = "flathub";
+              }
+              {
                 appId = "io.gitlab.woblight.GitAddonsManager//master";
                 origin = "woblight";
               }
             ];
             overrides = {
+              "com.valvesoftware.SteamLink" = {
+                Context.sockets = [
+                  "x11"
+                  "!wayland"
+                  "!fallback-x11"
+                ];
+                Environment.QT_QPA_PLATFORM = "xcb";
+              };
               "io.gitlab.woblight.GitAddonsManager".Environment = {
                 CURL_CA_BUNDLE = runtimeCa;
                 GIT_SSL_CAINFO = runtimeCa;

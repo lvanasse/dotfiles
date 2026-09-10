@@ -37,8 +37,6 @@
         home-manager
         steamtinkerlaunch
         umuLauncherNative
-        xrdp
-        pulseaudio-module-xrdp
       ];
     };
 }

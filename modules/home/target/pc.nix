@@ -21,17 +21,16 @@
       };
     in
     {
+      services.ntfySubscriber = {
+        enable = true;
+        device = "pc";
+      };
+
+      programs.fish.shellAliases.deck-link = "flatpak run com.valvesoftware.SteamLink";
+
       home.file = {
-        ".local/bin/deck-game-install" = {
-          source = ../../../scripts/deck-game-install;
-          executable = true;
-        };
-        ".local/bin/deck-game-add" = {
-          source = ../../../scripts/deck-game-add;
-          executable = true;
-        };
-        ".local/bin/deck-game-artwork" = {
-          source = ../../../scripts/deck-game-artwork;
+        ".local/bin/deck-install" = {
+          source = ../../../scripts/deck-install;
           executable = true;
         };
         ".local/bin/bootstrap-steamdeck-home-manager" = {

@@ -63,11 +63,21 @@ Activation and cache creation are separate, user-authorized steps.
 
 ## Uploading
 
-Create a longer-lived token scoped to `--pull dotfiles --push dotfiles`, log in
-with the Attic client, and upload explicit closures with:
+The PC has a long-lived token scoped only to `--pull dotfiles --push dotfiles`.
+Agenix decrypts it to `/run/agenix/attic-pc-push-token`, and the Attic client
+configuration refers to that file rather than copying the token into the home
+directory.
+
+After every successful local `nohm pc` switch, `nohm` pushes both
+`/run/current-system` and the active Home Manager profile. The upload is
+best-effort: an unavailable cache is reported, but does not make a successful
+activation fail. Set `NOHM_ATTIC_PUSH=0` for a one-off switch without uploading.
+
+An upload can also be retried manually with:
 
 ```fish
 attic push dotfiles /run/current-system
 ```
 
-Automatic store watching is not enabled; uploads remain deliberate.
+Automatic store watching is not enabled, so unrelated Nix builds are not
+uploaded.

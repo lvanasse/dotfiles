@@ -96,6 +96,7 @@ in
                 # --- Tool paths ---
                 nh_bin="${pkgs.nh}/bin/nh"
                 hm_bin="${pkgs.home-manager}/bin/home-manager"
+                attic_bin="${pkgs.attic-client}/bin/attic"
                 git_bin="${pkgs.git}/bin/git"
                 nproc_bin="${pkgs.coreutils}/bin/nproc"
                 nix_bin="${pkgs.nix}/bin/nix"
@@ -159,6 +160,27 @@ in
                       exit 1
                     fi
                   done
+                }
+                push_pc_cache() {
+                  [ "''${host}" = "pc" ] || return 0
+                  [ "''${action}" = "switch" ] || return 0
+                  is_remote && return 0
+                  [ "''${NOHM_ATTIC_PUSH:-1}" = "1" ] || return 0
+
+                  token_file="/run/agenix/attic-pc-push-token"
+                  [ -r "''${token_file}" ] || return 0
+
+                  cache_paths=(/run/current-system)
+                  home_profile="$(readlink -f "$HOME/.local/state/nix/profiles/home-manager" 2>/dev/null || true)"
+                  [ -n "''${home_profile}" ] && cache_paths+=("''${home_profile}")
+
+                  step "Push PC closures to Attic"
+                  cmd "attic push dotfiles /run/current-system <home-manager-profile>"
+                  if "$attic_bin" push dotfiles "''${cache_paths[@]}"; then
+                    ok "Attic cache"
+                  else
+                    fail "Attic upload (switch succeeded; retry with: attic push dotfiles /run/current-system)"
+                  fi
                 }
                 verify_remote_target() {
                   [ -n "''${target_host}" ] || return 0
@@ -264,6 +286,8 @@ in
                     exit 1
                   fi
                 fi
+
+                push_pc_cache
       '';
 
       nhOsWithHomeCompat = pkgs.writeShellScriptBin "nh-os-with-home" ''

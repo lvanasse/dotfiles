@@ -1,4 +1,4 @@
-{ ... }:
+{ inputs, ... }:
 {
   flake.modules.homeManager."target.config.pc" =
     {
@@ -8,6 +8,8 @@
       ...
     }:
     let
+      atticPushTokenAge = "${inputs.secrets}/attic/pc-push-token.age";
+      hasAtticPushToken = builtins.pathExists atticPushTokenAge;
       spotifydToml = pkgs.formats.toml { };
       spotifydConfig = spotifydToml.generate "spotifyd.conf" {
         global = {
@@ -39,7 +41,18 @@
         };
       };
 
-      xdg.configFile."spotifyd/spotifyd.conf".source = spotifydConfig;
+      xdg.configFile = {
+        "spotifyd/spotifyd.conf".source = spotifydConfig;
+        "attic/config.toml" = lib.mkIf hasAtticPushToken {
+          text = ''
+            default-server = "homelab"
+
+            [servers.homelab]
+            endpoint = "http://server.tail7e8d6c.ts.net:8080"
+            token-file = "/run/agenix/attic-pc-push-token"
+          '';
+        };
+      };
 
       programs.swayTools.autostartSlack = false;
 

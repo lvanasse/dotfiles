@@ -1,6 +1,14 @@
-{ config, ... }:
+{
+  config,
+  inputs,
+  lib,
+  ...
+}:
 let
   username = config.flake.lib.username;
+  atticCachePublicKeyFile = "${inputs.secrets}/server/attic-cache-public-key";
+  hasAtticCachePublicKey = builtins.pathExists atticCachePublicKeyFile;
+  atticCachePublicKey = lib.strings.removeSuffix "\n" (builtins.readFile atticCachePublicKeyFile);
 in
 {
   flake.modules.homeManager.core =
@@ -30,12 +38,21 @@ in
         }
       '';
 
+      xdg.configFile."nix/nix.conf".text = ''
+        experimental-features = nix-command flakes
+        substituters = https://cache.nixos.org/ https://cache.numtide.com${lib.optionalString hasAtticCachePublicKey " http://server.tail7e8d6c.ts.net:8080/dotfiles"}
+        trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g=${lib.optionalString hasAtticCachePublicKey " ${atticCachePublicKey}"}
+      '';
+
       home = {
         enableNixpkgsReleaseCheck = false;
         username = lib.mkDefault username;
         homeDirectory = lib.mkDefault "/home/${username}";
         stateVersion = "25.11";
-        packages = [ pkgs.ripgrep ];
+        packages = [
+          pkgs.attic-client
+          pkgs.ripgrep
+        ];
 
         sessionVariables = {
           NPM_CONFIG_PREFIX = "${config.home.homeDirectory}/.npm-global";

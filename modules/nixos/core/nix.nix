@@ -1,4 +1,9 @@
 { inputs, lib, ... }:
+let
+  atticCachePublicKeyFile = "${inputs.secrets}/server/attic-cache-public-key";
+  hasAtticCachePublicKey = builtins.pathExists atticCachePublicKeyFile;
+  atticCachePublicKey = lib.strings.removeSuffix "\n" (builtins.readFile atticCachePublicKeyFile);
+in
 {
   flake.modules.nixos."core.nix" =
     { pkgs, ... }:
@@ -25,6 +30,10 @@
           "root"
           "ludovic"
         ];
+      }
+      // lib.optionalAttrs hasAtticCachePublicKey {
+        extra-substituters = [ "http://server.tail7e8d6c.ts.net:8080/dotfiles" ];
+        extra-trusted-public-keys = [ atticCachePublicKey ];
       };
 
       system.activationScripts.agenixRuntimePathCleanup.text = ''

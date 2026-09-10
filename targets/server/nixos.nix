@@ -17,6 +17,7 @@
     flakeModules.nixos."services.vaultwarden"
     flakeModules.nixos."services.vaultwarden-backup"
     flakeModules.nixos."services.cloudflared"
+    flakeModules.nixos."services.attic"
     flakeModules.nixos."services.ntfy"
     flakeModules.nixos."services.beszel"
     flakeModules.nixos."services.fail2ban"

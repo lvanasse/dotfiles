@@ -8,6 +8,8 @@
       ...
     }:
     let
+      lanInterface = "lan0";
+      lanMacAddress = "04:7c:16:88:d0:f0";
       wakePcLan = pkgs.writeShellApplication {
         name = "wake-pc-lan";
         runtimeInputs = [ pkgs.wakeonlan ];
@@ -41,7 +43,7 @@
         networkmanager.enable = lib.mkForce false;
         useDHCP = false;
 
-        interfaces.enp1s0 = {
+        interfaces.${lanInterface} = {
           useDHCP = true;
         };
         nameservers = [
@@ -50,12 +52,19 @@
         ];
       };
 
+      # Keep the LAN name stable when PCI devices are added or removed.
+      systemd.network.links."10-server-lan" = {
+        matchConfig.MACAddress = lanMacAddress;
+        linkConfig.Name = lanInterface;
+      };
+
       # Headless server settings
       # Use the release kernel on infrastructure hosts instead of the
       # globally configured unstable kernel.
       boot.kernelPackages = lib.mkForce pkgs.linuxPackages;
       boot.loader.systemd-boot.enable = true;
       boot.loader.efi.canTouchEfiVariables = true;
+      hardware.enableRedistributableFirmware = true;
 
       # Tailscale client for secure remote access
       services.tailscale.enable = true;
@@ -78,7 +87,7 @@
       # Enable fstrim for SSD
       services.fstrim.enable = true;
 
-      # Firewall - trust tailscale and allow LAN access on enp1s0
+      # Firewall - trust tailscale and allow LAN access on the stable LAN interface
       networking.firewall = {
         enable = true;
         trustedInterfaces = [
@@ -87,20 +96,22 @@
         ];
         allowedTCPPorts = lib.mkForce [ ];
         allowedUDPPorts = lib.mkForce [ ];
-        interfaces.enp1s0.allowedTCPPorts = lib.mkForce [
-          22
-          6767
-          8082
-          8083
-          8084
-          8085
-          5010
-          3030
-          3031
-          13378
-          59793
-        ];
-        interfaces.enp1s0.allowedUDPPorts = lib.mkForce [ 59793 ];
+        interfaces.${lanInterface} = {
+          allowedTCPPorts = lib.mkForce [
+            22
+            6767
+            8082
+            8083
+            8084
+            8085
+            5010
+            3030
+            3031
+            13378
+            59793
+          ];
+          allowedUDPPorts = lib.mkForce [ 59793 ];
+        };
       };
 
       services.openssh.openFirewall = lib.mkForce false;

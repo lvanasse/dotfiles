@@ -36,8 +36,14 @@
     flakeModules.nixos."services.kitchenowl"
     flakeModules.nixos."services.mousehole"
     flakeModules.nixos."services.homepage-dashboard"
+    flakeModules.nixos."services.local-ai"
     flakeModules.nixos."target.config.server"
   ];
+
+  services.localAi = {
+    enable = true;
+    modelPath = "/mnt/ssd/appdata/llama-server/models/Qwen_Qwen3.5-9B-Q4_K_S.gguf";
+  };
 
   services.wealthsimpleActualSync = {
     enable = true;

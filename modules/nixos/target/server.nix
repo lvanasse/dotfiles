@@ -65,6 +65,8 @@
       boot.loader.systemd-boot.enable = true;
       boot.loader.efi.canTouchEfiVariables = true;
       hardware.enableRedistributableFirmware = true;
+      # Expose Mesa's Vulkan drivers for RX 580 inference through RADV.
+      hardware.graphics.enable = true;
 
       # Tailscale client for secure remote access
       services.tailscale.enable = true;
@@ -79,6 +81,8 @@
         curl
         wget
         rsync
+        llama-cpp-vulkan
+        vulkan-tools
         wakePcLan
         wakeonlan
         pkgs.llm-agents.codex

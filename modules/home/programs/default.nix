@@ -20,6 +20,7 @@ in
         flakeConfig.flake.modules.homeManager."programs.slack"
         flakeConfig.flake.modules.homeManager."programs.vesktop"
         flakeConfig.flake.modules.homeManager."programs.codex"
+        flakeConfig.flake.modules.homeManager."programs.pi"
         flakeConfig.flake.modules.homeManager."programs.rtk"
         flakeConfig.flake.modules.homeManager."programs.jira"
         flakeConfig.flake.modules.homeManager."programs.firefox"

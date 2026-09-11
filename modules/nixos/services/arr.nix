@@ -9,7 +9,7 @@ let
     "docker-bazarr"
     "docker-lidarr"
     "docker-prowlarr"
-    "docker-jellyseerr"
+    "docker-seerr"
     "docker-qbittorrent"
     "docker-calibre"
   ];
@@ -19,7 +19,8 @@ let
     bazarr = "/mnt/ssd/appdata/docker/bazarr";
     lidarr = "/mnt/ssd/appdata/docker/lidarr";
     prowlarr = "/mnt/ssd/appdata/docker/prowlarr";
-    jellyseerr = "/mnt/ssd/appdata/docker/jellyseerr";
+    # Keep the existing host path so Seerr can migrate the Jellyseerr database in place.
+    seerr = "/mnt/ssd/appdata/docker/jellyseerr";
     qbittorrent = "/mnt/ssd/appdata/docker/qbittorrent";
   };
 in
@@ -480,7 +481,7 @@ in
         "d ${appDataRoots.bazarr} 0775 99 100 -"
         "d ${appDataRoots.lidarr} 0775 99 100 -"
         "d ${appDataRoots.prowlarr} 0775 99 100 -"
-        "d ${appDataRoots.jellyseerr} 0775 99 100 -"
+        "d ${appDataRoots.seerr} 0755 1000 1000 -"
         "d ${appDataRoots.qbittorrent} 0775 99 100 -"
         "d /mnt/ssd/scratch/downloads/books 0775 99 100 -"
         "d /mnt/ssd/scratch/downloads/audiobook 0775 99 100 -"
@@ -578,19 +579,26 @@ in
         ports = [ "9696:9696" ];
       };
 
-      # Jellyseerr - Request management
-      virtualisation.oci-containers.containers.jellyseerr = {
-        image = "fallenbagel/jellyseerr:latest";
+      # Seerr - Request management
+      virtualisation.oci-containers.containers.seerr = {
+        image = "ghcr.io/seerr-team/seerr:latest";
         environment = {
           LOG_LEVEL = "info";
-          PUID = "99";
-          PGID = "100";
-          UMASK = "022";
+          PORT = "5055";
+          TZ = "America/Toronto";
         };
         volumes = [
-          "${appDataRoots.jellyseerr}:/app/config"
+          "${appDataRoots.seerr}:/app/config"
         ];
         extraOptions = [
+          "--init"
+          "--security-opt=no-new-privileges"
+          "--cap-drop=ALL"
+          "--health-cmd=wget --no-verbose --tries=1 --spider http://localhost:5055/api/v1/settings/public || exit 1"
+          "--health-start-period=20s"
+          "--health-timeout=3s"
+          "--health-interval=15s"
+          "--health-retries=3"
           "--label=com.centurylinklabs.watchtower.enable=false"
         ];
         ports = [ "5055:5055" ];
@@ -654,17 +662,32 @@ in
 
       # Ensure storage pool is mounted before media containers start.
       systemd.services =
-        (lib.genAttrs storageBackedUnits (_: {
+        (lib.genAttrs storageBackedUnits (unit: {
           requires = [
             "mnt-ssd.mount"
             "mnt-storage.mount"
-          ];
+          ]
+          ++ lib.optionals (unit == "docker-seerr") [ "seerr-config-permissions.service" ];
           after = [
             "mnt-ssd.mount"
             "mnt-storage.mount"
-          ];
+          ]
+          ++ lib.optionals (unit == "docker-seerr") [ "seerr-config-permissions.service" ];
         }))
         // {
+          # The official Seerr image runs as node (UID/GID 1000), while the old
+          # Jellyseerr image wrote parts of its config as root.
+          seerr-config-permissions = {
+            description = "Prepare the migrated Seerr configuration permissions";
+            after = [ "mnt-ssd.mount" ];
+            requires = [ "mnt-ssd.mount" ];
+            before = [ "docker-seerr.service" ];
+            serviceConfig = {
+              Type = "oneshot";
+              ExecStart = "${pkgs.coreutils}/bin/chown -R 1000:1000 ${appDataRoots.seerr}";
+            };
+          };
+
           # Keep the live WebUI/RSS config, but enforce the MaM-safe tracker settings.
           "docker-qbittorrent".preStart = lib.mkBefore ''
             ${pkgs.python3}/bin/python3 ${qBittorrentMamConfig} \

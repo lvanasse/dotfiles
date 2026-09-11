@@ -17,7 +17,7 @@
         "docker-dockhand.service"
         "docker-headplane.service"
         "docker-jellyfin.service"
-        "docker-jellyseerr.service"
+        "docker-seerr.service"
         "docker-kitchenowl.service"
         "docker-lidarr.service"
         "docker-linkwarden.service"

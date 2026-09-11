@@ -21,7 +21,7 @@
         "lidarr"
         "bazarr"
         "jellyfin"
-        "jellyseerr"
+        "seerr"
         "calibre-web-automated"
         "calibre"
         "nextcloud"
@@ -52,7 +52,7 @@
           kind = "http";
           url = "http://127.0.0.1:8096/";
         };
-        jellyseerr = {
+        seerr = {
           kind = "http";
           url = "http://127.0.0.1:5055/";
         };

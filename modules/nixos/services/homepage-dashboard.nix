@@ -224,11 +224,11 @@
                     };
                   }
                   {
-                    Jellyseerr = {
+                    Seerr = {
                       href = "http://${serverTailscaleHost}:5055";
                       description = "Media requests";
                       server = "local";
-                      container = "jellyseerr";
+                      container = "seerr";
                       showStats = true;
                     };
                   }

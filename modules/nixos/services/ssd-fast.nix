@@ -23,7 +23,7 @@
         "d /mnt/ssd/appdata/docker/bazarr 0775 99 100 -"
         "d /mnt/ssd/appdata/docker/lidarr 0775 99 100 -"
         "d /mnt/ssd/appdata/docker/prowlarr 0775 99 100 -"
-        "d /mnt/ssd/appdata/docker/jellyseerr 0775 99 100 -"
+        "d /mnt/ssd/appdata/docker/jellyseerr 0755 1000 1000 -"
         "d /mnt/ssd/appdata/docker/qbittorrent 0775 99 100 -"
         "d /mnt/ssd/appdata/docker/mariadb 0775 99 100 -"
         "d /mnt/ssd/appdata/docker/nextcloud 0775 99 100 -"

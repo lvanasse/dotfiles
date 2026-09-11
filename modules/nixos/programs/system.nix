@@ -27,7 +27,7 @@ in
 
                 # --- Argument parsing ---
                 if [ $# -lt 1 ]; then
-                  echo "Usage: nohm <host>|auth [--boot|--switch] [--target-host <user@ip>] [-- <extra nh args>]" >&2
+                  echo "Usage: nohm <host>|auth [--boot|--switch] [--target-host <user@ip>] [--attic-jobs <jobs>] [-- <extra nh args>]" >&2
                   exit 1
                 fi
 
@@ -36,6 +36,7 @@ in
 
                 action="switch"
                 target_host=""
+                attic_jobs="''${NOHM_ATTIC_JOBS:-1}"
                 extra_args=()
                 while [ $# -gt 0 ]; do
                   case "$1" in
@@ -52,6 +53,11 @@ in
                       target_host="$2"
                       shift 2
                       ;;
+                    --attic-jobs)
+                      [ $# -lt 2 ] && { echo "Missing value for --attic-jobs" >&2; exit 1; }
+                      attic_jobs="$2"
+                      shift 2
+                      ;;
                     --)
                       shift
                       extra_args+=("$@")
@@ -63,6 +69,13 @@ in
                       ;;
                   esac
                 done
+
+                case "''${attic_jobs}" in
+                  ""|*[!0-9]*|0)
+                    echo "nohm: --attic-jobs must be a positive integer (got: ''${attic_jobs:-<empty>})." >&2
+                    exit 1
+                    ;;
+                esac
 
                 # --- Resolve paths ---
                 flake_dir="$HOME/Code/personal/dotfiles"
@@ -175,11 +188,11 @@ in
                   [ -n "''${home_profile}" ] && cache_paths+=("''${home_profile}")
 
                   step "Push PC closures to Attic"
-                  cmd "attic push dotfiles /run/current-system <home-manager-profile>"
-                  if "$attic_bin" push dotfiles "''${cache_paths[@]}"; then
+                  cmd "attic push --jobs ''${attic_jobs} dotfiles /run/current-system <home-manager-profile>"
+                  if "$attic_bin" push --jobs "''${attic_jobs}" dotfiles "''${cache_paths[@]}"; then
                     ok "Attic cache"
                   else
-                    fail "Attic upload (switch succeeded; retry with: attic push dotfiles /run/current-system)"
+                    fail "Attic upload (switch succeeded; retry with: attic push --jobs ''${attic_jobs} dotfiles /run/current-system)"
                   fi
                 }
                 verify_remote_target() {

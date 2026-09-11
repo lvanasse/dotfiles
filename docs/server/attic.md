@@ -71,12 +71,15 @@ directory.
 After every successful local `nohm pc` switch, `nohm` pushes both
 `/run/current-system` and the active Home Manager profile. The upload is
 best-effort: an unavailable cache is reported, but does not make a successful
-activation fail. Set `NOHM_ATTIC_PUSH=0` for a one-off switch without uploading.
+activation fail. Uploads default to one path at a time to avoid exhausting the
+Attic server's SQLite connection pool. Use `nohm pc --attic-jobs 2` to override
+the concurrency for one run, or set `NOHM_ATTIC_JOBS` to change the default.
+Set `NOHM_ATTIC_PUSH=0` for a one-off switch without uploading.
 
 An upload can also be retried manually with:
 
 ```fish
-attic push dotfiles /run/current-system
+attic push --jobs 1 dotfiles /run/current-system
 ```
 
 Automatic store watching is not enabled, so unrelated Nix builds are not

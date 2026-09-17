@@ -14,7 +14,6 @@
         umu-launcher
         mpfr
         isl
-        xivlauncher
       ];
     };
 }

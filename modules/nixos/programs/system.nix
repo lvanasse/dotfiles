@@ -22,12 +22,20 @@ in
 
                 # Filter known nix noise from combined output
                 filter_noise() {
-                  grep -v "^Using saved setting\|^warning: Git tree\|^warning:.*builtins.derivation" || true
+                  grep --line-buffered -v "^Using saved setting\|^warning: Git tree\|^warning:.*builtins.derivation" || true
+                }
+
+                show_home_manager_progress() {
+                  if [ "''${NOHM_VERBOSE:-0}" = "1" ]; then
+                    filter_noise
+                  else
+                    grep --line-buffered -E "^(these .* will be built|these .* paths will be fetched|building '/nix/store/|copying path '/nix/store/|unpacking '|warning:|error:)" | filter_noise || true
+                  fi
                 }
 
                 # --- Argument parsing ---
                 if [ $# -lt 1 ]; then
-                  echo "Usage: nohm <host>|auth [--boot|--switch] [--target-host <user@ip>] [--attic-jobs <jobs>] [-- <extra nh args>]" >&2
+                  echo "Usage: nohm <host>|auth [--boot|--switch] [--restart-emacs] [--target-host <user@ip>] [--attic-jobs <jobs>] [-- <extra nh args>]" >&2
                   exit 1
                 fi
 
@@ -37,6 +45,7 @@ in
                 action="switch"
                 target_host=""
                 attic_jobs="''${NOHM_ATTIC_JOBS:-1}"
+                restart_emacs="''${NOHM_RESTART_EMACS:-0}"
                 extra_args=()
                 while [ $# -gt 0 ]; do
                   case "$1" in
@@ -46,6 +55,10 @@ in
                       ;;
                     --switch)
                       action="switch"
+                      shift
+                      ;;
+                    --restart-emacs)
+                      restart_emacs=1
                       shift
                       ;;
                     --target-host)
@@ -103,6 +116,7 @@ in
                     exec bash "''${flake_dir}/scripts/bootstrap-steamdeck-home-manager" \
                       --target-host "''${target_host}"
                   fi
+                  export NOHM_RESTART_EMACS="''${restart_emacs}"
                   exec bash "''${flake_dir}/scripts/nix-switch.sh" "''${host}"
                 fi
 
@@ -115,6 +129,7 @@ in
                 nix_bin="${pkgs.nix}/bin/nix"
                 ssh_bin="${pkgs.openssh}/bin/ssh"
                 systemctl_bin="${pkgs.systemd}/bin/systemctl"
+                tee_bin="${pkgs.coreutils}/bin/tee"
 
                 # --- Compute parallelism ---
                 reserve_cores="''${NOHM_RESERVED_CORES:-2}"
@@ -158,6 +173,8 @@ in
                 # --- Determine steps ---
                 is_remote() { [ -n "''${target_host}" ]; }
                 should_restart_emacs_daemons() {
+                  [ "''${restart_emacs}" = "1" ] || return 1
+
                   case "''${host}" in pc|laptop|hm-only|work-laptop) return 0 ;; *) return 1 ;; esac
                 }
                 restart_emacs_daemons() {
@@ -222,11 +239,20 @@ in
                   step "Home Manager switch (''${host})"
                   cmd "home-manager switch --flake .#${username}@''${host}"
                   bext="''${HM_BACKUP_EXT:-hm-$(date +%Y%m%d-%H%M%S)}"
+                  hm_log="$(mktemp)"
                   if env NIX_CONFIG="''${nix_config}" "$hm_bin" switch \
-                    --flake "''${flake_dir}#${username}@''${host}" -b "''${bext}" 2>&1 | filter_noise; then
+                    --flake "''${flake_dir}#${username}@''${host}" -b "''${bext}" 2>&1 | "$tee_bin" "''${hm_log}" | show_home_manager_progress; then
+                    hm_status="''${PIPESTATUS[0]}"
+                  else
+                    hm_status="''${PIPESTATUS[0]}"
+                  fi
+                  if [ "''${hm_status}" -eq 0 ]; then
+                    rm -f "''${hm_log}"
                     ok "Home Manager"
                     restart_emacs_daemons
                   else
+                    filter_noise < "''${hm_log}"
+                    rm -f "''${hm_log}"
                     fail "Home Manager"
                     exit 1
                   fi

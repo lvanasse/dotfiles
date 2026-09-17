@@ -1,6 +1,6 @@
 #!/bin/bash
 # Internal switch implementation for `nohm`
-# Usage: nohm <hostname> [-- <extra nh os args>]
+# Usage: nohm <hostname> [--restart-emacs] [-- <extra nh os args>]
 #
 # On NixOS:     runs home-manager switch, then nh os switch for NixOS targets
 # On non-NixOS: runs home-manager switch, then symlinks wayland sessions for GDM
@@ -23,8 +23,20 @@ log_cmd() {
   printf '%s %s\n' "$label" "$*"
 }
 
+filter_noise() {
+  grep --line-buffered -v "^Using saved setting\|^warning: Git tree\|^warning:.*builtins.derivation" || true
+}
+
+show_home_manager_progress() {
+  if [ "$NOHM_VERBOSE" = "1" ]; then
+    filter_noise
+  else
+    grep --line-buffered -E "^(these .* will be built|these .* paths will be fetched|building '/nix/store/|copying path '/nix/store/|unpacking '|warning:|error:)" | filter_noise || true
+  fi
+}
+
 if [ $# -lt 1 ]; then
-  echo "Usage: nohm <hostname> [-- <extra nh os args>]" >&2
+  echo "Usage: nohm <hostname> [--restart-emacs] [-- <extra nh os args>]" >&2
   echo "Examples:" >&2
   echo "  nohm pc" >&2
   echo "  nohm laptop" >&2
@@ -35,20 +47,28 @@ fi
 HOST="$1"
 shift
 
-# Collect extra args (everything after --)
+# Parse wrapper options and collect extra nh args (everything after --).
 EXTRA_ARGS=""
 while [ $# -gt 0 ]; do
-  if [ "$1" = "--" ]; then
+  case "$1" in
+  --restart-emacs)
+    NOHM_RESTART_EMACS=1
+    shift
+    ;;
+  --)
     shift
     EXTRA_ARGS="$*"
     break
-  fi
-  shift
+    ;;
+  *) shift ;;
+  esac
 done
 
 cd "$FLAKE_DIR"
 
 should_restart_emacs_daemons() {
+  [ "${NOHM_RESTART_EMACS:-0}" = "1" ] || return 1
+
   case "$HOST" in
   pc | laptop | hm-only | work-laptop) return 0 ;;
   *) return 1 ;;
@@ -156,7 +176,19 @@ rm -f "$HOME/.local/share/applications/mimeapps.list" 2>/dev/null || true
 # Step 1: Home Manager switch (always)
 BEXT="${HM_BACKUP_EXT:-hm-$(date +%Y%m%d-%H%M%S)}"
 log_cmd "[1/2]" "home-manager switch --flake ${FLAKE_DIR}#${USERNAME}@${HOST} -b ${BEXT}"
-NIX_CONFIG="${NIX_WRAPPER_CONFIG}" home-manager switch --flake "${FLAKE_DIR}#${USERNAME}@${HOST}" -b "${BEXT}"
+HM_LOG="$(mktemp)"
+if NIX_CONFIG="${NIX_WRAPPER_CONFIG}" home-manager switch --flake "${FLAKE_DIR}#${USERNAME}@${HOST}" -b "${BEXT}" 2>&1 | tee "${HM_LOG}" | show_home_manager_progress; then
+  HM_STATUS="${PIPESTATUS[0]}"
+else
+  HM_STATUS="${PIPESTATUS[0]}"
+fi
+if [ "$HM_STATUS" -eq 0 ]; then
+  rm -f "${HM_LOG}"
+else
+  filter_noise < "${HM_LOG}"
+  rm -f "${HM_LOG}"
+  exit 1
+fi
 restart_emacs_daemons
 
 # Step 2: NixOS or post-switch tasks

@@ -26,7 +26,7 @@
                 }
 
                 if [ $# -lt 1 ]; then
-                  echo "Usage: nohm <host>|auth [--target-host <user@ip>] [-- <extra nh os args>]" >&2
+                  echo "Usage: nohm <host>|auth [--restart-emacs] [--target-host <user@ip>] [-- <extra nh os args>]" >&2
                   exit 1
                 fi
 
@@ -134,7 +134,7 @@
                     exec bash "''${flake_dir}/scripts/bootstrap-steamdeck-home-manager" \
                       --target-host "''${target_host}"
                   fi
-                  exec bash "''${nix_switch_script}" "''${host}"
+                  exec bash "''${nix_switch_script}" "''${host}" "''${pass_args[@]}"
                 fi
 
                 if [ "''${NOHM_AUTO_INTENT_TO_ADD:-1}" = "1" ] \

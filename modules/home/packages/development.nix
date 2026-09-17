@@ -60,8 +60,10 @@
           basedpyright
           python3
           bash-language-server
+          bitbake-language-server
           taplo
           lua-language-server
+          vscode-langservers-extracted
           yaml-language-server
           cmake-language-server
           dockerfile-language-server

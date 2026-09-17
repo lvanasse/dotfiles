@@ -621,18 +621,52 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
     (find-file (expand-file-name path)))
 
   (defun my/open-directory-tab (directory)
-    "Open DIRECTORY in Dired inside the current workspace."
+    "Open DIRECTORY in Dired and make it Treemacs' top-level root."
     (interactive "DDirectory: ")
     (let ((directory (file-name-as-directory (expand-file-name directory))))
       (dired directory)
+      (when (fboundp 'my/treemacs-show-directory-root)
+        (my/treemacs-show-directory-root directory))
       (my/refresh-workspace-label)))
 
   (defun my/find-file-or-directory (path)
-    "Open PATH in the current workspace."
-    (interactive (list (read-file-name "Find file: " nil nil nil)))
+    "Open PATH in the current workspace, accepting new filenames immediately."
+    (interactive
+     (list
+      (let ((confirm-nonexistent-file-or-buffer nil))
+        (read-file-name "Find file: " nil nil nil))))
     (if (file-directory-p path)
         (my/open-directory-tab path)
+      (unless (file-exists-p path)
+        (make-empty-file path t))
       (my/open-file-tab path)))
+
+  (defun my/current-location-directory ()
+    "Return the directory represented by the current buffer or Treemacs node."
+    (or (when (and (derived-mode-p 'treemacs-mode)
+                   (fboundp 'treemacs-current-button)
+                   (fboundp 'treemacs--nearest-path))
+          (when-let* ((button (treemacs-current-button))
+                      (path (treemacs--nearest-path button)))
+            (if (file-directory-p path)
+                path
+              (file-name-directory path))))
+        (when buffer-file-name
+          (file-name-directory buffer-file-name))
+        (when (derived-mode-p 'dired-mode)
+          default-directory)
+        default-directory))
+
+  (defun create-file (path)
+    "Create and visit PATH, starting in the current location."
+    (interactive
+     (let* ((directory (my/current-location-directory))
+            (confirm-nonexistent-file-or-buffer nil))
+       (list (read-file-name "Create file: " directory nil nil))))
+    (let ((path (expand-file-name path)))
+      (unless (file-exists-p path)
+        (make-empty-file path t))
+      (find-file path)))
 
   (defun my/consult-buffer ()
     "Switch buffers with Consult without creating a workspace."
@@ -1021,12 +1055,31 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
   (add-hook 'prog-mode-hook #'display-line-numbers-mode)
   (add-hook 'prog-mode-hook #'electric-pair-local-mode)
 
+  (require 'project)
+
+  (cl-defmethod project-root ((project (head my/marker-project)))
+    "Return the root stored in a marker-based PROJECT."
+    (cdr project))
+
+  (defun my/project-try-flake (directory)
+    "Use the nearest flake.nix as a project root when VC finds no project."
+    (when-let* ((root (locate-dominating-file directory "flake.nix")))
+      (cons 'my/marker-project root)))
+
+  (add-hook 'project-find-functions #'my/project-try-flake t)
+
   (defun my/eglot-ensure ()
     "Start Eglot when the current project has a matching language server."
     (when (fboundp 'eglot-ensure)
       (eglot-ensure)))
 
   (with-eval-after-load 'eglot
+    (setq-default
+     eglot-workspace-configuration
+     '(:json
+       (:schemas
+        [(:fileMatch ["**/*.conf.json"]
+          :url "https://raw.githubusercontent.com/openembedded/bitbake/2.18/setup-schema/bitbake-setup.schema.json")])))
     (add-to-list 'eglot-server-programs
                  '((python-mode python-ts-mode) . ("basedpyright-langserver" "--stdio")))
     (add-to-list 'eglot-server-programs
@@ -1034,7 +1087,17 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
     (add-to-list 'eglot-server-programs
                  '((c-mode c++-mode c-ts-mode c++-ts-mode) . ("clangd")))
     (add-to-list 'eglot-server-programs
-                 '((rust-mode rust-ts-mode) . ("rust-analyzer"))))
+                 '((rust-mode rust-ts-mode) . ("rust-analyzer")))
+    (add-to-list 'eglot-server-programs
+                 '(((js-json-mode :language-id "json")
+                    json-mode json-ts-mode jsonc-mode)
+                   . ("vscode-json-language-server" "--stdio")))
+    (add-to-list 'eglot-server-programs
+                 '((yaml-mode yaml-ts-mode) . ("yaml-language-server" "--stdio")))
+    (add-to-list 'eglot-server-programs
+                 '((sh-mode bash-ts-mode) . ("bash-language-server" "start")))
+    (add-to-list 'eglot-server-programs
+                 '(bitbake-ts-mode . ("bitbake-language-server"))))
 
   (dolist (hook '(python-mode-hook
                   python-ts-mode-hook
@@ -1045,7 +1108,14 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
                   c++-ts-mode-hook
                   rust-mode-hook
                   rust-ts-mode-hook
-                  sh-mode-hook))
+                  sh-mode-hook
+                  bash-ts-mode-hook
+                  js-json-mode-hook
+                  json-mode-hook
+                  json-ts-mode-hook
+                  yaml-mode-hook
+                  yaml-ts-mode-hook
+                  bitbake-ts-mode-hook))
     (add-hook hook #'my/eglot-ensure))
 
   (with-eval-after-load 'rust-mode
@@ -1087,6 +1157,15 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
 
 #+begin_src emacs-lisp
   (when (require 'treemacs nil t)
+    (defun my/treemacs-show-directory-root (directory)
+      "Show DIRECTORY as the sole top-level Treemacs root."
+      (let* ((origin (selected-window))
+             (path (treemacs-canonical-path directory))
+             (name (my/directory-tab-name path)))
+        (treemacs--show-single-project path name)
+        (when (window-live-p origin)
+          (select-window origin))))
+
     (defun my/treemacs-project ()
       "Show only the current file's project in Treemacs."
       (interactive)
@@ -1129,9 +1208,17 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
           treemacs-show-hidden-files nil)
     (define-key treemacs-mode-map (kbd "<next>") #'my/treemacs-page-down)
     (define-key treemacs-mode-map (kbd "<prior>") #'my/treemacs-page-up)
+    (defun my/treemacs-evil-keys ()
+      "Keep Treemacs node actions ahead of Evil's generic Return binding."
+      (evil-local-set-key 'normal (kbd "RET") #'treemacs-RET-action)
+      (evil-local-set-key 'normal (kbd "<return>") #'treemacs-RET-action))
+
+    (add-hook 'treemacs-mode-hook #'my/treemacs-evil-keys)
     (treemacs-follow-mode 1)
-    (when (require 'treemacs-project-follow-mode nil t)
-      (treemacs-project-follow-mode 1))
+    ;; Keep a directory chosen by the user as the workspace root.  Project
+    ;; follow falls back to a file's default-directory and would replace that
+    ;; root whenever a file without project metadata is visited, so do not
+    ;; enable `treemacs-project-follow-mode' here.
     (add-hook 'find-file-hook #'my/treemacs-ensure-visible-for-file))
 #+end_src
 
@@ -1145,7 +1232,11 @@ manual formatting, LSP through Eglot, and built-in tab-bar workspaces.
   (add-to-list 'auto-mode-alist '("\\.rs\\'" . rust-mode))
 
   (when (require 'bitbake-ts-mode nil t)
-    (dolist (pattern '("\\.bb\\'" "\\.bbappend\\'" "\\.bbclass\\'"))
+    (dolist (pattern '("\\.bb\\'"
+                       "\\.bbappend\\'"
+                       "\\.bbclass\\'"
+                       "/recipes-[^/]+/.*\\.inc\\'"
+                       "/\\(?:meta[^/]*/conf\\|build/conf\\)/.*\\.conf\\'"))
       (add-to-list 'auto-mode-alist `(,pattern . bitbake-ts-mode))))
 
   (provide 'config)

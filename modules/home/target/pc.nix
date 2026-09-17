@@ -30,6 +30,11 @@
 
       programs.fish.shellAliases.deck-link = "flatpak run com.valvesoftware.SteamLink";
 
+      # Correct borderless Proton/UMU windows that cover an entire output but
+      # fail to request KWin fullscreen. Intentionally windowed games keep
+      # their configured geometry.
+      programs.plasma.configFile."kwinrc"."Plugins"."auto-game-fullscreenEnabled" = true;
+
       home.file = {
         ".local/bin/deck-install" = {
           source = ../../../scripts/deck-install;
@@ -52,6 +57,11 @@
             token-file = "/run/agenix/attic-pc-push-token"
           '';
         };
+      };
+
+      xdg.dataFile."kwin/scripts/auto-game-fullscreen" = {
+        source = ./kwin-auto-game-fullscreen;
+        recursive = true;
       };
 
       programs.swayTools.autostartSlack = false;

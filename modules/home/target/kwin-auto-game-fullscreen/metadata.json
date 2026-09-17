@@ -1,0 +1,18 @@
+{
+  "KPlugin": {
+    "Name": "Automatic Game Fullscreen",
+    "Description": "Correct borderless Proton and UMU windows that cover an entire output",
+    "Icon": "preferences-system-windows",
+    "Authors": [
+      {
+        "Name": "Ludovic Vanasse"
+      }
+    ],
+    "Id": "auto-game-fullscreen",
+    "Version": "1.0",
+    "License": "MIT"
+  },
+  "X-Plasma-API": "javascript",
+  "X-Plasma-MainScript": "code/main.js",
+  "KPackageStructure": "KWin/Script"
+}

@@ -8,6 +8,11 @@
         useNetworkd = true;
         interfaces.enp5s0.useDHCP = true;
         networkmanager.dns = "systemd-resolved";
+        # OctoWoW's current DNS answer for the Normal realm times out, while
+        # the temporary address published by its operators remains reachable.
+        extraHosts = ''
+          185.165.170.59 normal.octowow.st
+        '';
         # Cisco AnyConnect-compatible VPN support via OpenConnect.
         networkmanager.plugins = [ pkgs.networkmanager-openconnect ];
       };

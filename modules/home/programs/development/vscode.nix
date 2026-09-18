@@ -25,9 +25,10 @@
           ms-vscode.cmake-tools
           ms-vscode.makefile-tools
           ms-python.python
+          ms-python.vscode-pylance # Python language server: IntelliSense, hover docs, go-to-def
           streetsidesoftware.code-spell-checker
           xaver.clang-format
-          foxundermoon.shell-format
+          mkhl.shfmt
           vscode-icons-team.vscode-icons
           sonarsource.sonarlint-vscode # SonarLint 4.37.0 via refreshed nix-vscode-extensions
           jeff-hykin.better-c-syntax
@@ -75,7 +76,18 @@
           };
           "chat.viewSessions.orientation" = "stacked";
           "clangd.detectExtensionConflicts" = false;
+
+          # Use Pylance as the Python language server (IntelliSense, hover, type info).
+          # Requires ms-python.vscode-pylance in the extensions list above.
+          "python.languageServer" = "Default";
+          # Fallback interpreter when a workspace hasn't selected one. A per-project
+          # "Python: Select Interpreter" choice (stored in the project's .vscode
+          # settings) always overrides this.
+          "python.defaultInterpreterPath" = "${pkgs.python3}/bin/python3";
           "editor.renderWhitespace" = "all";
+          "[shellscript]" = {
+            "editor.defaultFormatter" = "mkhl.shfmt";
+          };
           "github.copilot.enable" = {
             "*" = false;
           };

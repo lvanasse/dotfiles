@@ -38,6 +38,12 @@
         ln -s ${pkgs.clang}/bin/clang "$out/bin/clang"
         ln -s ${pkgs.clang}/bin/clang++ "$out/bin/clang++"
       '';
+      # Make a devcontainer's compile_commands.json usable by host clangd:
+      # rewrites /workspaces/<repo> paths to the host worktree so go-to-definition
+      # works without the container running. Re-run after each in-container build.
+      clangdRehost = pkgs.writeShellScriptBin "clangd-rehost" ''
+        exec ${pkgs.python3}/bin/python3 ${./clangd-rehost.py} "$@"
+      '';
     in
     {
       # Development packages
@@ -112,6 +118,7 @@
 
           # Nix tools
           nixfmtCompat
+          clangdRehost
 
           # Libraries
           ncurses

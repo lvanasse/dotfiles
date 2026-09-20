@@ -87,6 +87,14 @@
         spotifyd.enable = lib.mkForce false;
       };
 
+      # The PXE interface is created and configured by systemd-networkd.
+      # Wait until network-online.target so dnsmasq does not race the
+      # enp5s0 rename/configuration during boot.
+      systemd.services.dnsmasq = {
+        wants = [ "network-online.target" ];
+        after = [ "network-online.target" ];
+      };
+
       networking.firewall = {
         allowedTCPPorts = [ 57621 ];
         allowedUDPPorts = [

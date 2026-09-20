@@ -117,8 +117,11 @@
             end
 
             wezterm.on('format-window-title', function(tab, pane)
-              local proc = pane.foreground_process_name
-              proc = basename(proc) or pane.title
+              local proc = basename(pane.foreground_process_name)
+              if is_codex_process(proc) then
+                proc = 'codex'
+              end
+              proc = proc or pane.title
               if proc == 'wezterm' then
                 proc = nil
               end

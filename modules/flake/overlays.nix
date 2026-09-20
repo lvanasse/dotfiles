@@ -7,6 +7,13 @@ let
     };
   };
 
+  # Use a coherent unstable KDE/Qt package set while keeping the rest of the
+  # system on the stable nixpkgs input.
+  latestPlasma = _final: prev: {
+    kdePackages = prev.unstable.kdePackages;
+    qt6 = prev.unstable.qt6;
+  };
+
   qbittorrent510_2505 =
     _final: prev:
     let
@@ -38,6 +45,7 @@ in
   flake.overlays = {
     inherit
       unstablePackages
+      latestPlasma
       qbittorrent510_2505
       agenixFromInput
       sonarlintHashFix

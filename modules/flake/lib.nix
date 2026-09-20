@@ -15,6 +15,7 @@ let
 
   overlays = [
     config.flake.overlays.unstablePackages
+    config.flake.overlays.latestPlasma
     config.flake.overlays.qbittorrent510_2505
     config.flake.overlays.agenixFromInput
     inputs.nix-vscode-extensions.overlays.default

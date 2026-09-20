@@ -31,7 +31,7 @@ show_home_manager_progress() {
   if [ "$NOHM_VERBOSE" = "1" ]; then
     filter_noise
   else
-    grep --line-buffered -E "^(these .* will be built|these .* paths will be fetched|building '/nix/store/|copying path '/nix/store/|unpacking '|warning:|error:)" | filter_noise || true
+    cat
   fi
 }
 
@@ -177,7 +177,11 @@ rm -f "$HOME/.local/share/applications/mimeapps.list" 2>/dev/null || true
 BEXT="${HM_BACKUP_EXT:-hm-$(date +%Y%m%d-%H%M%S)}"
 log_cmd "[1/2]" "home-manager switch --flake ${FLAKE_DIR}#${USERNAME}@${HOST} -b ${BEXT}"
 HM_LOG="$(mktemp)"
-if NIX_CONFIG="${NIX_WRAPPER_CONFIG}" home-manager switch --flake "${FLAKE_DIR}#${USERNAME}@${HOST}" -b "${BEXT}" 2>&1 | tee "${HM_LOG}" | show_home_manager_progress; then
+HM_LOG_FORMAT_ARGS=(--log-format bar)
+if [ "$NOHM_VERBOSE" = "1" ]; then
+  HM_LOG_FORMAT_ARGS=()
+fi
+if NIX_CONFIG="${NIX_WRAPPER_CONFIG}" home-manager switch --flake "${FLAKE_DIR}#${USERNAME}@${HOST}" -b "${BEXT}" "${HM_LOG_FORMAT_ARGS[@]}" 2>&1 | tee "${HM_LOG}" | show_home_manager_progress; then
   HM_STATUS="${PIPESTATUS[0]}"
 else
   HM_STATUS="${PIPESTATUS[0]}"

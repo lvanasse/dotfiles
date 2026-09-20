@@ -29,7 +29,7 @@ in
                   if [ "''${NOHM_VERBOSE:-0}" = "1" ]; then
                     filter_noise
                   else
-                    grep --line-buffered -E "^(these .* will be built|these .* paths will be fetched|building '/nix/store/|copying path '/nix/store/|unpacking '|warning:|error:)" | filter_noise || true
+                    cat
                   fi
                 }
 
@@ -240,8 +240,12 @@ in
                   cmd "home-manager switch --flake .#${username}@''${host}"
                   bext="''${HM_BACKUP_EXT:-hm-$(date +%Y%m%d-%H%M%S)}"
                   hm_log="$(mktemp)"
+                  hm_log_format_args=(--log-format bar)
+                  if [ "''${NOHM_VERBOSE:-0}" = "1" ]; then
+                    hm_log_format_args=()
+                  fi
                   if env NIX_CONFIG="''${nix_config}" "$hm_bin" switch \
-                    --flake "''${flake_dir}#${username}@''${host}" -b "''${bext}" 2>&1 | "$tee_bin" "''${hm_log}" | show_home_manager_progress; then
+                    --flake "''${flake_dir}#${username}@''${host}" -b "''${bext}" "''${hm_log_format_args[@]}" 2>&1 | "$tee_bin" "''${hm_log}" | show_home_manager_progress; then
                     hm_status="''${PIPESTATUS[0]}"
                   else
                     hm_status="''${PIPESTATUS[0]}"

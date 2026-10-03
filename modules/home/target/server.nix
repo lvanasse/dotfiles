@@ -1,4 +1,4 @@
-{ ... }:
+{ lib, ... }:
 {
   flake.modules.homeManager."target.config.server" =
     { pkgs, ... }:
@@ -10,6 +10,11 @@
       ];
 
       programs.bash.enable = true;
+
+      programs.ssh.settings = {
+        pc.identityFile = lib.mkForce "~/.ssh/id_ed25519_server_to_pc";
+        pc-ts.identityFile = lib.mkForce "~/.ssh/id_ed25519_server_to_pc";
+      };
 
       programs.git = {
         enable = true;

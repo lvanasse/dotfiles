@@ -9,13 +9,17 @@ let
 
   personalPub = "${inputs.secrets}/keys/id_ed25519_personal.pub";
   workPub = "${inputs.secrets}/keys/id_ed25519_work.pub";
+  serverToPcPub = "${inputs.secrets}/keys/server_to_pc.pub";
   personalKeyAge = "${inputs.secrets}/ssh/id_ed25519_personal.age";
   workKeyAge = "${inputs.secrets}/ssh/id_ed25519_work.age";
+  serverToPcKeyAge = "${inputs.secrets}/ssh/server_to_pc.age";
 
   hasPersonalPub = builtins.pathExists personalPub;
   hasWorkPub = builtins.pathExists workPub;
+  hasServerToPcPub = builtins.pathExists serverToPcPub;
   hasPersonalKeyAge = builtins.pathExists personalKeyAge;
   hasWorkKeyAge = builtins.pathExists workKeyAge;
+  hasServerToPcKeyAge = builtins.pathExists serverToPcKeyAge;
 in
 {
   flake.modules.nixos."services.ssh-keys" =
@@ -33,11 +37,16 @@ in
       # Passwordless auth uses the shared personal admin key on every target.
       users.users.${username}.openssh.authorizedKeys.keys =
         lib.optionals hasPersonalPub [ (builtins.readFile personalPub) ]
-        ++ lib.optionals hasWorkPub [ (builtins.readFile workPub) ];
+        ++ lib.optionals hasWorkPub [ (builtins.readFile workPub) ]
+        ++ lib.optionals (config.networking.hostName == "pc" && hasServerToPcPub) [
+          (builtins.readFile serverToPcPub)
+        ];
 
-      systemd.tmpfiles.rules = lib.optionals receivesClientKey [
-        "d /home/${username}/.ssh 0700 ${username} users -"
-      ];
+      systemd.tmpfiles.rules =
+        lib.optionals (receivesClientKey || config.networking.hostName == "server")
+          [
+            "d /home/${username}/.ssh 0700 ${username} users -"
+          ];
 
       age.secrets =
         lib.optionalAttrs (receivesClientKey && hasPersonalKeyAge) {
@@ -53,6 +62,15 @@ in
           "ssh-id-ed25519-work" = {
             file = workKeyAge;
             path = "/home/${username}/.ssh/id_ed25519_work";
+            mode = "0600";
+            owner = username;
+            group = "users";
+          };
+        }
+        // lib.optionalAttrs (config.networking.hostName == "server" && hasServerToPcKeyAge) {
+          "ssh-server-to-pc" = {
+            file = serverToPcKeyAge;
+            path = "/home/${username}/.ssh/id_ed25519_server_to_pc";
             mode = "0600";
             owner = username;
             group = "users";

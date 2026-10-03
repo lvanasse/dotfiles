@@ -395,12 +395,16 @@
                     Beszel = {
                       href = "http://${serverTailscaleHost}:8090";
                       description = "Host, Docker, and resource monitoring";
+                      siteMonitor = "http://127.0.0.1:8090/";
+                      statusStyle = "basic";
                     };
                   }
                   {
                     Ntfy = {
                       href = "https://ntfy.ludovicvanasse.com";
                       description = "Homelab notification service";
+                      siteMonitor = "http://127.0.0.1:2586/v1/health";
+                      statusStyle = "basic";
                     };
                   }
                   {

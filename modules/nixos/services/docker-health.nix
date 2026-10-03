@@ -114,6 +114,7 @@
         docker_bin = "${pkgs.docker_29}/bin/docker"
         systemctl_bin = "${pkgs.systemd}/bin/systemctl"
         expected = ${managedContainersJson}
+        expected_names = {item["name"] for item in expected}
 
         ids_proc = subprocess.run(
             [docker_bin, "ps", "-aq", "--no-trunc"],
@@ -178,21 +179,25 @@
                             "health": health,
                         }
 
-                        payload["summary"]["total"] += 1
+                        # Only report the declared long-lived services. Docker
+                        # Compose retains completed one-shot jobs (such as Plane
+                        # migrations), which are not service failures.
+                        if name in expected_names:
+                            payload["summary"]["total"] += 1
 
-                        if status == "running":
-                            payload["summary"]["running"] += 1
-                            if health == "unhealthy":
-                                payload["summary"]["unhealthy"] += 1
+                            if status == "running":
+                                payload["summary"]["running"] += 1
+                                if health == "unhealthy":
+                                    payload["summary"]["unhealthy"] += 1
+                                    failed_names.append(name)
+                                else:
+                                    payload["summary"]["healthy"] += 1
+                            elif status == "restarting":
+                                payload["summary"]["restarting"] += 1
                                 failed_names.append(name)
                             else:
-                                payload["summary"]["healthy"] += 1
-                        elif status == "restarting":
-                            payload["summary"]["restarting"] += 1
-                            failed_names.append(name)
-                        else:
-                            payload["summary"]["exited"] += 1
-                            failed_names.append(name)
+                                payload["summary"]["exited"] += 1
+                                failed_names.append(name)
 
                     payload["summary"]["failed"] = len(failed_names)
                     payload["failed"]["names"] = ", ".join(failed_names) if failed_names else "none"

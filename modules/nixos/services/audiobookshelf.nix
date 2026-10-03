@@ -125,16 +125,17 @@
         root="${audiobookLibraryRoot}"
         mkdir -p "$root"
 
-        while true; do
+        while IFS= read -r _; do
+          ${normalizeSingleFileAudiobooks}
+        done < <(
           ${pkgs.inotify-tools}/bin/inotifywait \
+            --monitor \
+            --quiet \
             --recursive \
             --event close_write \
             --event moved_to \
-            --event create \
-            "$root" || sleep 10
-          ${normalizeSingleFileAudiobooks}
-          sleep 2
-        done
+            "$root"
+        )
       '';
     in
     {

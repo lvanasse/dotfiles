@@ -184,14 +184,12 @@
       infomaniakMailAge = "${inputs.secrets}/email/mail@ludovicvanasse.com-infomaniak.age";
       infomaniakCaldavAge = "${inputs.secrets}/calendar/infomaniak-caldav-password.age";
       slackPrivateElAge = "${inputs.secrets}/emacs/slack-private.el.age";
-      spotifyPrivateElAge = "${inputs.secrets}/emacs/spotify-private.el.age";
       liberaAuthinfoAge = "${inputs.secrets}/irc/authinfo.age";
       hasJiraCfg = builtins.pathExists jiraCfgAge;
       hasJiraToken = builtins.pathExists jiraTokenAge;
       hasInfomaniakMail = builtins.pathExists infomaniakMailAge;
       hasInfomaniakCaldav = builtins.pathExists infomaniakCaldavAge;
       hasSlackPrivateEl = builtins.pathExists slackPrivateElAge;
-      hasSpotifyPrivateEl = builtins.pathExists spotifyPrivateElAge;
       hasLiberaAuthinfo = builtins.pathExists liberaAuthinfoAge;
     in
     {
@@ -270,13 +268,6 @@
           "emacs-slack-private-el" = {
             file = slackPrivateElAge;
             path = "${homeDir}/.config/slack/private.el";
-            mode = "0600";
-          };
-        })
-        // (lib.optionalAttrs hasSpotifyPrivateEl {
-          "emacs-spotify-private-el" = {
-            file = spotifyPrivateElAge;
-            path = "${homeDir}/.config/spotify/private.el";
             mode = "0600";
           };
         })

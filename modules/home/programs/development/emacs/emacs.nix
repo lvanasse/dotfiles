@@ -140,7 +140,6 @@
             all-the-icons
             mu4e
             mu4e-alert
-            counsel-spotify
             emoji-cheat-sheet-plus
             flycheck
             flycheck-pos-tip

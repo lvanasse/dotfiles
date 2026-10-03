@@ -70,7 +70,6 @@
 
           # Media
           vlc
-          spotify
           qbz
           kooha
           simplescreenrecorder

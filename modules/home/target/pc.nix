@@ -10,17 +10,6 @@
     let
       atticPushTokenAge = "${inputs.secrets}/attic/pc-push-token.age";
       hasAtticPushToken = builtins.pathExists atticPushTokenAge;
-      spotifydToml = pkgs.formats.toml { };
-      spotifydConfig = spotifydToml.generate "spotifyd.conf" {
-        global = {
-          backend = "pulseaudio";
-          bitrate = 320;
-          device_name = "pc";
-          device_type = "computer";
-          use_mpris = true;
-          zeroconf_port = 57621;
-        };
-      };
     in
     {
       services.ntfySubscriber = {
@@ -47,7 +36,6 @@
       };
 
       xdg.configFile = {
-        "spotifyd/spotifyd.conf".source = spotifydConfig;
         "attic/config.toml" = lib.mkIf hasAtticPushToken {
           text = ''
             default-server = "homelab"
@@ -188,25 +176,5 @@
           };
         };
 
-      systemd.user.services.spotifyd = {
-        Unit = {
-          Description = "spotifyd, a Spotify Connect background daemon";
-          After = [
-            "pipewire.service"
-            "pipewire-pulse.service"
-            "graphical-session.target"
-          ];
-          PartOf = [ "graphical-session.target" ];
-        };
-        Install.WantedBy = [
-          "graphical-session.target"
-          "default.target"
-        ];
-        Service = {
-          ExecStart = "${pkgs.spotifyd}/bin/spotifyd --no-daemon --cache-path %h/.cache/spotifyd --config-path %h/.config/spotifyd/spotifyd.conf";
-          Restart = "always";
-          RestartSec = 12;
-        };
-      };
     };
 }

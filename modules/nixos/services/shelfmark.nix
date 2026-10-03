@@ -87,22 +87,6 @@ in
                   "_GOOGLEBOOKS_QUOTA_BACKOFF_UNTIL = 0.0\n",
               ),
               (
-                  "        # Build request params\n"
-                  "        params: dict[str, Any] = {\n"
-                  "            \"q\": query,\n"
-                  "            \"maxResults\": min(options.limit, 40),  # Google max is 40\n",
-                  "        with suppress(TypeError, ValueError):\n"
-                  "            max_results_cap = int(os.environ.get(\"GOOGLEBOOKS_MAX_RESULTS\", \"5\"))\n"
-                  "        if \"max_results_cap\" not in locals():\n"
-                  "            max_results_cap = 5\n"
-                  "        max_results_cap = max(1, min(max_results_cap, 40))\n"
-                  "\n"
-                  "        # Build request params\n"
-                  "        params: dict[str, Any] = {\n"
-                  "            \"q\": query,\n"
-                  "            \"maxResults\": min(options.limit, max_results_cap, 40),  # Google max is 40\n",
-              ),
-              (
                   "        # Add API key to params\n"
                   "        params[\"key\"] = self.api_key\n",
                   "        global _GOOGLEBOOKS_QUOTA_BACKOFF_UNTIL\n"
@@ -140,6 +124,44 @@ in
               if before not in googlebooks_patched:
                   raise SystemExit("Shelfmark Google Books patch context not found")
               googlebooks_patched = googlebooks_patched.replace(before, after, 1)
+
+          search_cap = (
+              "        with suppress(TypeError, ValueError):\n"
+              "            max_results_cap = int(os.environ.get(\"GOOGLEBOOKS_MAX_RESULTS\", \"5\"))\n"
+              "        if \"max_results_cap\" not in locals():\n"
+              "            max_results_cap = 5\n"
+              "        max_results_cap = max(1, min(max_results_cap, 40))\n"
+              "\n"
+          )
+          old_search = (
+              "        # Build request params\n"
+              "        params: dict[str, Any] = {\n"
+              "            \"q\": query,\n"
+              "            \"maxResults\": min(options.limit, 40),  # Google max is 40\n"
+          )
+          new_search = (
+              "        # Build request params\n"
+              "        page_size = min(options.limit, 40)  # Google max is 40\n"
+          )
+          if search_cap not in googlebooks_patched:
+              if old_search in googlebooks_patched:
+                  googlebooks_patched = googlebooks_patched.replace(
+                      old_search,
+                      search_cap + old_search.replace(
+                          "min(options.limit, 40)", "min(options.limit, max_results_cap, 40)"
+                      ),
+                      1,
+                  )
+              elif new_search in googlebooks_patched:
+                  googlebooks_patched = googlebooks_patched.replace(
+                      new_search,
+                      search_cap + new_search.replace(
+                          "min(options.limit, 40)", "min(options.limit, max_results_cap, 40)"
+                      ),
+                      1,
+                  )
+              else:
+                  raise SystemExit("Shelfmark Google Books search limit patch context not found")
 
           if googlebooks_patched != googlebooks_source:
               googlebooks_path.write_text(googlebooks_patched, encoding="utf-8")

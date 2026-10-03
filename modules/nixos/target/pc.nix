@@ -4,7 +4,12 @@ let
 in
 {
   flake.modules.nixos."target.config.pc" =
-    { inputs, lib, ... }:
+    {
+      inputs,
+      lib,
+      username,
+      ...
+    }:
     let
       atticPushTokenAge = "${inputs.secrets}/attic/pc-push-token.age";
     in
@@ -28,5 +33,17 @@ in
         owner = username;
         group = "users";
       };
+
+      security.sudo.extraRules = [
+        {
+          users = [ username ];
+          commands = [
+            {
+              command = "ALL";
+              options = [ "NOPASSWD" ];
+            }
+          ];
+        }
+      ];
     };
 }

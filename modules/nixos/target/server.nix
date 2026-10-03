@@ -29,6 +29,17 @@
 
       # Server-specific settings
       users.users.${username}.initialPassword = "changeme";
+      security.sudo.extraRules = [
+        {
+          users = [ username ];
+          commands = [
+            {
+              command = "ALL";
+              options = [ "NOPASSWD" ];
+            }
+          ];
+        }
+      ];
 
       # Server identity/time services
       networking.timeServers = [

@@ -25,6 +25,12 @@
       programs.plasma.configFile."kwinrc"."Plugins"."auto-game-fullscreenEnabled" = true;
 
       home.file = {
+        # Spectacle's Qt Quick OpenGL renderer fails to create an EGL context
+        # on this PC; its software renderer completes a full-screen capture.
+        ".config/systemd/user/app-org.kde.spectacle.service.d/renderer.conf".text = ''
+          [Service]
+          Environment=QT_QUICK_BACKEND=software
+        '';
         ".local/bin/deck-install" = {
           source = ../../../scripts/deck-install;
           executable = true;

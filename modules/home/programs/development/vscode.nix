@@ -26,6 +26,7 @@
           ms-vscode.makefile-tools
           ms-python.python
           ms-python.vscode-pylance # Python language server: IntelliSense, hover docs, go-to-def
+          charliermarsh.ruff # Python linting, formatting, and import organization
           streetsidesoftware.code-spell-checker
           xaver.clang-format
           mkhl.shfmt
@@ -37,6 +38,7 @@
           mcu-debug.rtos-views
           mcu-debug.peripheral-viewer
           redhat.vscode-yaml
+          bufbuild.vscode-buf # Protobuf: parsing, linting, and formatting via buf language server
           davidanson.vscode-markdownlint
           jeff-hykin.better-cpp-syntax
           mkhl.direnv
@@ -76,6 +78,18 @@
           };
           "chat.viewSessions.orientation" = "stacked";
           "clangd.detectExtensionConflicts" = false;
+          "C_Cpp.intelliSenseEngine" = "disabled";
+          # Generic clangd tuning: background-index enables project-wide
+          # symbol search/go-to-def without a compile_commands.json, and
+          # clang-tidy adds richer diagnostics. None of this is project-specific.
+          "clangd.arguments" = [
+            "--background-index"
+            "--all-scopes-completion"
+            "--completion-style=detailed"
+            "--header-insertion=never"
+            "--pch-storage=memory"
+            "--clang-tidy"
+          ];
 
           # Use Pylance as the Python language server (IntelliSense, hover, type info).
           # Requires ms-python.vscode-pylance in the extensions list above.
@@ -84,9 +98,29 @@
           # "Python: Select Interpreter" choice (stored in the project's .vscode
           # settings) always overrides this.
           "python.defaultInterpreterPath" = "${pkgs.python3}/bin/python3";
+          # Ruff handles style diagnostics and formatting while Pylance provides
+          # completion, navigation, and type checking.
+          "ruff.path" = [ "${pkgs.ruff}/bin/ruff" ];
+          "[python]" = {
+            "editor.defaultFormatter" = "charliermarsh.ruff";
+            "editor.formatOnSave" = true;
+            "editor.codeActionsOnSave" = {
+              "source.fixAll.ruff" = "explicit";
+              "source.organizeImports.ruff" = "explicit";
+            };
+          };
           "editor.renderWhitespace" = "all";
           "[shellscript]" = {
             "editor.defaultFormatter" = "mkhl.shfmt";
+          };
+          # Protobuf: buf provides parsing, linting, and formatting through its
+          # language server. Point the extension at the Nix-managed binary and
+          # disable its self-update check since Nix owns the version.
+          "buf.path" = "${pkgs.buf}/bin/buf";
+          "buf.checkForUpdates" = false;
+          "[proto]" = {
+            "editor.defaultFormatter" = "bufbuild.vscode-buf";
+            "editor.formatOnSave" = true;
           };
           "github.copilot.enable" = {
             "*" = false;

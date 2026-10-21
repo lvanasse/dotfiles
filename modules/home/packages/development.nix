@@ -1,8 +1,29 @@
 { inputs, ... }:
 {
   flake.modules.homeManager."packages.development" =
-    { pkgs, ... }:
+    { config, pkgs, ... }:
     let
+      # nixpkgs patches pre-commit's hook-tmpl to `exec @pre-commit@/bin/pre-commit`,
+      # baking a version-pinned store path into every hook `pre-commit install`
+      # writes. That path is garbage-collected on the next nixpkgs bump, leaving
+      # hooks dead ("no such file or directory"). Point the template at the
+      # profile instead, which is a stable symlink across generations.
+      durablePreCommit = pkgs.pre-commit.overridePythonAttrs (old: {
+        # Upstream's test suite needs cargo/go/dotnet and only runs because
+        # pytestCheckHook hangs off doInstallCheck; nativeCheckInputs (which
+        # carry git) are gated on doCheck, so it fails before it starts.
+        dontUsePytestCheck = true;
+        doInstallCheck = false;
+
+        # Rewrite in postFixup, not postPatch: fixupPhase re-runs patchShebangs
+        # over the whole output and would re-pin the interpreter we just freed.
+        postFixup = (old.postFixup or "") + ''
+          tmpl="$out/${pkgs.python3.sitePackages}/pre_commit/resources/hook-tmpl"
+          substituteInPlace "$tmpl" \
+            --replace-fail "$out/bin/pre-commit" "${config.home.profileDirectory}/bin/pre-commit"
+          sed -i '1s|.*|#!/usr/bin/env bash|' "$tmpl"
+        '';
+      });
       fenix = {
         packages = inputs.fenix.packages.${pkgs.stdenv.hostPlatform.system};
         latest = inputs.fenix.packages.${pkgs.stdenv.hostPlatform.system}.latest;
@@ -46,6 +67,25 @@
       '';
     in
     {
+      # Global clangd config: makes navigation usable in repos without a
+      # compile_commands.json (e.g. a freshly cloned PR). Relative -I paths
+      # resolve against the file's directory in fallback mode, so these cover
+      # common src/ + include/ layouts; missing dirs are silently ignored.
+      xdg.configFile."clangd/config.yaml".text = ''
+        CompileFlags:
+          Add: [-I., -I.., -Iinclude, -I../include, -I../../include]
+        ---
+        # Forces C++20 on C++ sources, overriding a project's own -std. Not
+        # C++23: clang 21 segfaults on libstdc++ <expected> when third-party
+        # headers are unresolved, which is the norm in fallback mode. Plain
+        # .h files are left alone since they may be C headers.
+        If:
+          PathMatch: .*\.(cpp|cc|cxx|c\+\+|hpp|hh|hxx|ipp|tpp)
+        CompileFlags:
+          Remove: [-std=*]
+          Add: [-std=c++20]
+      '';
+
       # Development packages
       home.packages =
         (with pkgs; [
@@ -65,6 +105,8 @@
           clang-tools
           basedpyright
           python3
+          ruff
+          uv
           bash-language-server
           bitbake-language-server
           taplo
@@ -78,6 +120,7 @@
           shellcheck
           shfmt
           yamllint
+          buf # Protobuf toolchain: parse, lint, format (language server for vscode-buf)
           bear
           meson
           ninja
@@ -131,7 +174,7 @@
           saleae-logic-2
 
           pyenv
-          pre-commit
+          durablePreCommit
 
           # Networking
           wireshark

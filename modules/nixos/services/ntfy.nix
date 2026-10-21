@@ -1,4 +1,4 @@
-{ inputs, lib, ... }:
+{ inputs, ... }:
 let
   ntfyEnvAge = "${inputs.secrets}/server/ntfy.env.age";
   monitorTokenAge = "${inputs.secrets}/server/ntfy-monitor.token.age";

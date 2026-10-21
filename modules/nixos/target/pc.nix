@@ -1,7 +1,4 @@
 { config, ... }:
-let
-  username = config.flake.lib.username;
-in
 {
   flake.modules.nixos."target.config.pc" =
     {

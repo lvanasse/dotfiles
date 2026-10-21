@@ -1,7 +1,7 @@
 { ... }:
 {
   flake.modules.nixos."services.actual" =
-    { lib, pkgs, ... }:
+    { pkgs, ... }:
     let
       # The server and CLI operate on the same budget format and must move in
       # lockstep. Bump this one value, the npm lockfile, and the assertion.

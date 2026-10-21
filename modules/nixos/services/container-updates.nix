@@ -3,7 +3,6 @@
   flake.modules.nixos."services.container-updates" =
     {
       config,
-      lib,
       pkgs,
       ...
     }:

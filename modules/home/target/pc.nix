@@ -2,7 +2,6 @@
 {
   flake.modules.homeManager."target.config.pc" =
     {
-      config,
       lib,
       pkgs,
       ...

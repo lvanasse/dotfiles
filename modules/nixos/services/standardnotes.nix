@@ -6,7 +6,6 @@ in
   flake.modules.nixos."services.standardnotes" =
     {
       config,
-      lib,
       pkgs,
       ...
     }:

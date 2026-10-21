@@ -172,7 +172,10 @@ in
         systemd.services.wealthsimple-actual-sync-list-actual-accounts = {
           description = "List Actual accounts for Wealthsimple importer setup";
           wants = [ "network-online.target" ];
-          after = [ "network-online.target" "docker-actual.service" ];
+          after = [
+            "network-online.target"
+            "docker-actual.service"
+          ];
           requires = [ "docker-actual.service" ];
           unitConfig.ConditionPathExists = secretPath;
           serviceConfig = {
@@ -205,7 +208,10 @@ in
         systemd.services.wealthsimple-actual-sync-create-actual-accounts = {
           description = "Create Actual accounts for Wealthsimple Cash and Credit Card";
           wants = [ "network-online.target" ];
-          after = [ "network-online.target" "docker-actual.service" ];
+          after = [
+            "network-online.target"
+            "docker-actual.service"
+          ];
           requires = [ "docker-actual.service" ];
           unitConfig.ConditionPathExists = secretPath;
           serviceConfig = {
@@ -303,7 +309,10 @@ in
           description = "Preview Wealthsimple Cash and Credit Card imports into Actual";
           path = [ pkgs.bash ];
           wants = [ "network-online.target" ];
-          after = [ "network-online.target" "docker-actual.service" ];
+          after = [
+            "network-online.target"
+            "docker-actual.service"
+          ];
           requires = [ "docker-actual.service" ];
           unitConfig.ConditionPathExists = secretPath;
           serviceConfig = {

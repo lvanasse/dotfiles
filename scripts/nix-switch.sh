@@ -189,7 +189,7 @@ fi
 if [ "$HM_STATUS" -eq 0 ]; then
   rm -f "${HM_LOG}"
 else
-  filter_noise < "${HM_LOG}"
+  filter_noise <"${HM_LOG}"
   rm -f "${HM_LOG}"
   exit 1
 fi

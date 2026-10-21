@@ -42,19 +42,19 @@ generation is active:
 
 1. Open Beszel over Tailscale and sign in with the initial encrypted admin
    credentials.
-2. In **Settings → Notifications**, create an ntfy target using the monitoring
+1. In **Settings → Notifications**, create an ntfy target using the monitoring
    token in this form: `ntfy://:TOKEN@ntfy.ludovicvanasse.com/homelab-alerts`.
    Configure the desired host/status and resource alerts in Beszel.
-3. Create a **permanent** Beszel universal registration token. Encrypt the
+1. Create a **permanent** Beszel universal registration token. Encrypt the
    returned `KEY` and `TOKEN` as `server/beszel-agent.env.age` in the private
    secrets repository. Do not manually add `server`: a valid universal token
    registers it automatically. The module enables the local agent only when
    that file is present; it keeps its listener on `127.0.0.1:45876` until the
    WebSocket connection is established. An ephemeral token is unsuitable here,
    because a hub restart invalidates it.
-4. Apply the next server generation. The agent then reports Docker and selected
+1. Apply the next server generation. The agent then reports Docker and selected
    systemd units to the hub.
-5. Add the Android token in the ntfy Android app. Home Manager starts the PC,
+1. Add the Android token in the ntfy Android app. Home Manager starts the PC,
    laptop, and work-laptop subscribers after their next authorized activation.
 
 Beszel controls alert thresholds and recovery behavior in its UI. It monitors

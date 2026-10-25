@@ -1,0 +1,125 @@
+/* Gruvbox Dark Hard: keep the dark palette even if the browser requests light mode. */
+:root,
+:root[data-color-scheme="light"],
+:root[data-color-scheme="dark"] {
+  color-scheme: dark;
+
+  --main-color: #ebdbb2;
+  --main-bg-color: #1d2021;
+  --main-bg-image: none;
+  --main-bg-size: auto;
+  --main-bg-repeat: repeat;
+  --main-font-size: 14px;
+  --link-color: #83a598;
+  --border-color: #504945;
+  --border-radius: 4px;
+  --hr-color: #504945;
+  --panel-bg-clr: #282828;
+
+  --warning-clr: #fabd2f;
+  --warning-bg-clr: #3c3836;
+  --warning-border-clr: #b57614;
+  --error-clr: #fb4934;
+  --error-bg-clr: #3c3836;
+  --error-border-clr: #cc241d;
+  --info-clr: #83a598;
+  --info-bg-clr: #3c3836;
+  --info-border-clr: #458588;
+
+  --loading-color: #ebdbb2;
+  --loading-text-shadow: none;
+  --spinner-color: #fabd2f;
+
+  --login-color: #ebdbb2;
+  --login-bg-color: #282828;
+  --login-box-shadow: 0 4px 20px #0008;
+  --login-border: 1px solid #504945;
+  --login-border-radius: 4px;
+
+  --dropdown-menu-color: #ebdbb2;
+  --dropdown-menu-bg-color: #282828;
+  --dropdown-menu-hover-bg-color: #3c3836;
+  --dropdown-menu-hover-color: #fabd2f;
+  --dropdown-menu-disabled-color: #a89984;
+  --dropdown-menu-border-clr: #504945;
+
+  --folders-color: #ebdbb2;
+  --folders-disabled-color: #a89984;
+  --folders-selected-color: #1d2021;
+  --folders-selected-bg-color: #fabd2f;
+  --folders-focused-color: #1d2021;
+  --folders-focused-bg-color: #d79921;
+  --folders-hover-color: #ebdbb2;
+  --folders-hover-bg-color: #3c3836;
+  --folders-drop-color: #1d2021;
+  --folders-drop-bg-color: #b8bb26;
+  --unread-count-color: #1d2021;
+  --unread-count-bg-color: #fabd2f;
+
+  --settings-menu-color: #ebdbb2;
+  --settings-menu-selected-color: #1d2021;
+  --settings-menu-selected-bg-color: #fabd2f;
+  --settings-menu-hover-color: #ebdbb2;
+  --settings-menu-hover-bg-color: #3c3836;
+
+  --message-list-toolbar-bg-color: #282828;
+  --message-header-bg-clr: #282828;
+
+  --dialog-clr: #ebdbb2;
+  --dialog-bg-clr: #282828;
+  --dialog-border-clr: #504945;
+  --dialog-border-radius: 4px;
+
+  --btn-clr: #1d2021;
+  --btn-bg-clr: #fabd2f;
+  --btn-border-clr: #fabd2f;
+  --btn-border-radius: 4px;
+  --btn-success-bg-clr: #b8bb26;
+  --btn-danger-bg-clr: #fb4934;
+
+  --input-clr: #ebdbb2;
+  --input-bg-clr: #3c3836;
+  --input-border-clr: #665c54;
+  --input-border-radius: 4px;
+  --input-focus-border-clr: #fabd2f;
+
+  --tr-hover-bg-clr: #3c3836;
+  --tr-odd-bg-clr: #32302f;
+  --tab-active-bg-clr: #282828;
+  --tab-hover-border-clr: #665c54;
+
+  --smDialogShrink: 20px;
+  --smMainShadow: 0 2px 8px #0006;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: #fabd2f;
+}
+
+/* Local branding and toolbar refinements. */
+#rl-loading-logo {
+  display: none;
+}
+#rl-loading::before {
+  content: "";
+  display: block;
+  width: min(18rem, 78vw);
+  height: min(10rem, 43.5vw);
+  margin: 0 auto 0.5em;
+  background: url("?/Logo/tachyon-logo-v2.svg") center / 100% 100% no-repeat;
+}
+.tachyon-local-read-toggle {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Keep the mail sidebar to the four folders requested by this installation.
+   This changes only Tachyon's display; IMAP subscriptions remain untouched. */
+/* Wait until all three special folders are mapped before hiding the rest. */
+.b-folders:has(.b-folders-system a[data-icon="send"]):has(.b-folders-system a[data-icon="file-text"]):has(.b-folders-system a[data-icon="trash-2"]) :is(.b-folders-user, .search-input-wrp, .e-checkbox, .b-content > hr),
+.b-folders .b-folders-system > li:has(> a[data-icon="triangle-alert"]),
+.b-folders .b-folders-system > li:has(> a[data-icon="archive"]) {
+  display: none;
+}

@@ -1,0 +1,40 @@
+- id: wiz_lights_at_sunset
+  alias: WiZ lights 30 minutes before sunset
+  description: Turn on every WiZ light at warm white and 50% brightness 30 minutes before sunset.
+  triggers:
+    - trigger: sun
+      event: sunset
+      offset: "-00:30:00"
+  conditions:
+    - condition: template
+      value_template: "{{ integration_entities('wiz') | select('match', '^light[.]') | list | count > 0 }}"
+  actions:
+    - action: light.turn_on
+      target:
+        entity_id: "{{ integration_entities('wiz') | select('match', '^light[.]') | list }}"
+      data:
+        brightness_pct: 50
+        color_temp_kelvin: 2700
+  mode: single
+
+- id: wiz_lights_off_weeknights
+  alias: WiZ lights off at 23:00 Sunday through Thursday
+  description: Turn off every WiZ light at 23:00 Sunday through Thursday.
+  triggers:
+    - trigger: time
+      at: "23:00:00"
+  conditions:
+    - condition: time
+      weekday:
+        - sun
+        - mon
+        - tue
+        - wed
+        - thu
+    - condition: template
+      value_template: "{{ integration_entities('wiz') | select('match', '^light[.]') | list | count > 0 }}"
+  actions:
+    - action: light.turn_off
+      target:
+        entity_id: "{{ integration_entities('wiz') | select('match', '^light[.]') | list }}"
+  mode: single

@@ -392,6 +392,14 @@
               {
                 Infra = [
                   {
+                    HomeAssistant = {
+                      href = "http://${serverTailscaleHost}:8123";
+                      description = "Lights and home automations";
+                      siteMonitor = "http://127.0.0.1:8123/";
+                      statusStyle = "basic";
+                    };
+                  }
+                  {
                     Beszel = {
                       href = "http://${serverTailscaleHost}:8090";
                       description = "Host, Docker, and resource monitoring";

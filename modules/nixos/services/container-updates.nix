@@ -9,7 +9,12 @@
     let
       stateRoot = "/var/lib/container-updates";
       statusPath = "${stateRoot}/status.json";
-      excludedContainers = [ "dockhand" ];
+      # Tachyon is pinned to a reviewed release digest in its service module.
+      excludedContainers = [
+        "dockhand"
+        "home-assistant"
+        "tachyon"
+      ];
       preferredOrder = [
         "linkwarden-postgres"
         "mariadb"

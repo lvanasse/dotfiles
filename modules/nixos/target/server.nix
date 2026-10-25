@@ -120,12 +120,16 @@
             8084
             8085
             5010
+            8123
             3030
             3031
             13378
             59793
           ];
-          allowedUDPPorts = lib.mkForce [ 59793 ];
+          allowedUDPPorts = lib.mkForce [
+            38899 # WiZ bulb discovery and local push updates
+            59793
+          ];
         };
       };
 

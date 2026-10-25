@@ -1,0 +1,9 @@
+{
+  "KPlugin": {
+    "Id": "GruvboxDarkHard",
+    "Name": "Gruvbox Dark Hard",
+    "Description": "Breeze Plasma style with the Gruvbox Dark Hard color scheme",
+    "Version": "1.0",
+    "License": "MIT"
+  }
+}

@@ -115,9 +115,9 @@
         workspace = {
           # Shared wallpaper and theme across hosts
           wallpaper = "${config.home.homeDirectory}/.local/share/wallpapers/1458678242783.jpg";
-          # Breeze Dark across Plasma for a lean, native setup
-          colorScheme = "BreezeDark";
-          theme = "breeze-dark"; # Plasma style
+          # Use the same Gruvbox Dark Hard palette as Sway and Tachyon.
+          colorScheme = "GruvboxDarkHard";
+          theme = "GruvboxDarkHard"; # Plasma style for panels and widgets
 
           # Icon theme
           iconTheme = "Tela";
@@ -144,8 +144,7 @@
           "kdeglobals"."General" = {
             TerminalApplication = "wezterm";
             TerminalService = "org.wezfurlong.wezterm.desktop";
-            # Ensure apps pick the Breeze Dark color scheme
-            ColorScheme = "BreezeDark";
+            ColorScheme = "GruvboxDarkHard";
           };
           # Global Look & Feel + faster animations
           "kdeglobals"."KDE" = {
@@ -156,7 +155,7 @@
           # Icon theme
           "kdeglobals"."Icons".Theme = "Tela";
           # Plasma style (panel/desktop theme)
-          "plasmarc"."Theme".name = "breeze-dark";
+          "plasmarc"."Theme".name = "GruvboxDarkHard";
           # Cursor theme
           "kcminputrc"."Mouse".cursorTheme = "Breeze";
           # KWin: disable costly effects to minimize latency
@@ -170,6 +169,15 @@
           };
         };
       };
+
+      home.file.".local/share/color-schemes/GruvboxDarkHard.colors".source =
+        ./plasma/gruvbox-dark-hard.colors;
+      home.file.".local/share/plasma/desktoptheme/GruvboxDarkHard/metadata.json".source =
+        ./plasma/gruvbox-dark-hard-theme/metadata.json;
+      home.file.".local/share/plasma/desktoptheme/GruvboxDarkHard/plasmarc".source =
+        ./plasma/gruvbox-dark-hard-theme/plasmarc;
+      home.file.".local/share/plasma/desktoptheme/GruvboxDarkHard/colors".source =
+        ./plasma/gruvbox-dark-hard.colors;
 
       # Ensure the wallpaper file is present in the user's home
       home.file.".local/share/wallpapers/1458678242783.jpg".source =

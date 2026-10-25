@@ -54,6 +54,7 @@
           tomoki1207.pdf
           wharflab.tally
           anthropic.claude-code
+          tootone.org-mode
         ];
         profiles.default.userSettings = {
           "git.autofetch" = true;

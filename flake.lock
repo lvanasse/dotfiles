@@ -1030,7 +1030,8 @@
         "secrets": "secrets",
         "spacemacs": "spacemacs",
         "stylix": "stylix",
-        "treefmt-nix": "treefmt-nix_2"
+        "treefmt-nix": "treefmt-nix_2",
+        "yapfast": "yapfast"
       }
     },
     "rust-analyzer-src": {
@@ -1047,6 +1048,27 @@
         "owner": "rust-lang",
         "ref": "nightly",
         "repo": "rust-analyzer",
+        "type": "github"
+      }
+    },
+    "rust-overlay": {
+      "inputs": {
+        "nixpkgs": [
+          "yapfast",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1792133817,
+        "narHash": "sha256-LivT78KkZ18adR5daoXj2nlIOxuLw6B96nvW4FOl4d0=",
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "rev": "ec07af44be2e0ce4e1a17e00a97d44232607c1ec",
+        "type": "github"
+      },
+      "original": {
+        "owner": "oxalica",
+        "repo": "rust-overlay",
         "type": "github"
       }
     },
@@ -1295,6 +1317,27 @@
       "original": {
         "owner": "numtide",
         "repo": "treefmt-nix",
+        "type": "github"
+      }
+    },
+    "yapfast": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "rust-overlay": "rust-overlay"
+      },
+      "locked": {
+        "lastModified": 1792891987,
+        "narHash": "sha256-rnNagvPPgILF41rMtvOgM78nJp5ySaN5LG3TuMsLs5g=",
+        "owner": "yapfast",
+        "repo": "yapfast",
+        "rev": "ac9780062c23eed26ee9c933ac0ac7efaab666d0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "yapfast",
+        "repo": "yapfast",
         "type": "github"
       }
     }

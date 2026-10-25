@@ -110,6 +110,13 @@
       url = "github:nix-community/nixGL";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # Yapfast
+
+    yapfast = {
+      url = "github:yapfast/yapfast";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =

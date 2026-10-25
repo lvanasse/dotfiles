@@ -8,6 +8,8 @@
       ...
     }:
     let
+      yapfast = inputs.yapfast.packages.${pkgs.stdenv.hostPlatform.system}.yapfast;
+
       koreaderEnglishDictionary = pkgs.fetchzip {
         url = "https://www.reader-dict.com/file/en/dict-en-en-noetym.zip";
         hash = "sha256-k0J/PwEt00I+XTzBLPeQm2HNjDXbeFk2Hc4QEPTxi0A=";
@@ -64,6 +66,7 @@
 
           # Communication
           vesktop
+          yapfast
           slack
           discord
           jami
